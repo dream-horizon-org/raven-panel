@@ -339,12 +339,10 @@ export default function JourneysTable({
   };
 
   const handleEdit = (journeyId: number) => {
-    console.log("Edit journey:", journeyId);
     // TODO: Implement edit functionality
   };
 
   const handleClone = (journeyId: number) => {
-    console.log("Clone journey:", journeyId);
     // TODO: Implement clone functionality
   };
 
@@ -352,7 +350,6 @@ export default function JourneysTable({
     try {
       await navigator.clipboard.writeText(journeyId.toString());
       // TODO: Show success toast/notification
-      console.log("Journey ID copied:", journeyId);
     } catch (err) {
       console.error("Failed to copy journey ID:", err);
       // TODO: Show error toast/notification

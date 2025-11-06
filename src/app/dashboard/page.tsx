@@ -1,7 +1,7 @@
-import Body from "./components/Body";
+import JourneyListingPage from "./components/JourneyListingPage";
 
 const DashboardPage = () => {
-  return <Body />;
+  return <JourneyListingPage />;
 };
 
 export default DashboardPage;

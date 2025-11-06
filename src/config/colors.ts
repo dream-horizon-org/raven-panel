@@ -60,6 +60,30 @@ export const THEME_COLORS = {
     tableContainerDark: "#1F201D",
   },
 
+  SHADOWS: {
+    light: {
+      sm: "0px 1px 3px rgba(0, 0, 0, 0.05)",
+      md: "0px 2px 8px rgba(0, 0, 0, 0.08)",
+      lg: "0px 2px 8px rgba(0, 0, 0, 0.15)",
+      xl: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+    },
+    dark: {
+      sm: "0px 1px 3px rgba(0, 0, 0, 0.3)",
+      md: "0px 2px 8px rgba(0, 0, 0, 0.4)",
+      lg: "0px 2px 8px rgba(0, 0, 0, 0.5)",
+      xl: "0px 4px 12px rgba(0, 0, 0, 0.6)",
+    },
+  },
+
+  LABEL: {
+    light: {
+      bg: "rgba(173, 216, 230, 0.3)", // Light blue background for labels
+    },
+    dark: {
+      bg: "rgba(173, 216, 230, 0.2)", // Slightly darker for dark mode
+    },
+  },
+
   CSS: {
     background: {
       light: "#ffffff",
@@ -69,6 +93,11 @@ export const THEME_COLORS = {
       light: "#171717",
       dark: "#ededed",
     },
+  },
+
+  OVERLAY: {
+    light: "rgba(255, 255, 255, 0.9)",
+    dark: "rgba(26, 26, 26, 0.9)",
   },
 } as const;
 

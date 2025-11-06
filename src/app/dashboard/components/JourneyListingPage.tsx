@@ -18,8 +18,10 @@ import {
 import { BUTTON_TEXT, PAGE_TITLES } from "@/config/constants";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useJourneysList } from "@/hooks/useJourneysList";
+import { useRouter } from "next/navigation";
 
-export default function Body() {
+export default function JourneyListingPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState<Status>("ALL");
 
@@ -94,6 +96,7 @@ export default function Body() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
+                onClick={() => router.push("/dashboard/create")}
               >
                 {BUTTON_TEXT.CREATE_JOURNEY}
               </Button>

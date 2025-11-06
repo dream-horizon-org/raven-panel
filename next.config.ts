@@ -10,6 +10,10 @@ const nextConfig = {
         source: "/thunder-master-uat/:path*",
         destination: "http://thunder-master-uat.dream11.local/thunder/:path*",
       },
+      {
+        source: "/concord/:path*",
+        destination: "http://concord.dream11.local/:path*",
+      },
     ];
   },
 };

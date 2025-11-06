@@ -15,10 +15,12 @@ export const API_BASE_URLS = {
 export const API_ENDPOINTS = {
   FILTERS_LIST: `${API_BASE_URLS.THUNDER}/filters`,
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/ctas`,
+  EVENTS_SCHEMA: "/concord/schema",
+  SYSTEM_PROPERTIES: "/concord/getSystemProperties",
 };
 
 export const API_AXIOS_CONFIG = {
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
