@@ -22,7 +22,8 @@ import {
 } from "@mui/material";
 import { StateNode, EngagementNode } from "./FlowNodes";
 import NodeConfigurationPanel from "./NodeConfigurationPanel";
-import { JourneyNodeData, Branch, EngagementNodeData } from "./types";
+import EngagementConfigurationPanel from "./EngagementConfigurationPanel";
+import { JourneyNodeData, Branch, EngagementNodeData, EngagementConfig } from "./types";
 
 const nodeTypes: NodeTypes = {
   state: StateNode,
@@ -106,6 +107,8 @@ export default function JourneyFlowBuilder() {
   const [highlightedBranchId, setHighlightedBranchId] = useState<string | null>(null);
   const [highlightedEngagementId, setHighlightedEngagementId] = useState<string | null>(null);
   const panelCloseHandlerRef = useRef<(() => void) | null>(null);
+  const [selectedEngagementNode, setSelectedEngagementNode] = useState<Node<EngagementNodeData> | null>(null);
+  const [engagementConfigPanelOpen, setEngagementConfigPanelOpen] = useState(false);
 
   // Create initial node on mount and remove any exit nodes
   useEffect(() => {
@@ -247,12 +250,15 @@ export default function JourneyFlowBuilder() {
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
-      // Only open config panel for state nodes, not engagement nodes
       if (node.type === "state") {
         setSelectedNode(node as Node<JourneyNodeData>);
         setConfigPanelOpen(true);
         setHighlightedBranchId(null);
         setHighlightedEngagementId(null);
+      } else if (node.type === "engagement") {
+        // Open engagement configuration panel
+        setSelectedEngagementNode(node as Node<EngagementNodeData>);
+        setEngagementConfigPanelOpen(true);
       }
     },
     []
@@ -469,6 +475,39 @@ export default function JourneyFlowBuilder() {
     panelCloseHandlerRef.current = null;
   };
 
+  const handleUpdateEngagementConfig = useCallback(
+    (engagementId: string, config: EngagementConfig) => {
+      setNodes((currentNodes) => {
+        return currentNodes.map((node) => {
+          if (node.type === "state") {
+            const nodeData = node.data as JourneyNodeData;
+            if (nodeData.engagements) {
+              const updatedEngagements = nodeData.engagements.map((engagement) =>
+                engagement.id === engagementId
+                  ? { ...engagement, config: config as Record<string, unknown> }
+                  : engagement
+              );
+              return {
+                ...node,
+                data: {
+                  ...nodeData,
+                  engagements: updatedEngagements,
+                },
+              };
+            }
+          }
+          return node;
+        });
+      });
+    },
+    [setNodes]
+  );
+
+  const handleCloseEngagementPanel = () => {
+    setEngagementConfigPanelOpen(false);
+    setSelectedEngagementNode(null);
+  };
+
   return (
     <Box sx={{ height: "100%", position: "relative", width: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ flex: 1, position: "relative" }}>
@@ -512,6 +551,33 @@ export default function JourneyFlowBuilder() {
             highlightedBranchId={highlightedBranchId}
             highlightedEngagementId={highlightedEngagementId}
             onRequestClose={panelCloseHandlerRef}
+          />
+        )}
+      </Drawer>
+
+      {/* Engagement Configuration Panel */}
+      <Drawer
+        anchor="right"
+        open={engagementConfigPanelOpen}
+        onClose={handleCloseEngagementPanel}
+        PaperProps={{
+          sx: { width: "85vw", maxWidth: "1400px", p: 3 },
+        }}
+      >
+        {selectedEngagementNode && (
+          <EngagementConfigurationPanel
+            engagementNode={selectedEngagementNode}
+            sourceNode={
+              nodes.find(
+                (n) =>
+                  n.type === "state" &&
+                  (n.data as JourneyNodeData).engagements?.some(
+                    (e) => e.id === selectedEngagementNode.data.engagementId
+                  )
+              ) || selectedNode || nodes[0]
+            }
+            onUpdate={handleUpdateEngagementConfig}
+            onClose={handleCloseEngagementPanel}
           />
         )}
       </Drawer>

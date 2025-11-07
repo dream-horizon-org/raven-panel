@@ -14,6 +14,69 @@ export interface Engagement {
   config: Record<string, unknown>;
 }
 
+// UI Element Types for Engagement Configuration
+export type UIElementType = "view" | "text" | "image";
+
+export interface Spacing {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+export interface TextElement {
+  id: string;
+  type: "text";
+  text: string;
+  textAlignment?: "left" | "center" | "right";
+  textColor?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  spacing?: {
+    margin?: Spacing;
+    padding?: Spacing;
+  };
+}
+
+export interface ImageElement {
+  id: string;
+  type: "image";
+  imageSource?: string;
+  clickAction?: string;
+  occupyFullWidth?: boolean;
+  spacing?: {
+    margin?: Spacing;
+    padding?: Spacing;
+  };
+}
+
+export interface ViewElement {
+  id: string;
+  type: "view";
+  orientation?: "horizontal" | "vertical";
+  children?: UIElement[];
+  spacing?: {
+    margin?: Spacing;
+    padding?: Spacing;
+  };
+}
+
+export type UIElement = TextElement | ImageElement | ViewElement;
+
+export interface EngagementVariant {
+  id: string;
+  name: string;
+  description?: string;
+  preview?: string; // URL or path to preview image
+}
+
+export interface EngagementConfig {
+  variant?: string; // Selected variant ID
+  content?: {
+    elements?: UIElement[];
+  };
+}
+
 export interface EngagementNodeData {
   label: string;
   nodeType: "engagement";
