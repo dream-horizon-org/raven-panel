@@ -3,7 +3,10 @@
 import { memo } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Box, Typography, Chip } from "@mui/material";
-import { JourneyNodeData } from "./types";
+import { JourneyNodeData, EngagementNodeData } from "./types";
+import InfoIcon from "@mui/icons-material/Info";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
 
 const nodeStyle = {
   border: "2px solid",
@@ -74,7 +77,8 @@ export const StateNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
           ))}
         </Box>
       )}
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} id="branch-source" />
+      <Handle type="source" position={Position.Right} id="engagement-source" />
     </Box>
   );
 });
@@ -102,4 +106,72 @@ export const ExitNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
 });
 
 ExitNode.displayName = "ExitNode";
+
+// Engagement Node (represents an in-app nudge/engagement)
+export const EngagementNode = memo(({ data }: NodeProps<EngagementNodeData>) => {
+  const getIcon = () => {
+    switch (data.engagementType) {
+      case "tooltip":
+        return <InfoIcon sx={{ fontSize: 20 }} />;
+      case "popup":
+        return <OpenInNewIcon sx={{ fontSize: 20 }} />;
+      case "bottomsheet":
+        return <ViewAgendaIcon sx={{ fontSize: 20 }} />;
+      default:
+        return null;
+    }
+  };
+
+  const getTypeLabel = () => {
+    switch (data.engagementType) {
+      case "tooltip":
+        return "Tooltip";
+      case "popup":
+        return "Popup";
+      case "bottomsheet":
+        return "Bottom Sheet";
+      default:
+        return data.engagementType;
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        border: "2px dashed #ff9800",
+        borderRadius: "6px",
+        padding: "8px 12px",
+        backgroundColor: "#fff3e0",
+        minWidth: "120px",
+        maxWidth: "120px",
+      }}
+    >
+      <Handle type="target" position={Position.Left} />
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
+        <Box sx={{ color: "#ff9800", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {getIcon()}
+        </Box>
+        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ fontSize: "0.65rem" }}>
+          {getTypeLabel()}
+        </Typography>
+        <Chip
+          label="Engagement"
+          size="small"
+          sx={{
+            fontSize: "8px",
+            height: "16px",
+            bgcolor: "#ff9800",
+            color: "white",
+            fontWeight: 600,
+            "& .MuiChip-label": {
+              padding: "0 4px",
+            },
+          }}
+        />
+      </Box>
+    </Box>
+  );
+});
+
+EngagementNode.displayName = "EngagementNode";
 

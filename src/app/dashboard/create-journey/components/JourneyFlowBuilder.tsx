@@ -20,12 +20,13 @@ import {
   Box,
   Drawer,
 } from "@mui/material";
-import { StateNode } from "./FlowNodes";
+import { StateNode, EngagementNode } from "./FlowNodes";
 import NodeConfigurationPanel from "./NodeConfigurationPanel";
-import { JourneyNodeData, Branch } from "./types";
+import { JourneyNodeData, Branch, EngagementNodeData } from "./types";
 
 const nodeTypes: NodeTypes = {
   state: StateNode,
+  engagement: EngagementNode,
 };
 
 // Mock event names
@@ -103,6 +104,7 @@ export default function JourneyFlowBuilder() {
   const [selectedNode, setSelectedNode] = useState<Node<JourneyNodeData> | null>(null);
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [highlightedBranchId, setHighlightedBranchId] = useState<string | null>(null);
+  const [highlightedEngagementId, setHighlightedEngagementId] = useState<string | null>(null);
 
   // Create initial node on mount and remove any exit nodes
   useEffect(() => {
@@ -139,9 +141,10 @@ export default function JourneyFlowBuilder() {
     });
   }, [nodes.length, setNodes, setEdges]);
 
-  // Sync edges with branches
+  // Sync edges with branches and engagements
   useEffect(() => {
     const branchEdges: Edge[] = [];
+    const engagementEdges: Edge[] = [];
 
     nodes.forEach((node) => {
       if (node.type === "state" && node.data.branches && Array.isArray(node.data.branches)) {
@@ -160,6 +163,8 @@ export default function JourneyFlowBuilder() {
               id: `edge-${branch.id}`,
               source: node.id,
               target: targetNode.id,
+              sourceHandle: "branch-source",
+              targetHandle: null,
               type: "bezier",
               data: { branchId: branch.id },
               style: { strokeWidth: 2 },
@@ -169,30 +174,66 @@ export default function JourneyFlowBuilder() {
           // If target node doesn't exist yet, don't create edge - it will be created when node is saved
         });
       }
+
+      // Create edges for engagements
+      if (node.type === "state" && node.data.engagements && Array.isArray(node.data.engagements)) {
+        node.data.engagements.forEach((engagement) => {
+          // Find engagement node
+          const engagementNode = nodes.find(
+            (n) => n.type === "engagement" && (n.data as EngagementNodeData).engagementId === engagement.id
+          );
+          if (engagementNode) {
+            engagementEdges.push({
+              id: `engagement-edge-${engagement.id}`,
+              source: node.id,
+              target: engagementNode.id,
+              sourceHandle: "engagement-source",
+              targetHandle: null,
+              type: "bezier",
+              data: { engagementId: engagement.id },
+              style: { strokeWidth: 2, stroke: "#ff9800", strokeDasharray: "5,5" },
+              markerEnd: { type: "arrowclosed", color: "#ff9800" },
+            });
+          }
+        });
+      }
     });
 
-    // Update edges to match branches
+    // Update edges to match branches and engagements
     setEdges((currentEdges) => {
-      // Keep edges that are not branch-based (manually created)
-      const manualEdges = currentEdges.filter((e) => !e.id.startsWith("edge-"));
+      // Keep edges that are not branch-based or engagement-based (manually created)
+      const manualEdges = currentEdges.filter(
+        (e) => !e.id.startsWith("edge-") && !e.id.startsWith("engagement-edge-")
+      );
       
-      // Create a map of existing branch edges for quick lookup
+      // Create maps of existing edges for quick lookup
       const existingBranchEdgesMap = new Map(
         currentEdges.filter((e) => e.id.startsWith("edge-")).map((e) => [e.id, e])
+      );
+      const existingEngagementEdgesMap = new Map(
+        currentEdges.filter((e) => e.id.startsWith("engagement-edge-")).map((e) => [e.id, e])
       );
       
       // Update or create branch edges
       const updatedBranchEdges = branchEdges.map((be) => {
         const existing = existingBranchEdgesMap.get(be.id);
         if (existing) {
-          // Preserve any custom properties from existing edge, but update with branch data
           return { ...existing, ...be };
         }
         return be;
       });
 
-      // Combine manual edges with branch edges
-      return [...manualEdges, ...updatedBranchEdges];
+      // Update or create engagement edges
+      const updatedEngagementEdges = engagementEdges.map((ee) => {
+        const existing = existingEngagementEdgesMap.get(ee.id);
+        if (existing) {
+          return { ...existing, ...ee };
+        }
+        return ee;
+      });
+
+      // Combine all edges
+      return [...manualEdges, ...updatedBranchEdges, ...updatedEngagementEdges];
     });
   }, [nodes, setEdges]);
 
@@ -204,10 +245,14 @@ export default function JourneyFlowBuilder() {
   );
 
   const onNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node<JourneyNodeData>) => {
-      setSelectedNode(node);
-      setConfigPanelOpen(true);
-      setHighlightedBranchId(null);
+    (_event: React.MouseEvent, node: Node) => {
+      // Only open config panel for state nodes, not engagement nodes
+      if (node.type === "state") {
+        setSelectedNode(node as Node<JourneyNodeData>);
+        setConfigPanelOpen(true);
+        setHighlightedBranchId(null);
+        setHighlightedEngagementId(null);
+      }
     },
     []
   );
@@ -216,12 +261,22 @@ export default function JourneyFlowBuilder() {
     (_event: React.MouseEvent, edge: Edge) => {
       // Find the source node
       const sourceNode = nodes.find((n) => n.id === edge.source);
-      if (sourceNode) {
+      if (sourceNode && sourceNode.type === "state") {
         setSelectedNode(sourceNode as Node<JourneyNodeData>);
         setConfigPanelOpen(true);
-        // Extract branchId from edge id (format: edge-{branchId})
-        const branchId = edge.id.replace("edge-", "");
-        setHighlightedBranchId(branchId);
+        
+        // Check if it's an engagement edge or branch edge
+        if (edge.id.startsWith("engagement-edge-")) {
+          // Extract engagementId from edge id (format: engagement-edge-{engagementId})
+          const engagementId = edge.id.replace("engagement-edge-", "");
+          setHighlightedEngagementId(engagementId);
+          setHighlightedBranchId(null);
+        } else if (edge.id.startsWith("edge-")) {
+          // Extract branchId from edge id (format: edge-{branchId})
+          const branchId = edge.id.replace("edge-", "");
+          setHighlightedBranchId(branchId);
+          setHighlightedEngagementId(null);
+        }
       }
     },
     [nodes]
@@ -231,7 +286,7 @@ export default function JourneyFlowBuilder() {
   const handleUpdateNode = useCallback(
     (nodeId: string, data: Partial<JourneyNodeData>) => {
       setNodes((currentNodes) => {
-        const updated = currentNodes.map((node) => {
+        let updated = currentNodes.map((node) => {
           if (node.id === nodeId) {
             // Update label to event name if event name is provided
             const updatedData = { ...node.data, ...data };
@@ -243,13 +298,73 @@ export default function JourneyFlowBuilder() {
           return node;
         });
         
+        // Handle engagement nodes separately after updating the main node
+        if (data.engagements && Array.isArray(data.engagements)) {
+          const sourceNode = updated.find((n) => n.id === nodeId);
+          
+          data.engagements.forEach((engagement) => {
+            // Check if engagement node already exists
+            const existingEngagementNode = updated.find(
+              (n) => n.type === "engagement" && (n.data as EngagementNodeData).engagementId === engagement.id
+            );
+            
+            if (!existingEngagementNode) {
+              // Calculate position to the right of the source node
+              const engagementPosition = sourceNode
+                ? {
+                    x: sourceNode.position.x + 300,
+                    y: sourceNode.position.y,
+                  }
+                : { x: 500, y: 200 };
+              
+              // Create engagement node
+              const engagementNode: Node<EngagementNodeData> = {
+                id: `engagement-${engagement.id}`,
+                type: "engagement",
+                position: engagementPosition,
+                data: {
+                  label: engagement.type,
+                  nodeType: "engagement",
+                  engagementId: engagement.id,
+                  engagementType: engagement.type as "tooltip" | "popup" | "bottomsheet",
+                },
+              };
+              updated.push(engagementNode);
+            } else {
+              // Update existing engagement node if type changed
+              const engagementNodeData = existingEngagementNode.data as EngagementNodeData;
+              if (engagementNodeData.engagementType !== engagement.type) {
+                const index = updated.indexOf(existingEngagementNode);
+                updated[index] = {
+                  ...existingEngagementNode,
+                  data: {
+                    ...engagementNodeData,
+                    engagementType: engagement.type as "tooltip" | "popup" | "bottomsheet",
+                    label: engagement.type,
+                  },
+                };
+              }
+            }
+          });
+          
+          // Remove engagement nodes that are no longer in the engagements array
+          const engagementIds = new Set(data.engagements.map((e) => e.id));
+          updated = updated.filter((n) => {
+            if (n.type === "engagement") {
+              const engagementData = n.data as EngagementNodeData;
+              return engagementIds.has(engagementData.engagementId);
+            }
+            return true;
+          });
+        }
+        
         // Create nodes for branches that reference event names that don't exist yet
         if (data.branches) {
           data.branches.forEach((branch) => {
             if (branch.targetNodeId && branch.targetNodeId !== "exit") {
               // Check if a node with this event name already exists
               const existingNode = updated.find(
-                (n) => n.type === "state" && n.data.eventName === branch.targetNodeId
+                (n) => n.type === "state" && (n.data as JourneyNodeData).eventName === branch.targetNodeId
               );
               
               if (!existingNode) {
@@ -259,7 +374,7 @@ export default function JourneyFlowBuilder() {
                 // Calculate position to avoid overlaps
                 const newNodePosition = calculateNonOverlappingPosition(
                   sourceNode as Node<JourneyNodeData> | undefined,
-                  updated as Node<JourneyNodeData>[],
+                  updated.filter((n) => n.type === "state") as Node<JourneyNodeData>[],
                   250, // horizontal spacing
                   150  // vertical spacing
                 );
@@ -299,8 +414,6 @@ export default function JourneyFlowBuilder() {
           }
         }
         
-        // Force edge sync by triggering it after nodes are updated
-        // The useEffect will handle edge creation, but we need to ensure it runs
         return updated;
       });
     },
@@ -338,6 +451,7 @@ export default function JourneyFlowBuilder() {
     setConfigPanelOpen(false);
     setSelectedNode(null);
     setHighlightedBranchId(null);
+    setHighlightedEngagementId(null);
   };
 
   return (
@@ -353,8 +467,7 @@ export default function JourneyFlowBuilder() {
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
             nodeTypes={nodeTypes}
-            fitView
-            edgesUpdatable={true}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
             edgesFocusable={true}
             defaultEdgeOptions={{ type: "bezier" }}
           >
@@ -382,6 +495,7 @@ export default function JourneyFlowBuilder() {
             onDeleteEdge={handleDeleteEdge}
             mockEventNames={MOCK_EVENT_NAMES}
             highlightedBranchId={highlightedBranchId}
+            highlightedEngagementId={highlightedEngagementId}
           />
         )}
       </Drawer>

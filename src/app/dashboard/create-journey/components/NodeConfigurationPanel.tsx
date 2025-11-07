@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Node } from "@xyflow/react";
 import {
   Box,
@@ -20,7 +20,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { JourneyNodeData, Condition, Branch } from "./types";
+import InfoIcon from "@mui/icons-material/Info";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
+import { JourneyNodeData, Condition, Branch, Engagement } from "./types";
 
 interface NodeConfigurationPanelProps {
   node: Node<JourneyNodeData>;
@@ -31,6 +34,7 @@ interface NodeConfigurationPanelProps {
   onDeleteEdge: (edgeId: string) => void;
   mockEventNames: string[];
   highlightedBranchId?: string | null;
+  highlightedEngagementId?: string | null;
 }
 
 export default function NodeConfigurationPanel({
@@ -42,14 +46,41 @@ export default function NodeConfigurationPanel({
   onDeleteEdge,
   mockEventNames,
   highlightedBranchId,
+  highlightedEngagementId,
 }: NodeConfigurationPanelProps) {
-  const [localData, setLocalData] = useState<JourneyNodeData>(node.data);
-
-  useEffect(() => {
-    setLocalData(node.data);
+  const [localData, setLocalData] = useState<JourneyNodeData>(() => {
+    // Initialize with default exit branch if event name exists but no branches
+    const hasBranches = node.data.branches && Array.isArray(node.data.branches) && node.data.branches.length > 0;
+    const hasEventName = node.data.eventName && node.data.eventName.trim() !== "";
     
-    // Auto-create default exit transition if event name exists but no branches
-    if (node.data.eventName && (!node.data.branches || node.data.branches.length === 0)) {
+    if (hasEventName && !hasBranches) {
+      const defaultBranch: Branch = {
+        id: `branch-default-${Date.now()}`,
+        targetNodeId: "exit",
+        filters: [],
+      };
+      return {
+        ...node.data,
+        branches: [defaultBranch],
+      };
+    }
+    // Ensure branches is always an array
+    return {
+      ...node.data,
+      branches: node.data.branches || [],
+    };
+  });
+
+  // Sync with node.data and ensure default branch exists when eventName is set
+  useEffect(() => {
+    const hasBranches = node.data.branches && Array.isArray(node.data.branches) && node.data.branches.length > 0;
+    const hasEventName = node.data.eventName && node.data.eventName.trim() !== "";
+    
+    if (hasBranches) {
+      // Node has branches, sync them
+      setLocalData(node.data);
+    } else if (hasEventName) {
+      // Node has eventName but no branches, create default branch
       const defaultBranch: Branch = {
         id: `branch-default-${Date.now()}`,
         targetNodeId: "exit",
@@ -59,8 +90,20 @@ export default function NodeConfigurationPanel({
         ...node.data,
         branches: [defaultBranch],
       });
+    } else {
+      // No event name, just sync
+      setLocalData({
+        ...node.data,
+        branches: node.data.branches || [],
+      });
     }
-  }, [node.data]);
+  }, [node.data.eventName, node.id]);
+
+  // Compute branches to display - ensure default branch is shown if eventName exists
+  const branchesToDisplay = useMemo(() => {
+    const currentBranches = localData.branches && Array.isArray(localData.branches) ? localData.branches : [];
+    return currentBranches;
+  }, [localData.branches]);
 
   const handleSave = () => {
     onUpdate(node.id, localData);
@@ -151,6 +194,37 @@ export default function NodeConfigurationPanel({
     });
   };
 
+  // Engagement handlers
+  const handleAddEngagement = () => {
+    const newEngagement: Engagement = {
+      id: `engagement-${Date.now()}`,
+      type: "tooltip", // Default to tooltip
+      config: {},
+    };
+    setLocalData({
+      ...localData,
+      engagements: [...(localData.engagements || []), newEngagement],
+    });
+  };
+
+  const handleUpdateEngagement = (engagementId: string, updates: Partial<Engagement>) => {
+    setLocalData({
+      ...localData,
+      engagements: (localData.engagements || []).map((engagement) =>
+        engagement.id === engagementId ? { ...engagement, ...updates } : engagement
+      ),
+    });
+  };
+
+  const handleDeleteEngagement = (engagementId: string) => {
+    setLocalData({
+      ...localData,
+      engagements: (localData.engagements || []).filter((engagement) => engagement.id !== engagementId),
+    });
+    // Delete the corresponding edge
+    onDeleteEdge(`engagement-edge-${engagementId}`);
+  };
+
   const availableTargetNodes = nodes.filter(
     (n) => n.id !== node.id && n.type === "state"
   );
@@ -221,26 +295,36 @@ export default function NodeConfigurationPanel({
             value={localData.eventName || ""}
             onChange={(e) => {
               const eventName = e.target.value;
-              const updatedData = {
+              const currentBranches = localData.branches && Array.isArray(localData.branches) ? localData.branches : [];
+              
+              const updatedData: JourneyNodeData = {
                 ...localData,
                 eventName,
                 label: eventName || "New Node",
               };
               
               // If event name is selected and no branches exist, create default exit transition
-              if (eventName && (!localData.branches || localData.branches.length === 0)) {
-                const defaultBranch: Branch = {
-                  id: `branch-default-${Date.now()}`,
-                  targetNodeId: "exit",
-                  filters: [],
-                };
-                updatedData.branches = [defaultBranch];
+              if (eventName) {
+                if (currentBranches.length === 0) {
+                  const defaultBranch: Branch = {
+                    id: `branch-default-${Date.now()}`,
+                    targetNodeId: "exit",
+                    filters: [],
+                  };
+                  updatedData.branches = [defaultBranch];
+                } else {
+                  // Keep existing branches
+                  updatedData.branches = currentBranches;
+                }
+              } else {
+                // If event name is cleared, clear branches too
+                updatedData.branches = [];
               }
               
               setLocalData(updatedData);
             }}
             required
-            helperText="The event that triggers this node. Conditions below will be evaluated on this event's properties."
+            helperText="The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
           >
             <MenuItem value="">
               <em>Select an event</em>
@@ -251,6 +335,121 @@ export default function NodeConfigurationPanel({
               </MenuItem>
             ))}
           </TextField>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* In-App Presentations */}
+        <Box sx={{ mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
+                In-App Presentations
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Show nudge when journey reaches this node
+              </Typography>
+            </Box>
+            <Button size="small" startIcon={<AddIcon />} onClick={handleAddEngagement} variant="outlined">
+              Add Engagement
+            </Button>
+          </Box>
+
+          {localData.engagements && localData.engagements.length > 0 ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {localData.engagements.map((engagement, index) => (
+                <Paper
+                  key={engagement.id}
+                  elevation={highlightedEngagementId === engagement.id ? 3 : 1}
+                  sx={{
+                    border: "2px solid",
+                    borderColor: highlightedEngagementId === engagement.id ? "primary.main" : "divider",
+                    borderRadius: 2,
+                    p: 2.5,
+                    bgcolor: highlightedEngagementId === engagement.id ? "action.selected" : "background.paper",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 2,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {engagement.type === "tooltip" && <InfoIcon sx={{ color: "#ff9800" }} />}
+                      {engagement.type === "popup" && <OpenInNewIcon sx={{ color: "#ff9800" }} />}
+                      {engagement.type === "bottomsheet" && <ViewAgendaIcon sx={{ color: "#ff9800" }} />}
+                      <Typography variant="subtitle2" fontWeight={600}>
+                        Engagement {index + 1}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteEngagement(engagement.id)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  <TextField
+                    fullWidth
+                    select
+                    label="Engagement Type"
+                    value={engagement.type}
+                    onChange={(e) => {
+                      handleUpdateEngagement(engagement.id, {
+                        type: e.target.value as "tooltip" | "popup" | "bottomsheet",
+                      });
+                    }}
+                    size="small"
+                  >
+                    <MenuItem value="tooltip">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <InfoIcon sx={{ fontSize: 18 }} />
+                        <Typography>Tooltip</Typography>
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="popup">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <OpenInNewIcon sx={{ fontSize: 18 }} />
+                        <Typography>Popup</Typography>
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="bottomsheet">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <ViewAgendaIcon sx={{ fontSize: 18 }} />
+                        <Typography>Bottom Sheet</Typography>
+                      </Box>
+                    </MenuItem>
+                  </TextField>
+                </Paper>
+              ))}
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                p: 2,
+                textAlign: "center",
+                bgcolor: "action.hover",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                No engagements. Add an in-app presentation to show when this node is reached.
+              </Typography>
+            </Box>
+          )}
         </Box>
 
         <Divider sx={{ my: 3 }} />
@@ -291,7 +490,7 @@ export default function NodeConfigurationPanel({
             </Alert>
           )}
 
-          {localData.branches && localData.branches.length > 0 ? (
+          {branchesToDisplay.length > 0 ? (
             <Box
               sx={{
                 display: "flex",
@@ -299,7 +498,7 @@ export default function NodeConfigurationPanel({
                 gap: 2,
               }}
             >
-              {localData.branches.map((branch, index) => (
+              {branchesToDisplay.map((branch, index) => (
                 <Paper
                   key={branch.id}
                   elevation={highlightedBranchId === branch.id ? 3 : 1}
@@ -603,9 +802,7 @@ export default function NodeConfigurationPanel({
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                {localData.eventName 
-                  ? "Select an event name to create a default transition."
-                  : "No transitions. Add a transition to define where the journey moves next."}
+                No transitions. Add a transition to define where the journey moves next.
               </Typography>
             </Box>
           )}

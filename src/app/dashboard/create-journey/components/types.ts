@@ -1,4 +1,4 @@
-export type NodeType = "state" | "exit";
+export type NodeType = "state" | "exit" | "engagement";
 
 export interface Condition {
   id: string;
@@ -12,6 +12,13 @@ export interface Engagement {
   id: string;
   type: "tooltip" | "popup" | "bottomsheet" | "coachmark" | "pip";
   config: Record<string, unknown>;
+}
+
+export interface EngagementNodeData {
+  label: string;
+  nodeType: "engagement";
+  engagementId: string;
+  engagementType: "tooltip" | "popup" | "bottomsheet";
 }
 
 export interface Branch {
