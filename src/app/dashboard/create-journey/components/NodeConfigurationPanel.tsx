@@ -472,7 +472,7 @@ export default function NodeConfigurationPanel({
                 Define when and where the journey moves next
               </Typography>
             </Box>
-            <Button size="small" startIcon={<AddIcon />} onClick={handleAddBranch}>
+            <Button size="small" startIcon={<AddIcon />} onClick={handleAddBranch} variant="outlined">
               Add Transition
             </Button>
           </Box>
