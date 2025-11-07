@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -105,6 +105,7 @@ export default function JourneyFlowBuilder() {
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [highlightedBranchId, setHighlightedBranchId] = useState<string | null>(null);
   const [highlightedEngagementId, setHighlightedEngagementId] = useState<string | null>(null);
+  const panelCloseHandlerRef = useRef<(() => void) | null>(null);
 
   // Create initial node on mount and remove any exit nodes
   useEffect(() => {
@@ -448,10 +449,24 @@ export default function JourneyFlowBuilder() {
   }, []);
 
   const handleClosePanel = () => {
+    // If panel has a close handler (for checking unsaved changes), use it
+    // Otherwise, close directly
+    if (panelCloseHandlerRef.current) {
+      panelCloseHandlerRef.current();
+    } else {
+      setConfigPanelOpen(false);
+      setSelectedNode(null);
+      setHighlightedBranchId(null);
+      setHighlightedEngagementId(null);
+    }
+  };
+
+  const handleDirectClose = () => {
     setConfigPanelOpen(false);
     setSelectedNode(null);
     setHighlightedBranchId(null);
     setHighlightedEngagementId(null);
+    panelCloseHandlerRef.current = null;
   };
 
   return (
@@ -491,11 +506,12 @@ export default function JourneyFlowBuilder() {
             nodes={nodes}
             onUpdate={handleUpdateNode}
             onDelete={handleDeleteNode}
-            onClose={handleClosePanel}
+            onClose={handleDirectClose}
             onDeleteEdge={handleDeleteEdge}
             mockEventNames={MOCK_EVENT_NAMES}
             highlightedBranchId={highlightedBranchId}
             highlightedEngagementId={highlightedEngagementId}
+            onRequestClose={panelCloseHandlerRef}
           />
         )}
       </Drawer>

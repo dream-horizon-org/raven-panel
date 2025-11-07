@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Node } from "@xyflow/react";
 import {
   Box,
@@ -13,6 +13,11 @@ import {
   Chip,
   Alert,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -23,6 +28,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { JourneyNodeData, Condition, Branch, Engagement } from "./types";
 
 interface NodeConfigurationPanelProps {
@@ -35,6 +41,7 @@ interface NodeConfigurationPanelProps {
   mockEventNames: string[];
   highlightedBranchId?: string | null;
   highlightedEngagementId?: string | null;
+  onRequestClose?: React.MutableRefObject<(() => void) | null>; // Ref to store close handler (for intercepting Drawer's onClose)
 }
 
 export default function NodeConfigurationPanel({
@@ -47,6 +54,7 @@ export default function NodeConfigurationPanel({
   mockEventNames,
   highlightedBranchId,
   highlightedEngagementId,
+  onRequestClose,
 }: NodeConfigurationPanelProps) {
   const [localData, setLocalData] = useState<JourneyNodeData>(() => {
     // Initialize with default exit branch if event name exists but no branches
@@ -70,6 +78,7 @@ export default function NodeConfigurationPanel({
       branches: node.data.branches || [],
     };
   });
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   // Sync with node.data and ensure default branch exists when eventName is set
   useEffect(() => {
@@ -105,9 +114,89 @@ export default function NodeConfigurationPanel({
     return currentBranches;
   }, [localData.branches]);
 
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    const originalData = node.data;
+    const currentBranches = localData.branches || [];
+    const originalBranches = originalData.branches || [];
+    const currentEngagements = localData.engagements || [];
+    const originalEngagements = originalData.engagements || [];
+    
+    // Compare event name
+    if (localData.eventName !== originalData.eventName) {
+      return true;
+    }
+    
+    // Compare branches (simplified comparison - check length and basic structure)
+    if (currentBranches.length !== originalBranches.length) {
+      return true;
+    }
+    
+    // Compare engagements
+    if (currentEngagements.length !== originalEngagements.length) {
+      return true;
+    }
+    
+    // Deep compare branches
+    for (let i = 0; i < currentBranches.length; i++) {
+      const current = currentBranches[i];
+      const original = originalBranches[i];
+      if (
+        !original ||
+        current.targetNodeId !== original.targetNodeId ||
+        current.filters.length !== original.filters.length
+      ) {
+        return true;
+      }
+    }
+    
+    // Deep compare engagements
+    for (let i = 0; i < currentEngagements.length; i++) {
+      const current = currentEngagements[i];
+      const original = originalEngagements[i];
+      if (!original || current.type !== original.type) {
+        return true;
+      }
+    }
+    
+    return false;
+  }, [localData, node.data]);
+
   const handleSave = () => {
     onUpdate(node.id, localData);
     onClose();
+  };
+
+  const handleCloseClick = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowCloseDialog(true);
+    } else {
+      onClose();
+    }
+  }, [hasUnsavedChanges, onClose]);
+
+  // Expose close handler to parent (for Drawer's onClose)
+  useEffect(() => {
+    if (onRequestClose) {
+      // Store the close handler that checks for unsaved changes
+      onRequestClose.current = handleCloseClick;
+    }
+    // Cleanup: remove handler when component unmounts
+    return () => {
+      if (onRequestClose) {
+        onRequestClose.current = null;
+      }
+    };
+  }, [handleCloseClick, onRequestClose]);
+
+  const handleDiscardChanges = () => {
+    setShowCloseDialog(false);
+    onClose();
+  };
+
+  const handleSaveAndClose = () => {
+    setShowCloseDialog(false);
+    handleSave();
   };
 
   // Branch handlers
@@ -278,7 +367,7 @@ export default function NodeConfigurationPanel({
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h6">Configure Node</Typography>
-        <IconButton size="small" onClick={onClose}>
+        <IconButton size="small" onClick={handleCloseClick}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -827,6 +916,77 @@ export default function NodeConfigurationPanel({
           Save
         </Button>
       </Box>
+
+      {/* Confirmation Dialog for Unsaved Changes */}
+      <Dialog
+        open={showCloseDialog}
+        onClose={() => setShowCloseDialog(false)}
+        aria-labelledby="unsaved-changes-dialog-title"
+        aria-describedby="unsaved-changes-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="unsaved-changes-dialog-title">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <WarningAmberIcon sx={{ color: "warning.main", fontSize: 28 }} />
+            <Typography variant="h6" component="span">
+              Unsaved Changes
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText 
+            id="unsaved-changes-dialog-description"
+            sx={{ 
+              fontSize: "0.95rem",
+              lineHeight: 1.6,
+              color: "text.primary",
+              mb: 1
+            }}
+          >
+            You have unsaved changes to this node configuration. What would you like to do?
+          </DialogContentText>
+          <Alert 
+            severity="info" 
+            icon={<InfoOutlinedIcon />}
+            sx={{ 
+              mt: 2,
+              "& .MuiAlert-icon": {
+                alignItems: "center"
+              }
+            }}
+          >
+            <Typography variant="caption" component="div">
+              If you close without saving, all your changes will be lost.
+            </Typography>
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
+          <Button 
+            onClick={() => setShowCloseDialog(false)} 
+            variant="outlined"
+            sx={{ minWidth: 100 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDiscardChanges} 
+            color="error"
+            variant="outlined"
+            sx={{ minWidth: 140 }}
+          >
+            Discard Changes
+          </Button>
+          <Button 
+            onClick={handleSaveAndClose} 
+            variant="contained" 
+            autoFocus
+            sx={{ minWidth: 140 }}
+          >
+            Save & Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
