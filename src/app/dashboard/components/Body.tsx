@@ -17,9 +17,11 @@ import {
 } from "./styles/bodyStyles";
 import { BUTTON_TEXT, PAGE_TITLES } from "@/config/constants";
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useJourneysList } from "@/hooks/useJourneysList";
 
 export default function Body() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState<Status>("ALL");
 
@@ -94,6 +96,7 @@ export default function Body() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
+                onClick={() => router.push("/dashboard/create-journey")}
               >
                 {BUTTON_TEXT.CREATE_JOURNEY}
               </Button>
