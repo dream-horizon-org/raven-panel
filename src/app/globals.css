@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+/* CSS variables are set via CSSVariables component from THEME_COLORS.CSS constants */
+/* See src/components/CSSVariables.tsx and src/config/colors.ts */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--css-background, #ffffff);
+  --foreground: var(--css-foreground, #171717);
 }
 
 @theme inline {
@@ -14,8 +16,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--css-background, #0a0a0a);
+    --foreground: var(--css-foreground, #ededed);
   }
 }
 
