@@ -1,12 +1,22 @@
 import axiosInstance from "@/lib/axios";
 import { API_ENDPOINTS } from "@/config/api";
 
+export interface SystemProperty {
+  propertyName: string;
+  type: string;
+  expectedValue: string;
+  isMandatory: boolean;
+  description: string;
+}
+
 export interface SystemPropertiesResponse {
-  data: {
-    names: string[];
-    properties: string[];
-    systemProperties: string[];
-  };
+  data:
+    | SystemProperty[]
+    | {
+        names?: string[];
+        properties?: string[];
+        systemProperties?: string[];
+      };
 }
 
 export const getSystemProperties = async ({

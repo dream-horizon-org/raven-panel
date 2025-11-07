@@ -11,7 +11,12 @@ import {
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { Controller, FieldValues, useWatch } from "react-hook-form";
+import {
+  Controller,
+  FieldValues,
+  useWatch,
+  useFormContext,
+} from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
 import { useState, useMemo } from "react";
@@ -26,14 +31,17 @@ interface EventTriggerSectionProps {
   fields: Array<{ id: string }>;
   onAddFilter: () => void;
   onRemoveFilter: (index: number) => void;
+  onOperatorChange: (operator: "AND" | "OR") => void;
+  operator: "AND" | "OR";
   availableProperties: string[];
   isLoadingFilters: boolean;
   events: Array<{
     metadata: { eventName: string };
-    properties: Array<{ propertyName: string }>;
+    properties: Array<{ propertyName: string; type: string }>;
   }>;
   isLoadingEvents: boolean;
   systemProperties: string[];
+  systemPropertyTypes: Map<string, string>;
   isLoading: boolean;
 }
 
@@ -43,36 +51,56 @@ export default function EventTriggerSection({
   fields,
   onAddFilter,
   onRemoveFilter,
+  onOperatorChange,
+  operator,
   availableProperties,
   isLoadingFilters,
   events,
   isLoadingEvents,
   systemProperties,
+  systemPropertyTypes,
   isLoading,
 }: EventTriggerSectionProps) {
+  const { setValue } = useFormContext<CreateJourneyFormData>();
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
 
   const selectedEventName = useWatch({ control, name: "event" });
 
-  const combinedProperties = useMemo(() => {
+  const { combinedProperties, propertyTypeMap } = useMemo(() => {
     const eventProperties: string[] = [];
+    const typeMap = new Map<string, string>();
 
     if (selectedEventName && events) {
       const selectedEvent = events.find(
         (e) => e.metadata.eventName === selectedEventName
       );
       if (selectedEvent?.properties) {
-        eventProperties.push(
-          ...selectedEvent.properties.map((prop) => prop.propertyName)
-        );
+        selectedEvent.properties.forEach((prop) => {
+          eventProperties.push(prop.propertyName);
+          typeMap.set(prop.propertyName, prop.type || "string");
+        });
       }
     }
+
+    // Add system properties - we need to get their types from the systemPropertiesData
+    // For now, default to "string" if type not available
+    // Add system properties with their types from systemPropertyTypes map
+    systemProperties.forEach((propName) => {
+      if (!typeMap.has(propName)) {
+        // Use type from systemPropertyTypes if available, otherwise default to "string"
+        const systemType = systemPropertyTypes.get(propName);
+        typeMap.set(propName, systemType || "string");
+      }
+    });
 
     const allProperties = [...eventProperties, ...(systemProperties || [])];
     const uniqueProperties = Array.from(new Set(allProperties)).sort();
 
-    return uniqueProperties;
+    return {
+      combinedProperties: uniqueProperties,
+      propertyTypeMap: typeMap,
+    };
   }, [selectedEventName, events, systemProperties]);
 
   const filteredEvents = useMemo(() => {
@@ -179,6 +207,7 @@ export default function EventTriggerSection({
             onRemove={() => onRemoveFilter(index)}
             availableProperties={combinedProperties}
             isLoadingFilters={isLoadingFilters}
+            propertyTypeMap={propertyTypeMap}
           />
         ))}
       </Box>

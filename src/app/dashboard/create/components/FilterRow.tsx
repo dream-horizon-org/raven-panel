@@ -9,15 +9,17 @@ import {
   MenuItem,
   IconButton,
   Autocomplete,
+  Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Controller, FieldValues } from "react-hook-form";
+import { Controller, FieldValues, useWatch, useFormContext } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { filterRowStyles } from "../styles/filterRowStyles";
 import { CreateJourneyFormData } from "../types/journeyTypes";
 import { OPERATORS, JOURNEY_TEXT } from "../constants/journeyConstants";
+import { getInputType, isNumericType, normalizePropertyType } from "../utils/propertyTypeUtils";
 
 interface FilterRowProps {
   control: Control<CreateJourneyFormData>;
@@ -26,6 +28,7 @@ interface FilterRowProps {
   onRemove: () => void;
   availableProperties: string[];
   isLoadingFilters: boolean;
+  propertyTypeMap: Map<string, string>;
 }
 
 export default function FilterRow({
@@ -35,9 +38,81 @@ export default function FilterRow({
   onRemove,
   availableProperties,
   isLoadingFilters,
+  propertyTypeMap,
 }: FilterRowProps) {
+  const { setValue } = useFormContext<CreateJourneyFormData>();
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Get selected property name to determine input type
+  const selectedProperty = useWatch({
+    control,
+    name: `condition.comparisons.${index}.propertyName` as `condition.comparisons.${number}.propertyName`,
+  });
+
+  // Get property type from map (source of truth when property is selected)
+  const propertyTypeFromMap = selectedProperty
+    ? propertyTypeMap.get(selectedProperty) || "string"
+    : "string";
+
+  // Use propertyTypeFromMap if we have a selected property (source of truth)
+  // Otherwise, use form value as fallback
+  const formPropertyType = useWatch({
+    control,
+    name: `condition.comparisons.${index}.propertyType` as `condition.comparisons.${number}.propertyType`,
+  });
+
+  // Determine the actual property type to use for rendering
+  // Priority: propertyTypeFromMap (if property selected) > formPropertyType > "string"
+  const propertyType = selectedProperty
+    ? propertyTypeFromMap
+    : formPropertyType || "string";
+
+  // Get input type based on property type
+  const inputType = getInputType(propertyType);
+
+  // Get current comparison value to check if conversion is needed
+  const currentComparisonValue = useWatch({
+    control,
+    name: `condition.comparisons.${index}.comparisonValue` as `condition.comparisons.${number}.comparisonValue`,
+  });
+
+  // Update propertyType when propertyName changes and convert value if needed
+  useEffect(() => {
+    if (selectedProperty && propertyTypeFromMap) {
+      // Normalize the property type before storing in form
+      const normalizedType = normalizePropertyType(propertyTypeFromMap);
+      // Always set the propertyType from the map when property changes
+      // This ensures the correct type is stored in the form
+      setValue(
+        `condition.comparisons.${index}.propertyType` as `condition.comparisons.${number}.propertyType`,
+        normalizedType,
+        {
+          shouldValidate: false,
+        }
+      );
+
+      // Convert existing comparisonValue to number if property type is numeric
+      if (isNumericType(propertyTypeFromMap) && currentComparisonValue) {
+        const numValue = parseFloat(String(currentComparisonValue));
+        if (!isNaN(numValue)) {
+          setValue(
+            `condition.comparisons.${index}.comparisonValue` as `condition.comparisons.${number}.comparisonValue`,
+            numValue,
+            {
+              shouldValidate: false,
+            }
+          );
+        }
+      }
+    }
+  }, [
+    selectedProperty,
+    propertyTypeFromMap,
+    index,
+    setValue,
+    currentComparisonValue,
+  ]);
 
   const filteredProperties = useMemo(() => {
     if (!availableProperties || availableProperties.length === 0) return [];
@@ -51,7 +126,7 @@ export default function FilterRow({
     <Box sx={filterRowStyles.filterCard(theme)}>
       <Box sx={filterRowStyles.filterFields}>
         <Controller
-          name={`filters.${index}.property`}
+          name={`condition.comparisons.${index}.propertyName` as `condition.comparisons.${number}.propertyName`}
           control={control}
           rules={{ required: JOURNEY_TEXT.VALIDATION.PROPERTY_REQUIRED }}
           render={({ field }: { field: FieldValues }) => (
@@ -71,8 +146,12 @@ export default function FilterRow({
                 <TextField
                   {...params}
                   label={JOURNEY_TEXT.FILTERS.PROPERTY}
-                  error={!!errors.filters?.[index]?.property}
-                  helperText={errors.filters?.[index]?.property?.message}
+                  error={
+                    !!errors.condition?.comparisons?.[index]?.propertyName
+                  }
+                  helperText={
+                    errors.condition?.comparisons?.[index]?.propertyName?.message
+                  }
                   size="small"
                   sx={filterRowStyles.filterField}
                 />
@@ -95,7 +174,7 @@ export default function FilterRow({
         />
 
         <Controller
-          name={`filters.${index}.operator`}
+          name={`condition.comparisons.${index}.comparisonType` as `condition.comparisons.${number}.comparisonType`}
           control={control}
           render={({ field }: { field: FieldValues }) => (
             <FormControl
@@ -116,30 +195,100 @@ export default function FilterRow({
         />
 
         <Controller
-          name={`filters.${index}.value`}
+          name={`condition.comparisons.${index}.comparisonValue` as `condition.comparisons.${number}.comparisonValue`}
           control={control}
           rules={{ required: JOURNEY_TEXT.VALIDATION.VALUE_REQUIRED }}
-          render={({ field }: { field: FieldValues }) => (
-            <TextField
-              {...field}
-              label={JOURNEY_TEXT.FILTERS.VALUE}
-              fullWidth
-              error={!!errors.filters?.[index]?.value}
-              helperText={errors.filters?.[index]?.value?.message}
-              sx={filterRowStyles.filterField}
-              size="small"
-              placeholder={JOURNEY_TEXT.FILTERS.PLACEHOLDER}
-            />
-          )}
+          render={({ field }: { field: FieldValues }) => {
+            if (inputType === "select") {
+              return (
+                <FormControl
+                  fullWidth
+                  error={
+                    !!errors.condition?.comparisons?.[index]?.comparisonValue
+                  }
+                  sx={filterRowStyles.filterField}
+                  size="small"
+                >
+                  <InputLabel>{JOURNEY_TEXT.FILTERS.VALUE}</InputLabel>
+                  <Select
+                    {...field}
+                    label={JOURNEY_TEXT.FILTERS.VALUE}
+                    value={field.value || ""}
+                  >
+                    <MenuItem value="true">True</MenuItem>
+                    <MenuItem value="false">False</MenuItem>
+                  </Select>
+                  {errors.condition?.comparisons?.[index]?.comparisonValue && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ mt: 0.5, ml: 1.75 }}
+                    >
+                      {
+                        errors.condition?.comparisons?.[index]
+                          ?.comparisonValue?.message
+                      }
+                    </Typography>
+                  )}
+                </FormControl>
+              );
+            }
+
+            // Render number or text input
+            const isNumeric = isNumericType(propertyType);
+            return (
+              <TextField
+                {...field}
+                type={inputType}
+                label={JOURNEY_TEXT.FILTERS.VALUE}
+                fullWidth
+                error={
+                  !!errors.condition?.comparisons?.[index]?.comparisonValue
+                }
+                helperText={
+                  errors.condition?.comparisons?.[index]?.comparisonValue
+                    ?.message
+                }
+                sx={filterRowStyles.filterField}
+                size="small"
+                placeholder={JOURNEY_TEXT.FILTERS.PLACEHOLDER}
+                value={
+                  isNumeric && typeof field.value === "number"
+                    ? field.value
+                    : field.value || ""
+                }
+                onChange={(e) => {
+                  if (isNumeric) {
+                    const numValue = parseFloat(e.target.value);
+
+                    field.onChange(
+                      e.target.value === "" || isNaN(numValue) ? "" : numValue
+                    );
+                  } else {
+                    field.onChange(e.target.value);
+                  }
+                }}
+                inputProps={
+                  inputType === "number"
+                    ? {
+                        step: "any",
+                      }
+                    : {}
+                }
+              />
+            );
+          }}
         />
 
-        <IconButton
-          onClick={onRemove}
-          sx={filterRowStyles.deleteButton}
-          size="small"
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
+        {index > 0 && (
+          <IconButton
+            onClick={onRemove}
+            sx={filterRowStyles.deleteButton}
+            size="small"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        )}
       </Box>
     </Box>
   );

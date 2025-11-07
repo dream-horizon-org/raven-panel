@@ -1,3 +1,5 @@
+import { PropertyType } from "../types/journeyTypes";
+
 export type FilterOperator = "=" | ">" | "<" | ">=" | "<=";
 
 export const OPERATORS: Array<{
@@ -100,7 +102,17 @@ export const getJourneyFormDefaults = () => ({
   name: "",
   cohort: "",
   event: "",
-  filters: [{ property: "", operator: "=" as const, value: "" }],
+  condition: {
+    operator: "AND" as const,
+    comparisons: [
+      {
+        propertyName: "",
+        propertyType: "string" as const,
+        comparisonType: "=" as const,
+        comparisonValue: "",
+      },
+    ],
+  },
   schedule: {
     startType: "immediate" as const,
     startDate: "",
@@ -117,3 +129,14 @@ export const getJourneyFormDefaults = () => ({
     maxTimesInLifetime: 1,
   },
 });
+
+/**
+ * Numeric types that should render as number inputs
+ */
+export const NUMERIC_TYPES: PropertyType[] = [
+  "integer",
+  "long",
+  "double",
+  "decimal",
+  "float",
+];
