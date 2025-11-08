@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { EngagementConfig, UIElement } from "../../types";
 
 interface EngagementPreviewProps {
@@ -9,6 +9,7 @@ interface EngagementPreviewProps {
 }
 
 export default function EngagementPreview({ engagementType, config }: EngagementPreviewProps) {
+  const theme = useTheme();
   const elements = config.content?.elements || [];
 
   const renderElement = (element: UIElement): React.ReactNode => {
@@ -90,31 +91,43 @@ export default function EngagementPreview({ engagementType, config }: Engagement
     }
   };
 
+  const phoneFrameColor = theme.palette.mode === "dark" ? "#2a2a2a" : "#1a1a1a";
+  const screenBgColor = theme.palette.mode === "dark" ? "#000000" : "#000000";
+  const borderColor = theme.palette.mode === "dark" 
+    ? "rgba(255, 255, 255, 0.15)" 
+    : "rgba(255, 255, 255, 0.1)";
+  const innerBorderColor = theme.palette.mode === "dark"
+    ? "rgba(255, 255, 255, 0.12)"
+    : "rgba(255, 255, 255, 0.08)";
+
   return (
     <Box
       sx={{
-        width: "240px",
-        height: "420px",
-        bgcolor: "grey.900",
-        borderRadius: "20px",
-        padding: "16px",
+        width: "280px",
+        height: "560px",
+        bgcolor: phoneFrameColor,
+        borderRadius: "32px",
+        padding: "8px",
         position: "relative",
         display: "flex",
         flexDirection: "column",
-        boxShadow: 6,
+        boxShadow: theme.palette.mode === "dark"
+          ? "0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.15)"
+          : "0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.1)",
+        border: `2px solid ${borderColor}`,
       }}
     >
-      {/* Phone notch simulation */}
+      {/* Phone frame bezel */}
       <Box
         sx={{
           position: "absolute",
           top: 0,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "100px",
-          height: "16px",
-          bgcolor: "grey.900",
-          borderRadius: "0 0 10px 10px",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: "30px",
+          border: `1px solid ${theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.05)"}`,
+          pointerEvents: "none",
         }}
       />
 
@@ -122,13 +135,15 @@ export default function EngagementPreview({ engagementType, config }: Engagement
       <Box
         sx={{
           flex: 1,
-          bgcolor: "grey.800",
-          borderRadius: "12px",
+          bgcolor: screenBgColor,
+          borderRadius: "24px",
           overflow: "hidden",
           position: "relative",
-          mt: 1.5,
+          mt: "8px",
+          border: `1px solid ${innerBorderColor}`,
         }}
       >
+
         {/* Engagement content area */}
         <Box
           sx={{
@@ -137,11 +152,12 @@ export default function EngagementPreview({ engagementType, config }: Engagement
             left: 0,
             right: 0,
             bgcolor: "white",
-            borderRadius: "12px 12px 0 0",
-            p: 1.5,
-            minHeight: "180px",
+            borderRadius: "20px 20px 0 0",
+            p: 2,
+            minHeight: "200px",
             maxHeight: "75%",
             overflowY: "auto",
+            boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.1)",
           }}
         >
           {elements.length === 0 ? (

@@ -14,6 +14,7 @@ import {
   Card,
   CardContent,
   CardActionArea,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { EngagementNodeData, Engagement, EngagementConfig, UIElement } from "./types";
@@ -34,6 +35,7 @@ export default function EngagementConfigurationPanel({
   onUpdate,
   onClose,
 }: EngagementConfigurationPanelProps) {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [localConfig, setLocalConfig] = useState<EngagementConfig>(() => {
     // Get engagement from source node
@@ -91,11 +93,11 @@ export default function EngagementConfigurationPanel({
         {/* Mobile Preview - Left Side (Fixed Width) */}
         <Box
           sx={{
-            width: "320px",
-            minWidth: "320px",
+            width: "380px",
+            minWidth: "380px",
             display: "flex",
             flexDirection: "column",
-            bgcolor: "grey.50",
+            bgcolor: theme.palette.mode === "dark" ? "grey.900" : "grey.50",
             borderRadius: 2,
             p: 2,
             border: "1px solid",
