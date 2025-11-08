@@ -3,7 +3,11 @@ import { THEME_COLORS } from "@/config/colors";
 
 const lightPalette: PaletteOptions = {
   mode: "light",
-  primary: { main: THEME_COLORS.PRIMARY.light },
+  primary: {
+    main: THEME_COLORS.PRIMARY.light,
+    light: THEME_COLORS.PRIMARY.lightVariant,
+    dark: THEME_COLORS.PRIMARY.darkVariant,
+  },
   secondary: { main: THEME_COLORS.SECONDARY.light },
   background: {
     default: THEME_COLORS.BACKGROUND.light.default,
@@ -54,11 +58,70 @@ export const getTheme = (mode: "light" | "dark") => {
   return createTheme({
     palette,
     typography: {
-      fontFamily: "Arial, Helvetica, sans-serif",
-      h1: { fontSize: "1.875rem", fontWeight: 700 },
-      h2: { fontSize: "1.875rem", fontWeight: 700 },
-      body1: { fontSize: "0.875rem" },
-      body2: { fontSize: "0.75rem" },
+      fontFamily: '"Red Hat Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      h1: { 
+        fontSize: "2rem", 
+        fontWeight: 700,
+        lineHeight: 1.2,
+        letterSpacing: "-0.02em",
+      },
+      h2: { 
+        fontSize: "1.75rem", 
+        fontWeight: 700,
+        lineHeight: 1.3,
+        letterSpacing: "-0.01em",
+      },
+      h3: {
+        fontSize: "1.5rem",
+        fontWeight: 600,
+        lineHeight: 1.4,
+      },
+      h4: {
+        fontSize: "1.25rem",
+        fontWeight: 600,
+        lineHeight: 1.4,
+      },
+      h5: {
+        fontSize: "1.125rem",
+        fontWeight: 600,
+        lineHeight: 1.5,
+      },
+      h6: {
+        fontSize: "1rem",
+        fontWeight: 600,
+        lineHeight: 1.5,
+      },
+      subtitle1: {
+        fontSize: "1rem",
+        fontWeight: 500,
+        lineHeight: 1.5,
+      },
+      subtitle2: {
+        fontSize: "0.875rem",
+        fontWeight: 500,
+        lineHeight: 1.5,
+      },
+      body1: { 
+        fontSize: "0.875rem",
+        lineHeight: 1.6,
+        fontWeight: 400,
+      },
+      body2: { 
+        fontSize: "0.75rem",
+        lineHeight: 1.6,
+        fontWeight: 400,
+      },
+      button: {
+        fontSize: "0.875rem",
+        fontWeight: 500,
+        textTransform: "none",
+        letterSpacing: "0.01em",
+      },
+      caption: {
+        fontSize: "0.75rem",
+        lineHeight: 1.5,
+        fontWeight: 400,
+      },
     },
     components: {
       MuiButton: {
