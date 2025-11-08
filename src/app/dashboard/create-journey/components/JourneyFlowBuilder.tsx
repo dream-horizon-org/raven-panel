@@ -451,16 +451,99 @@ export default function JourneyFlowBuilder() {
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
-      setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
-      );
+      setNodes((nds) => {
+        // Find the node being deleted to get its engagements
+        const nodeToDelete = nds.find((n) => n.id === nodeId);
+        
+        // Get engagement IDs from the node being deleted
+        const engagementIds: string[] = [];
+        if (nodeToDelete && nodeToDelete.type === "state") {
+          const nodeData = nodeToDelete.data as JourneyNodeData;
+          if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
+            engagementIds.push(...nodeData.engagements.map((e) => e.id));
+          }
+        }
+        
+        // Filter out the deleted node and all its associated engagement nodes
+        return nds.filter((node) => {
+          // Remove the deleted node
+          if (node.id === nodeId) {
+            return false;
+          }
+          
+          // Remove engagement nodes associated with the deleted node
+          if (node.type === "engagement") {
+            const engagementData = node.data as EngagementNodeData;
+            return !engagementIds.includes(engagementData.engagementId);
+          }
+          
+          return true;
+        });
+      });
+      
+      setEdges((eds) => {
+        // Find engagement IDs from the node being deleted
+        const nodeToDelete = nodes.find((n) => n.id === nodeId);
+        const engagementIds: string[] = [];
+        if (nodeToDelete && nodeToDelete.type === "state") {
+          const nodeData = nodeToDelete.data as JourneyNodeData;
+          if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
+            engagementIds.push(...nodeData.engagements.map((e) => e.id));
+          }
+        }
+        
+        // Get engagement node IDs that will be deleted
+        const engagementNodeIds = engagementIds.map((id) => `engagement-${id}`);
+        
+        // Filter out edges connected to:
+        // 1. The deleted node (as source or target)
+        // 2. Engagement nodes associated with the deleted node (as source or target)
+        // 3. Engagement edges from the deleted node
+        return eds.filter((edge) => {
+          // Remove edges connected to the deleted node
+          if (edge.source === nodeId || edge.target === nodeId) {
+            return false;
+          }
+          
+          // Remove edges connected to engagement nodes that will be deleted
+          if (engagementNodeIds.includes(edge.source) || engagementNodeIds.includes(edge.target)) {
+            return false;
+          }
+          
+          // Remove engagement edges that reference the deleted node's engagements
+          if (edge.id.startsWith("engagement-edge-")) {
+            const engagementId = edge.id.replace("engagement-edge-", "");
+            if (engagementIds.includes(engagementId)) {
+              return false;
+            }
+          }
+          
+          return true;
+        });
+      });
+      
       if (selectedNode?.id === nodeId) {
         setSelectedNode(null);
         setConfigPanelOpen(false);
       }
+      
+      // Also close engagement config panel if it's open for a deleted engagement
+      if (selectedEngagementNode) {
+        const engagementData = selectedEngagementNode.data as EngagementNodeData;
+        const nodeToDelete = nodes.find((n) => n.id === nodeId);
+        if (nodeToDelete && nodeToDelete.type === "state") {
+          const nodeData = nodeToDelete.data as JourneyNodeData;
+          if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
+            const engagementIds = nodeData.engagements.map((e) => e.id);
+            if (engagementIds.includes(engagementData.engagementId)) {
+              setSelectedEngagementNode(null);
+              setEngagementConfigPanelOpen(false);
+            }
+          }
+        }
+      }
     },
-    [setNodes, setEdges, selectedNode]
+    [setNodes, setEdges, selectedNode, nodes, selectedEngagementNode, setSelectedEngagementNode, setEngagementConfigPanelOpen]
   );
 
   const handleDeleteEdge = useCallback(
