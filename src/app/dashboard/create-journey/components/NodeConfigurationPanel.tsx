@@ -377,6 +377,17 @@ export default function NodeConfigurationPanel({
       <Box sx={{ flex: 1, overflowY: "auto" }}>
         {/* Event Name */}
         <Box sx={{ mb: 3 }}>
+          {node.data.isEntry && !localData.eventName && (
+            <Alert 
+              severity="info" 
+              icon={<InfoOutlinedIcon />}
+              sx={{ mb: 2 }}
+            >
+              <Typography variant="body2">
+                <strong>Start by selecting an event</strong> to configure this journey node. Once an event is selected, you&apos;ll be able to add transitions and engagements.
+              </Typography>
+            </Alert>
+          )}
           <TextField
             fullWidth
             select
@@ -413,7 +424,39 @@ export default function NodeConfigurationPanel({
               setLocalData(updatedData);
             }}
             required
-            helperText="The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
+            error={node.data.isEntry && !localData.eventName}
+            focused={node.data.isEntry && !localData.eventName}
+            helperText={
+              node.data.isEntry && !localData.eventName
+                ? "⚠️ Please select an event first to enable transitions and engagements"
+                : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
+            }
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                ...(node.data.isEntry && !localData.eventName && {
+                  "& fieldset": {
+                    borderColor: "primary.main",
+                    borderWidth: 2,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "primary.main",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "primary.main",
+                    borderWidth: 2,
+                  },
+                  animation: "pulse 2s ease-in-out infinite",
+                  "@keyframes pulse": {
+                    "0%, 100%": {
+                      boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
+                    },
+                    "50%": {
+                      boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
+                    },
+                  },
+                }),
+              },
+            }}
           >
             <MenuItem value="">
               <em>Select an event</em>
@@ -446,7 +489,14 @@ export default function NodeConfigurationPanel({
                 Show nudge when journey reaches this node
               </Typography>
             </Box>
-            <Button size="small" startIcon={<AddIcon />} onClick={handleAddEngagement} variant="outlined">
+            <Button 
+              size="small" 
+              startIcon={<AddIcon />} 
+              onClick={handleAddEngagement} 
+              variant="outlined"
+              disabled={node.data.isEntry && !localData.eventName}
+              title={node.data.isEntry && !localData.eventName ? "Please select an event first" : "Add an engagement"}
+            >
               Add Engagement
             </Button>
           </Box>
@@ -530,12 +580,19 @@ export default function NodeConfigurationPanel({
               sx={{
                 p: 2,
                 textAlign: "center",
-                bgcolor: "action.hover",
+                bgcolor: node.data.isEntry && !localData.eventName ? "action.disabledBackground" : "action.hover",
                 borderRadius: 1,
+                border: node.data.isEntry && !localData.eventName ? "1px dashed" : "none",
+                borderColor: node.data.isEntry && !localData.eventName ? "divider" : "transparent",
               }}
             >
-              <Typography variant="caption" color="text.secondary">
-                No engagements. Add an in-app presentation to show when this node is reached.
+              <Typography 
+                variant="caption" 
+                color={node.data.isEntry && !localData.eventName ? "text.disabled" : "text.secondary"}
+              >
+                {node.data.isEntry && !localData.eventName
+                  ? "Select an event first to add engagements"
+                  : "No engagements. Add an in-app presentation to show when this node is reached."}
               </Typography>
             </Box>
           )}
@@ -561,7 +618,14 @@ export default function NodeConfigurationPanel({
                 Define when and where the journey moves next
               </Typography>
             </Box>
-            <Button size="small" startIcon={<AddIcon />} onClick={handleAddBranch} variant="outlined">
+            <Button 
+              size="small" 
+              startIcon={<AddIcon />} 
+              onClick={handleAddBranch} 
+              variant="outlined"
+              disabled={node.data.isEntry && !localData.eventName}
+              title={node.data.isEntry && !localData.eventName ? "Please select an event first" : "Add a transition"}
+            >
               Add Transition
             </Button>
           </Box>
@@ -886,12 +950,19 @@ export default function NodeConfigurationPanel({
               sx={{
                 p: 3,
                 textAlign: "center",
-                bgcolor: "action.hover",
+                bgcolor: node.data.isEntry && !localData.eventName ? "action.disabledBackground" : "action.hover",
                 borderRadius: 1,
+                border: node.data.isEntry && !localData.eventName ? "1px dashed" : "none",
+                borderColor: node.data.isEntry && !localData.eventName ? "divider" : "transparent",
               }}
             >
-              <Typography variant="body2" color="text.secondary">
-                No transitions. Add a transition to define where the journey moves next.
+              <Typography 
+                variant="body2" 
+                color={node.data.isEntry && !localData.eventName ? "text.disabled" : "text.secondary"}
+              >
+                {node.data.isEntry && !localData.eventName
+                  ? "Select an event first to add transitions"
+                  : "No transitions. Add a transition to define where the journey moves next."}
               </Typography>
             </Box>
           )}

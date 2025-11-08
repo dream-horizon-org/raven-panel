@@ -309,20 +309,29 @@ export default function JourneyFlowBuilder() {
         if (data.engagements && Array.isArray(data.engagements)) {
           const sourceNode = updated.find((n) => n.id === nodeId);
           
-          data.engagements.forEach((engagement) => {
+          data.engagements.forEach((engagement, engagementIndex) => {
             // Check if engagement node already exists
             const existingEngagementNode = updated.find(
               (n) => n.type === "engagement" && (n.data as EngagementNodeData).engagementId === engagement.id
             );
             
             if (!existingEngagementNode) {
-              // Calculate position to the right of the source node
-              const engagementPosition = sourceNode
-                ? {
-                    x: sourceNode.position.x + 300,
-                    y: sourceNode.position.y,
-                  }
-                : { x: 500, y: 200 };
+              // Calculate position to the right of the source node, vertically offset for each engagement
+              let engagementPosition;
+              if (sourceNode) {
+                // Position to the right of source node
+                const baseX = sourceNode.position.x + 300;
+                // Calculate Y position: start from source node's Y, then offset by engagement index
+                // Each engagement is offset by 120px vertically to avoid overlap
+                const baseY = sourceNode.position.y;
+                const verticalOffset = engagementIndex * 120; // 120px spacing between engagement nodes
+                engagementPosition = {
+                  x: baseX,
+                  y: baseY + verticalOffset,
+                };
+              } else {
+                engagementPosition = { x: 500, y: 200 + (engagementIndex * 120) };
+              }
               
               // Create engagement node
               const engagementNode: Node<EngagementNodeData> = {
@@ -353,17 +362,30 @@ export default function JourneyFlowBuilder() {
               }
             }
           });
-          
-          // Remove engagement nodes that are no longer in the engagements array
-          const engagementIds = new Set(data.engagements.map((e) => e.id));
-          updated = updated.filter((n) => {
-            if (n.type === "engagement") {
-              const engagementData = n.data as EngagementNodeData;
-              return engagementIds.has(engagementData.engagementId);
-            }
-            return true;
-          });
         }
+        
+        // Remove engagement nodes that are no longer in ANY node's engagements array
+        // This needs to be done after all node updates, so we collect all engagement IDs from all state nodes
+        const allEngagementIds = new Set<string>();
+        updated.forEach((node) => {
+          if (node.type === "state") {
+            const nodeData = node.data as JourneyNodeData;
+            if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
+              nodeData.engagements.forEach((engagement) => {
+                allEngagementIds.add(engagement.id);
+              });
+            }
+          }
+        });
+        
+        // Filter out engagement nodes that don't exist in any state node's engagements
+        updated = updated.filter((n) => {
+          if (n.type === "engagement") {
+            const engagementData = n.data as EngagementNodeData;
+            return allEngagementIds.has(engagementData.engagementId);
+          }
+          return true;
+        });
         
         // Create nodes for branches that reference event names that don't exist yet
         if (data.branches) {
