@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { Node } from "@xyflow/react";
 import {
   Box,
@@ -41,7 +42,7 @@ interface NodeConfigurationPanelProps {
   mockEventNames: string[];
   highlightedBranchId?: string | null;
   highlightedEngagementId?: string | null;
-  onRequestClose?: React.MutableRefObject<(() => void) | null>; // Ref to store close handler (for intercepting Drawer's onClose)
+  onRequestClose?: React.MutableRefObject<(() => void) | null>;
 }
 
 export default function NodeConfigurationPanel({
@@ -56,8 +57,8 @@ export default function NodeConfigurationPanel({
   highlightedEngagementId,
   onRequestClose,
 }: NodeConfigurationPanelProps) {
-  const [localData, setLocalData] = useState<JourneyNodeData>(() => {
-    // Initialize with default exit branch if event name exists but no branches
+  // Initialize form data
+  const getInitialData = useCallback((): JourneyNodeData => {
     const hasBranches = node.data.branches && Array.isArray(node.data.branches) && node.data.branches.length > 0;
     const hasEventName = node.data.eventName && node.data.eventName.trim() !== "";
     
@@ -72,100 +73,186 @@ export default function NodeConfigurationPanel({
         branches: [defaultBranch],
       };
     }
-    // Ensure branches is always an array
     return {
       ...node.data,
       branches: node.data.branches || [],
+      engagements: node.data.engagements || [],
     };
-  });
-  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  }, [node.data]);
 
-  // Sync with node.data and ensure default branch exists when eventName is set
+  const { control, handleSubmit, watch, reset, setValue, getValues, formState: { isDirty } } = useForm<JourneyNodeData & Record<string, unknown>>({
+    defaultValues: getInitialData(),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+  });
+
+  // Watch form data - this gives us reactive access to branches
+  const formData = watch();
+  const branches = (formData.branches || []) as Branch[];
+  const engagements = (formData.engagements || []) as Engagement[];
+  const eventName = formData.eventName || "";
+
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [newlyAddedBranchId, setNewlyAddedBranchId] = useState<string | null>(null);
+
+  // Local state to track if highlight should be shown (auto-dismiss after 3 seconds)
+  const [showBranchHighlight, setShowBranchHighlight] = useState(false);
+  const [showEngagementHighlight, setShowEngagementHighlight] = useState(false);
+
+  // Refs to track branch elements for scrolling
+  const branchRefsMap = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Track if connection highlight was already dismissed (to prevent re-highlighting when new branch is added)
+  const connectionHighlightDismissedRef = useRef(false);
+
+  // Auto-dismiss branch highlight after user attention (3 seconds) and scroll to it
+  useEffect(() => {
+    if (highlightedBranchId) {
+      // Reset the dismissed flag when a new branch is highlighted
+      connectionHighlightDismissedRef.current = false;
+      setShowBranchHighlight(true);
+      
+      // Scroll to the highlighted branch
+      const scrollToBranch = () => {
+        const branchElement = branchRefsMap.current.get(highlightedBranchId);
+        if (branchElement) {
+          branchElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+          return true;
+        }
+        return false;
+      };
+
+      // Try immediately, then retry if needed (branches might still be rendering)
+      let timeoutId1: NodeJS.Timeout | null = null;
+      let timeoutId2: NodeJS.Timeout | null = null;
+      
+      if (!scrollToBranch()) {
+        timeoutId1 = setTimeout(() => {
+          if (!scrollToBranch()) {
+            timeoutId2 = setTimeout(scrollToBranch, 200);
+          }
+        }, 100);
+      }
+
+      const timeoutId = setTimeout(() => {
+        setShowBranchHighlight(false);
+        connectionHighlightDismissedRef.current = true;
+      }, 3000);
+      
+      return () => {
+        if (timeoutId1) clearTimeout(timeoutId1);
+        if (timeoutId2) clearTimeout(timeoutId2);
+        clearTimeout(timeoutId);
+      };
+    } else {
+      setShowBranchHighlight(false);
+      connectionHighlightDismissedRef.current = false;
+    }
+  }, [highlightedBranchId]);
+
+  // Prevent re-enabling connection highlight when branches change if it was already dismissed
+  useEffect(() => {
+    // If connection highlight was dismissed and highlightedBranchId is still set,
+    // don't re-enable it when branches change (e.g., when a new branch is added)
+    if (connectionHighlightDismissedRef.current && highlightedBranchId) {
+      setShowBranchHighlight(false);
+    }
+  }, [branches.length, highlightedBranchId]);
+
+  // Auto-dismiss engagement highlight after user attention (3 seconds)
+  useEffect(() => {
+    if (highlightedEngagementId) {
+      setShowEngagementHighlight(true);
+      const timeoutId = setTimeout(() => {
+        setShowEngagementHighlight(false);
+      }, 3000);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setShowEngagementHighlight(false);
+    }
+  }, [highlightedEngagementId]);
+
+  // Auto-dismiss newly added branch highlight after user attention (3 seconds) and scroll to it
+  useEffect(() => {
+    if (newlyAddedBranchId) {
+      // Scroll to the newly added branch
+      const scrollToNewBranch = () => {
+        const branchElement = branchRefsMap.current.get(newlyAddedBranchId);
+        if (branchElement) {
+          branchElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+          return true;
+        }
+        return false;
+      };
+
+      // Try immediately, then retry if needed (branch might still be rendering)
+      let timeoutId1: NodeJS.Timeout | null = null;
+      let timeoutId2: NodeJS.Timeout | null = null;
+      
+      if (!scrollToNewBranch()) {
+        timeoutId1 = setTimeout(() => {
+          if (!scrollToNewBranch()) {
+            timeoutId2 = setTimeout(scrollToNewBranch, 200);
+          }
+        }, 100);
+      }
+
+      const timeoutId = setTimeout(() => {
+        setNewlyAddedBranchId(null);
+      }, 3000);
+      
+      return () => {
+        if (timeoutId1) clearTimeout(timeoutId1);
+        if (timeoutId2) clearTimeout(timeoutId2);
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [newlyAddedBranchId, branches.length]);
+
+  // Sync form with node.data when node changes
   useEffect(() => {
     const hasBranches = node.data.branches && Array.isArray(node.data.branches) && node.data.branches.length > 0;
     const hasEventName = node.data.eventName && node.data.eventName.trim() !== "";
     
+    let dataToReset: JourneyNodeData;
     if (hasBranches) {
-      // Node has branches, sync them
-      setLocalData(node.data);
+      dataToReset = node.data;
     } else if (hasEventName) {
-      // Node has eventName but no branches, create default branch
       const defaultBranch: Branch = {
         id: `branch-default-${Date.now()}`,
         targetNodeId: "exit",
         filters: [],
       };
-      setLocalData({
+      dataToReset = {
         ...node.data,
         branches: [defaultBranch],
-      });
+        engagements: node.data.engagements || [],
+      };
     } else {
-      // No event name, just sync
-      setLocalData({
+      dataToReset = {
         ...node.data,
         branches: node.data.branches || [],
-      });
+        engagements: node.data.engagements || [],
+      };
     }
-  }, [node.data.eventName, node.id]);
+    reset(dataToReset);
+    setNewlyAddedBranchId(null);
+  }, [node.data, reset]);
 
-  // Compute branches to display - ensure default branch is shown if eventName exists
-  const branchesToDisplay = useMemo(() => {
-    const currentBranches = localData.branches && Array.isArray(localData.branches) ? localData.branches : [];
-    return currentBranches;
-  }, [localData.branches]);
+  const hasUnsavedChanges = isDirty;
 
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = useMemo(() => {
-    const originalData = node.data;
-    const currentBranches = localData.branches || [];
-    const originalBranches = originalData.branches || [];
-    const currentEngagements = localData.engagements || [];
-    const originalEngagements = originalData.engagements || [];
-    
-    // Compare event name
-    if (localData.eventName !== originalData.eventName) {
-      return true;
-    }
-    
-    // Compare branches (simplified comparison - check length and basic structure)
-    if (currentBranches.length !== originalBranches.length) {
-      return true;
-    }
-    
-    // Compare engagements
-    if (currentEngagements.length !== originalEngagements.length) {
-      return true;
-    }
-    
-    // Deep compare branches
-    for (let i = 0; i < currentBranches.length; i++) {
-      const current = currentBranches[i];
-      const original = originalBranches[i];
-      if (
-        !original ||
-        current.targetNodeId !== original.targetNodeId ||
-        current.filters.length !== original.filters.length
-      ) {
-        return true;
-      }
-    }
-    
-    // Deep compare engagements
-    for (let i = 0; i < currentEngagements.length; i++) {
-      const current = currentEngagements[i];
-      const original = originalEngagements[i];
-      if (!original || current.type !== original.type) {
-        return true;
-      }
-    }
-    
-    return false;
-  }, [localData, node.data]);
-
-  const handleSave = () => {
-    onUpdate(node.id, localData);
+  const onSubmit = (data: JourneyNodeData) => {
+    onUpdate(node.id, data);
     onClose();
   };
+
+  const handleSave = handleSubmit(onSubmit);
 
   const handleCloseClick = useCallback(() => {
     if (hasUnsavedChanges) {
@@ -175,13 +262,10 @@ export default function NodeConfigurationPanel({
     }
   }, [hasUnsavedChanges, onClose]);
 
-  // Expose close handler to parent (for Drawer's onClose)
   useEffect(() => {
     if (onRequestClose) {
-      // Store the close handler that checks for unsaved changes
       onRequestClose.current = handleCloseClick;
     }
-    // Cleanup: remove handler when component unmounts
     return () => {
       if (onRequestClose) {
         onRequestClose.current = null;
@@ -199,35 +283,37 @@ export default function NodeConfigurationPanel({
     handleSave();
   };
 
-  // Branch handlers
+  // Branch handlers - update form directly using setValue (already destructured above)
+
   const handleAddBranch = () => {
+    const newBranchId = `branch-${Date.now()}`;
     const newBranch: Branch = {
-      id: `branch-${Date.now()}`,
-      targetNodeId: "exit", // Default to exit
+      id: newBranchId,
+      targetNodeId: "exit",
       filters: [],
     };
-    setLocalData({
-      ...localData,
-      branches: [...(localData.branches || []), newBranch],
-    });
-    // Don't create nodes immediately - they'll be created when saved
+    const currentBranches = getValues("branches") || [];
+    setValue("branches", [...currentBranches, newBranch], { shouldDirty: true });
+    setNewlyAddedBranchId(newBranchId);
+    // Clear the connection highlight when a new branch is added
+    // This prevents both highlights from showing at the same time
+    setShowBranchHighlight(false);
+    // Mark connection highlight as dismissed so it doesn't re-enable
+    connectionHighlightDismissedRef.current = true;
   };
 
   const handleUpdateBranch = (branchId: string, updates: Partial<Branch>) => {
-    setLocalData({
-      ...localData,
-      branches: (localData.branches || []).map((branch) =>
-        branch.id === branchId ? { ...branch, ...updates } : branch
-      ),
-    });
+    const currentBranches = getValues("branches") || [];
+    const updatedBranches = currentBranches.map((branch: Branch) =>
+      branch.id === branchId ? { ...branch, ...updates } : branch
+    );
+    setValue("branches", updatedBranches, { shouldDirty: true });
   };
 
   const handleDeleteBranch = (branchId: string) => {
-    setLocalData({
-      ...localData,
-      branches: (localData.branches || []).filter((branch) => branch.id !== branchId),
-    });
-    // Delete the corresponding edge
+    const currentBranches = getValues("branches") || [];
+    const updatedBranches = currentBranches.filter((branch: Branch) => branch.id !== branchId);
+    setValue("branches", updatedBranches, { shouldDirty: true });
     onDeleteEdge(`edge-${branchId}`);
   };
 
@@ -239,84 +325,70 @@ export default function NodeConfigurationPanel({
       operator: "=",
       value: "",
     };
-    setLocalData({
-      ...localData,
-      branches: (localData.branches || []).map((branch) =>
-        branch.id === branchId
-          ? { ...branch, filters: [...(branch.filters || []), newFilter] }
-          : branch
-      ),
-    });
+    const currentBranches = getValues("branches") || [];
+    const updatedBranches = currentBranches.map((branch: Branch) =>
+      branch.id === branchId
+        ? { ...branch, filters: [...(branch.filters || []), newFilter] }
+        : branch
+    );
+    setValue("branches", updatedBranches, { shouldDirty: true });
   };
 
-  const handleUpdateBranchFilter = (
-    branchId: string,
-    filterId: string,
-    updates: Partial<Condition>
-  ) => {
-    setLocalData({
-      ...localData,
-      branches: (localData.branches || []).map((branch) =>
-        branch.id === branchId
-          ? {
-              ...branch,
-              filters: (branch.filters || []).map((filter) =>
-                filter.id === filterId ? { ...filter, ...updates } : filter
-              ),
-            }
-          : branch
-      ),
-    });
+  const handleUpdateBranchFilter = (branchId: string, filterId: string, updates: Partial<Condition>) => {
+    const currentBranches = getValues("branches") || [];
+    const updatedBranches = currentBranches.map((branch: Branch) =>
+      branch.id === branchId
+        ? {
+            ...branch,
+            filters: (branch.filters || []).map((filter) =>
+              filter.id === filterId ? { ...filter, ...updates } : filter
+            ),
+          }
+        : branch
+    );
+    setValue("branches", updatedBranches, { shouldDirty: true });
   };
 
   const handleDeleteBranchFilter = (branchId: string, filterId: string) => {
-    setLocalData({
-      ...localData,
-      branches: (localData.branches || []).map((branch) =>
-        branch.id === branchId
-          ? {
-              ...branch,
-              filters: (branch.filters || []).filter((filter) => filter.id !== filterId),
-            }
-          : branch
-      ),
-    });
+    const currentBranches = getValues("branches") || [];
+    const updatedBranches = currentBranches.map((branch: Branch) =>
+      branch.id === branchId
+        ? {
+            ...branch,
+            filters: (branch.filters || []).filter((filter) => filter.id !== filterId),
+          }
+        : branch
+    );
+    setValue("branches", updatedBranches, { shouldDirty: true });
   };
 
   // Engagement handlers
   const handleAddEngagement = () => {
     const newEngagement: Engagement = {
       id: `engagement-${Date.now()}`,
-      type: "tooltip", // Default to tooltip
+      type: "tooltip",
       config: {},
     };
-    setLocalData({
-      ...localData,
-      engagements: [...(localData.engagements || []), newEngagement],
-    });
+    const currentEngagements = getValues("engagements") || [];
+    setValue("engagements", [...currentEngagements, newEngagement], { shouldDirty: true });
   };
 
   const handleUpdateEngagement = (engagementId: string, updates: Partial<Engagement>) => {
-    setLocalData({
-      ...localData,
-      engagements: (localData.engagements || []).map((engagement) =>
-        engagement.id === engagementId ? { ...engagement, ...updates } : engagement
-      ),
-    });
+    const currentEngagements = getValues("engagements") || [];
+    const updatedEngagements = currentEngagements.map((engagement: Engagement) =>
+      engagement.id === engagementId ? { ...engagement, ...updates } : engagement
+    );
+    setValue("engagements", updatedEngagements, { shouldDirty: true });
   };
 
   const handleDeleteEngagement = (engagementId: string) => {
-    setLocalData({
-      ...localData,
-      engagements: (localData.engagements || []).filter((engagement) => engagement.id !== engagementId),
-    });
-    // Delete the corresponding edge
+    const currentEngagements = getValues("engagements") || [];
+    const updatedEngagements = currentEngagements.filter((engagement: Engagement) => engagement.id !== engagementId);
+    setValue("engagements", updatedEngagements, { shouldDirty: true });
     onDeleteEdge(`engagement-edge-${engagementId}`);
   };
 
-  const availableTargetNodes = nodes.filter(
-    (n) => n.id !== node.id && n.type === "state"
-  );
+  const availableTargetNodes = nodes.filter((n) => n.id !== node.id && n.type === "state");
 
   const renderFilterEditor = (
     filter: Condition,
@@ -374,113 +446,97 @@ export default function NodeConfigurationPanel({
 
       <Divider sx={{ mb: 2 }} />
 
-      <Box sx={{ flex: 1, overflowY: "auto" }}>
+      <Box sx={{ flex: 1, overflowY: "auto" }} component="form" onSubmit={handleSave}>
         {/* Event Name */}
-        <Box sx={{ mb: 3, mt: localData.eventName ? 2 : 0 }}>
-          {node.data.isEntry && !localData.eventName && (
-            <Alert 
-              severity="info" 
-              icon={<InfoOutlinedIcon />}
-              sx={{ mb: 2 }}
-            >
+        <Box sx={{ mb: 3, mt: eventName ? 2 : 0 }}>
+          {node.data.isEntry && !eventName && (
+            <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ mb: 2 }}>
               <Typography variant="body2">
                 <strong>Start by selecting an event</strong> to configure this journey node. Once an event is selected, you&apos;ll be able to add transitions and engagements.
               </Typography>
             </Alert>
           )}
-          <TextField
-            fullWidth
-            select
-            label="Event Name"
-            value={localData.eventName || ""}
-            onChange={(e) => {
-              const eventName = e.target.value;
-              const currentBranches = localData.branches && Array.isArray(localData.branches) ? localData.branches : [];
-              
-              const updatedData: JourneyNodeData = {
-                ...localData,
-                eventName,
-                label: eventName || "New Node",
+          <Controller
+            name="eventName"
+            control={control}
+            render={({ field }) => {
+              const handleEventNameChange = (eventName: string) => {
+                field.onChange(eventName);
+                if (eventName) {
+                  const currentBranches = getValues("branches") || [];
+                  if (currentBranches.length === 0) {
+                    const defaultBranch: Branch = {
+                      id: `branch-default-${Date.now()}`,
+                      targetNodeId: "exit",
+                      filters: [],
+                    };
+                    setValue("branches", [defaultBranch], { shouldDirty: true });
+                  }
+                }
               };
               
-              // If event name is selected and no branches exist, create default exit transition
-              if (eventName) {
-                if (currentBranches.length === 0) {
-                  const defaultBranch: Branch = {
-                    id: `branch-default-${Date.now()}`,
-                    targetNodeId: "exit",
-                    filters: [],
-                  };
-                  updatedData.branches = [defaultBranch];
-                } else {
-                  // Keep existing branches
-                  updatedData.branches = currentBranches;
-                }
-              } else {
-                // If event name is cleared, clear branches too
-                updatedData.branches = [];
-              }
-              
-              setLocalData(updatedData);
-            }}
-            required
-            error={node.data.isEntry && !localData.eventName}
-            focused={node.data.isEntry && !localData.eventName}
-            helperText={
-              node.data.isEntry && !localData.eventName
-                ? "⚠️ Please select an event first to enable transitions and engagements"
-                : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
-            }
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                ...(node.data.isEntry && !localData.eventName && {
-                  "& fieldset": {
-                    borderColor: "primary.main",
-                    borderWidth: 2,
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "primary.main",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "primary.main",
-                    borderWidth: 2,
-                  },
-                  animation: "pulse 2s ease-in-out infinite",
-                  "@keyframes pulse": {
-                    "0%, 100%": {
-                      boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
+              return (
+                <TextField
+                  {...field}
+                  fullWidth
+                  select
+                  label="Event Name"
+                  value={field.value || ""}
+                  onChange={(e) => handleEventNameChange(e.target.value)}
+                  required
+                  error={node.data.isEntry && !field.value}
+                  focused={node.data.isEntry && !field.value}
+                  helperText={
+                    node.data.isEntry && !field.value
+                      ? "⚠️ Please select an event first to enable transitions and engagements"
+                      : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
+                  }
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      ...(node.data.isEntry && !field.value && {
+                        "& fieldset": {
+                          borderColor: "primary.main",
+                          borderWidth: 2,
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "primary.main",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "primary.main",
+                          borderWidth: 2,
+                        },
+                        animation: "pulse 2s ease-in-out infinite",
+                        "@keyframes pulse": {
+                          "0%, 100%": {
+                            boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
+                          },
+                          "50%": {
+                            boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
+                          },
+                        },
+                      }),
                     },
-                    "50%": {
-                      boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
-                    },
-                  },
-                }),
-              },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select an event</em>
+                  </MenuItem>
+                  {mockEventNames.map((eventName) => (
+                    <MenuItem key={eventName} value={eventName}>
+                      {eventName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              );
             }}
-          >
-            <MenuItem value="">
-              <em>Select an event</em>
-            </MenuItem>
-            {mockEventNames.map((eventName) => (
-              <MenuItem key={eventName} value={eventName}>
-                {eventName}
-              </MenuItem>
-            ))}
-          </TextField>
+          />
         </Box>
 
         <Divider sx={{ my: 3 }} />
 
         {/* In-App Presentations */}
         <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Box>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
                 In-App Presentations
@@ -489,41 +545,36 @@ export default function NodeConfigurationPanel({
                 Show nudge when journey reaches this node
               </Typography>
             </Box>
-            <Button 
-              size="small" 
-              startIcon={<AddIcon />} 
-              onClick={handleAddEngagement} 
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={handleAddEngagement}
               variant="outlined"
-              disabled={node.data.isEntry && !localData.eventName}
-              title={node.data.isEntry && !localData.eventName ? "Please select an event first" : "Add an engagement"}
+              disabled={node.data.isEntry && !eventName}
+              title={node.data.isEntry && !eventName ? "Please select an event first" : "Add an engagement"}
             >
               Add Engagement
             </Button>
           </Box>
 
-          {localData.engagements && localData.engagements.length > 0 ? (
+          {engagements.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {localData.engagements.map((engagement, index) => (
+              {engagements.map((engagement: Engagement, index: number) => {
+                const isHighlighted = highlightedEngagementId === engagement.id && showEngagementHighlight;
+                return (
                 <Paper
                   key={engagement.id}
-                  elevation={highlightedEngagementId === engagement.id ? 3 : 1}
+                  elevation={isHighlighted ? 3 : 1}
                   sx={{
                     border: "2px solid",
-                    borderColor: highlightedEngagementId === engagement.id ? "primary.main" : "divider",
+                    borderColor: isHighlighted ? "primary.main" : "divider",
                     borderRadius: 2,
                     p: 2.5,
-                    bgcolor: highlightedEngagementId === engagement.id ? "action.selected" : "background.paper",
+                    bgcolor: isHighlighted ? "action.selected" : "background.paper",
                     transition: "all 0.2s",
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 2,
-                    }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       {engagement.type === "tooltip" && <InfoIcon sx={{ color: "#ff9800" }} />}
                       {engagement.type === "popup" && <OpenInNewIcon sx={{ color: "#ff9800" }} />}
@@ -541,56 +592,65 @@ export default function NodeConfigurationPanel({
                     </IconButton>
                   </Box>
 
-                  <TextField
-                    fullWidth
-                    select
-                    label="Engagement Type"
-                    value={engagement.type}
-                    onChange={(e) => {
-                      handleUpdateEngagement(engagement.id, {
-                        type: e.target.value as "tooltip" | "popup" | "bottomsheet",
-                      });
-                    }}
-                    size="small"
-                  >
-                    <MenuItem value="tooltip">
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <InfoIcon sx={{ fontSize: 18 }} />
-                        <Typography>Tooltip</Typography>
-                      </Box>
-                    </MenuItem>
-                    <MenuItem value="popup">
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <OpenInNewIcon sx={{ fontSize: 18 }} />
-                        <Typography>Popup</Typography>
-                      </Box>
-                    </MenuItem>
-                    <MenuItem value="bottomsheet">
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <ViewAgendaIcon sx={{ fontSize: 18 }} />
-                        <Typography>Bottom Sheet</Typography>
+                  <Controller
+                    name={`engagements.${index}.type`}
+                    control={control}
+                    render={({ field }: { field: { value: string; onChange: (value: string) => void } }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        select
+                        label="Engagement Type"
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          handleUpdateEngagement(engagement.id, {
+                            type: e.target.value as "tooltip" | "popup" | "bottomsheet",
+                          });
+                        }}
+                        size="small"
+                      >
+                        <MenuItem value="tooltip">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <InfoIcon sx={{ fontSize: 18 }} />
+                            <Typography>Tooltip</Typography>
+                          </Box>
+                        </MenuItem>
+                        <MenuItem value="popup">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <OpenInNewIcon sx={{ fontSize: 18 }} />
+                            <Typography>Popup</Typography>
+                          </Box>
+                        </MenuItem>
+                        <MenuItem value="bottomsheet">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <ViewAgendaIcon sx={{ fontSize: 18 }} />
+                            <Typography>Bottom Sheet</Typography>
                       </Box>
                     </MenuItem>
                   </TextField>
+                    )}
+                  />
                 </Paper>
-              ))}
+              );
+              })}
             </Box>
           ) : (
             <Box
               sx={{
                 p: 2,
                 textAlign: "center",
-                bgcolor: node.data.isEntry && !localData.eventName ? "action.disabledBackground" : "action.hover",
+                bgcolor: node.data.isEntry && !eventName ? "action.disabledBackground" : "action.hover",
                 borderRadius: 1,
-                border: node.data.isEntry && !localData.eventName ? "1px dashed" : "none",
-                borderColor: node.data.isEntry && !localData.eventName ? "divider" : "transparent",
+                border: node.data.isEntry && !eventName ? "1px dashed" : "none",
+                borderColor: node.data.isEntry && !eventName ? "divider" : "transparent",
               }}
             >
-              <Typography 
-                variant="caption" 
-                color={node.data.isEntry && !localData.eventName ? "text.disabled" : "text.secondary"}
+              <Typography
+                variant="caption"
+                color={node.data.isEntry && !eventName ? "text.disabled" : "text.secondary"}
               >
-                {node.data.isEntry && !localData.eventName
+                {node.data.isEntry && !eventName
                   ? "Select an event first to add engagements"
                   : "No engagements. Add an in-app presentation to show when this node is reached."}
               </Typography>
@@ -602,14 +662,7 @@ export default function NodeConfigurationPanel({
 
         {/* Branches */}
         <Box>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Box>
               <Typography variant="subtitle2" fontWeight={600}>
                 Transitions
@@ -618,349 +671,300 @@ export default function NodeConfigurationPanel({
                 Define when and where the journey moves next
               </Typography>
             </Box>
-            <Button 
-              size="small" 
-              startIcon={<AddIcon />} 
-              onClick={handleAddBranch} 
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={handleAddBranch}
               variant="outlined"
-              disabled={node.data.isEntry && !localData.eventName}
-              title={node.data.isEntry && !localData.eventName ? "Please select an event first" : "Add a transition"}
+              disabled={node.data.isEntry && !eventName}
+              title={node.data.isEntry && !eventName ? "Please select an event first" : "Add a transition"}
             >
               Add Transition
             </Button>
           </Box>
 
-          {localData.eventName && (
-            <Alert 
-              icon={<InfoOutlinedIcon fontSize="inherit" />} 
-              severity="info" 
-              sx={{ mb: 2 }}
-            >
+          {eventName && (
+            <Alert icon={<InfoOutlinedIcon fontSize="inherit" />} severity="info" sx={{ mb: 2 }}>
               <Typography variant="caption">
-                <strong>How it works:</strong> When the <strong>{localData.eventName || "selected event"}</strong> occurs 
-                and all conditions pass, the journey transitions to the target node.
+                <strong>How it works:</strong> When the <strong>{eventName || "selected event"}</strong> occurs and all
+                conditions pass, the journey transitions to the target node.
               </Typography>
             </Alert>
           )}
 
-          {branchesToDisplay.length > 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-              }}
-            >
-              {branchesToDisplay.map((branch, index) => (
-                <Paper
-                  key={branch.id}
-                  elevation={highlightedBranchId === branch.id ? 3 : 1}
-                  sx={{
-                    border: "2px solid",
-                    borderColor: highlightedBranchId === branch.id ? "primary.main" : "divider",
-                    borderRadius: 2,
-                    p: 2.5,
-                    bgcolor: highlightedBranchId === branch.id ? "action.selected" : "background.paper",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  {/* Transition Flow Header */}
-                  <Box
+          {branches.length > 0 ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {branches.map((branch: Branch, index: number) => {
+                const isHighlighted = highlightedBranchId === branch.id && showBranchHighlight;
+                const isNewlyAdded = newlyAddedBranchId === branch.id;
+                const shouldHighlight = isHighlighted || isNewlyAdded;
+
+                return (
+                  <Paper
+                    key={branch.id}
+                    ref={(el) => {
+                      if (el) {
+                        branchRefsMap.current.set(branch.id, el);
+                      } else {
+                        branchRefsMap.current.delete(branch.id);
+                      }
+                    }}
+                    elevation={shouldHighlight ? 3 : 1}
                     sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      mb: 2.5,
+                      border: "2px solid",
+                      borderColor: shouldHighlight ? "primary.main" : "divider",
+                      borderRadius: 2,
+                      p: 2.5,
+                      bgcolor: shouldHighlight ? "action.selected" : "background.paper",
+                      transition: "all 0.2s",
+                      ...(shouldHighlight && {
+                        boxShadow: isNewlyAdded
+                          ? "0 4px 16px rgba(25, 118, 210, 0.5)"
+                          : "0 4px 12px rgba(25, 118, 210, 0.3)",
+                      }),
                     }}
                   >
-                    <Box sx={{ flex: 1 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <Chip
-                          label={`Transition ${index + 1}`}
-                          size="small"
-                          color={highlightedBranchId === branch.id ? "primary" : "default"}
-                          sx={{ fontWeight: 600 }}
-                        />
-                      </Box>
-                      {/* Visual Flow Indicator */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mt: 1.5,
-                          p: 1.5,
-                          bgcolor: "action.hover",
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            When
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {localData.eventName || "Event"}
-                          </Typography>
+                    {/* Transition Flow Header */}
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2.5 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                          <Chip
+                            label={`Transition ${index + 1}`}
+                            size="small"
+                            color={isHighlighted ? "primary" : "default"}
+                            sx={{ fontWeight: 600 }}
+                          />
                         </Box>
-                        <ArrowForwardIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            AND conditions pass
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600} color="primary.main">
-                            {branch.filters.length === 0 ? "No conditions" : `${branch.filters.length} condition${branch.filters.length > 1 ? "s" : ""}`}
-                          </Typography>
-                        </Box>
-                        <ArrowForwardIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            Go to
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {branch.targetNodeId === "exit" ? "Exit" : branch.targetNodeId || "Target"}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeleteBranch(branch.id)}
-                      color="error"
-                      sx={{ ml: 1 }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-
-                  <Divider sx={{ my: 2 }} />
-
-                  {/* Target Node Selection */}
-                  <Box sx={{ mb: 3 }}>
-                    <TextField
-                      fullWidth
-                      select
-                      label="Target Node"
-                      value={branch.targetNodeId}
-                      onChange={(e) => {
-                        const target = e.target.value as string | "exit";
-                        handleUpdateBranch(branch.id, {
-                          targetNodeId: target,
-                        });
-                        // Don't create nodes immediately - they'll be created when saved
-                        // Delete edge if switching to exit or if target changes
-                        if (target === "exit" || branch.targetNodeId !== target) {
-                          onDeleteEdge(`edge-${branch.id}`);
-                        }
-                      }}
-                      size="small"
-                      helperText="Where the journey moves to when conditions are met"
-                    >
-                      <MenuItem value="exit">Exit</MenuItem>
-                      {mockEventNames.map((eventName) => (
-                        <MenuItem key={eventName} value={eventName}>
-                          {eventName}
-                        </MenuItem>
-                      ))}
-                      {availableTargetNodes.map((targetNode) => (
-                        <MenuItem key={targetNode.id} value={targetNode.data.eventName}>
-                          {targetNode.data.eventName || targetNode.id}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Box>
-
-                  {/* Conditions Section */}
-                  <Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 1.5,
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
-                          Conditions
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Evaluated on <strong>{localData.eventName || "this event"}</strong>&apos;s properties
-                        </Typography>
-                      </Box>
-                      <Button
-                        size="small"
-                        startIcon={<AddIcon />}
-                        onClick={() => handleAddBranchFilter(branch.id)}
-                        variant="outlined"
-                      >
-                        Add Condition
-                      </Button>
-                    </Box>
-
-                    {branch.filters.length > 0 ? (
-                      <Box>
-                        {/* AND Logic Header */}
-                        {branch.filters.length > 1 && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              mb: 2,
-                              p: 1.5,
-                              bgcolor: (theme) => theme.palette.mode === "light" 
-                                ? "rgba(25, 118, 210, 0.08)" 
-                                : "rgba(144, 202, 249, 0.16)",
-                              borderRadius: 1,
-                              border: "1px solid",
-                              borderColor: (theme) => theme.palette.mode === "light"
-                                ? "rgba(25, 118, 210, 0.2)"
-                                : "rgba(144, 202, 249, 0.3)",
-                            }}
-                          >
-                            <CheckCircleOutlineIcon sx={{ fontSize: 18, color: "primary.main" }} />
-                            <Typography variant="caption" fontWeight={600} color="primary.main">
-                              All conditions must pass (AND logic)
+                        {/* Visual Flow Indicator */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mt: 1.5,
+                            p: 1.5,
+                            bgcolor: "action.hover",
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              When
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600}>
+                              {eventName || "Event"}
                             </Typography>
                           </Box>
+                          <ArrowForwardIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              AND conditions pass
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} color="primary.main">
+                              {(branch.filters?.length || 0) === 0
+                                ? "No conditions"
+                                : `${branch.filters?.length || 0} condition${(branch.filters?.length || 0) > 1 ? "s" : ""}`}
+                            </Typography>
+                          </Box>
+                          <ArrowForwardIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              Go to
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600}>
+                              {branch.targetNodeId === "exit" ? "Exit" : branch.targetNodeId || "Target"}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                      <IconButton size="small" onClick={() => handleDeleteBranch(branch.id)} color="error" sx={{ ml: 1 }}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    {/* Target Node Selection */}
+                    <Box sx={{ mb: 3 }}>
+                      <Controller
+                        name={`branches.${index}.targetNodeId`}
+                        control={control}
+                        render={({ field }: { field: { value: string | "exit"; onChange: (value: string | "exit") => void } }) => (
+                          <TextField
+                            {...field}
+                            fullWidth
+                            select
+                            label="Target Node"
+                            value={field.value}
+                            onChange={(e) => {
+                              const target = e.target.value as string | "exit";
+                              field.onChange(target);
+                              handleUpdateBranch(branch.id, {
+                                targetNodeId: target,
+                              });
+                              if (target === "exit" || branch.targetNodeId !== target) {
+                                onDeleteEdge(`edge-${branch.id}`);
+                              }
+                            }}
+                            size="small"
+                            helperText="Where the journey moves to when conditions are met"
+                          >
+                            <MenuItem value="exit">Exit</MenuItem>
+                            {mockEventNames.map((eventName) => (
+                              <MenuItem key={eventName} value={eventName}>
+                                {eventName}
+                              </MenuItem>
+                            ))}
+                            {availableTargetNodes.map((targetNode) => (
+                              <MenuItem key={targetNode.id} value={targetNode.data.eventName}>
+                                {targetNode.data.eventName || targetNode.id}
+                              </MenuItem>
+                            ))}
+                          </TextField>
                         )}
-                        
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                          {branch.filters.map((filter, filterIndex) => (
-                            <Box key={filter.id}>
-                              {filterIndex > 0 && (
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 1,
-                                    my: 1.5,
-                                    position: "relative",
-                                  }}
-                                >
-                                  {/* Left line */}
-                                  <Box
-                                    sx={{
-                                      flex: 1,
-                                      height: "1px",
-                                      bgcolor: "divider",
-                                    }}
-                                  />
-                                  {/* AND Badge */}
+                      />
+                    </Box>
+
+                    {/* Conditions Section */}
+                    <Box>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                        <Box>
+                          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
+                            Conditions
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Evaluated on <strong>{eventName || "this event"}</strong>&apos;s properties
+                          </Typography>
+                        </Box>
+                        <Button
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => handleAddBranchFilter(branch.id)}
+                          variant="outlined"
+                        >
+                          Add Condition
+                        </Button>
+                      </Box>
+
+                      {(branch.filters?.length || 0) > 0 ? (
+                        <Box>
+                          {/* AND Logic Header */}
+                          {(branch.filters?.length || 0) > 1 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                mb: 2,
+                                p: 1.5,
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === "light"
+                                    ? "rgba(25, 118, 210, 0.08)"
+                                    : "rgba(144, 202, 249, 0.16)",
+                                borderRadius: 1,
+                                border: "1px solid",
+                                borderColor: (theme) =>
+                                  theme.palette.mode === "light"
+                                    ? "rgba(25, 118, 210, 0.2)"
+                                    : "rgba(144, 202, 249, 0.3)",
+                              }}
+                            >
+                              <CheckCircleOutlineIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                              <Typography variant="caption" fontWeight={600} color="primary.main">
+                                All conditions must pass (AND logic)
+                              </Typography>
+                            </Box>
+                          )}
+
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                            {(branch.filters || []).map((filter: Condition, filterIndex: number) => (
+                              <Box key={filter.id}>
+                                {filterIndex > 0 && (
                                   <Box
                                     sx={{
                                       display: "flex",
                                       alignItems: "center",
-                                      gap: 0.5,
-                                      px: 1.5,
-                                      py: 0.5,
-                                      bgcolor: "primary.main",
-                                      color: "white",
-                                      borderRadius: 2,
-                                      boxShadow: 1,
+                                      gap: 1,
+                                      my: 1.5,
+                                      position: "relative",
                                     }}
                                   >
-                                    <Typography
-                                      variant="caption"
-                                      fontWeight={700}
-                                      sx={{ fontSize: "0.7rem", letterSpacing: 0.5 }}
+                                    <Box sx={{ flex: 1, height: "1px", bgcolor: "divider" }} />
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 0.5,
+                                        px: 1.5,
+                                        py: 0.5,
+                                        bgcolor: "primary.main",
+                                        color: "white",
+                                        borderRadius: 2,
+                                        boxShadow: 1,
+                                      }}
                                     >
-                                      AND
-                                    </Typography>
+                                      <Typography variant="caption" fontWeight={700} sx={{ fontSize: "0.7rem", letterSpacing: 0.5 }}>
+                                        AND
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ flex: 1, height: "1px", bgcolor: "divider" }} />
                                   </Box>
-                                  {/* Right line */}
-                                  <Box
-                                    sx={{
-                                      flex: 1,
-                                      height: "1px",
-                                      bgcolor: "divider",
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                              <Box
-                                sx={{
-                                  p: 1.5,
-                                  border: "1px solid",
-                                  borderColor: "divider",
-                                  borderRadius: 1,
-                                  bgcolor: "background.paper",
-                                  position: "relative",
-                                  "&:hover": {
-                                    borderColor: "primary.main",
-                                    boxShadow: 1,
-                                  },
-                                  transition: "all 0.2s",
-                                }}
-                              >
+                                )}
                                 <Box
                                   sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 0.5,
-                                    mb: 1,
+                                    p: 1.5,
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    borderRadius: 1,
+                                    bgcolor: "background.paper",
+                                    position: "relative",
+                                    "&:hover": {
+                                      borderColor: "primary.main",
+                                      boxShadow: 1,
+                                    },
+                                    transition: "all 0.2s",
                                   }}
                                 >
-                                  <Typography
-                                    variant="caption"
-                                    fontWeight={600}
-                                    color="text.secondary"
-                                  >
-                                    Condition {filterIndex + 1}
-                                  </Typography>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+                                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                      Condition {filterIndex + 1}
+                                    </Typography>
+                                  </Box>
+                                  {renderFilterEditor(
+                                    filter,
+                                    (updates) => handleUpdateBranchFilter(branch.id, filter.id, updates),
+                                    () => handleDeleteBranchFilter(branch.id, filter.id)
+                                  )}
                                 </Box>
-                                {renderFilterEditor(
-                                  filter,
-                                  (updates) =>
-                                    handleUpdateBranchFilter(branch.id, filter.id, updates),
-                                  () => handleDeleteBranchFilter(branch.id, filter.id)
-                                )}
                               </Box>
-                            </Box>
-                          ))}
+                            ))}
+                          </Box>
                         </Box>
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={{
-                          p: 1.5,
-                          textAlign: "center",
-                          bgcolor: "action.hover",
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          No conditions. Always taken if no other transition matches.
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </Paper>
-              ))}
+                      ) : (
+                        <Box sx={{ p: 1.5, textAlign: "center", bgcolor: "action.hover", borderRadius: 1 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            No conditions. Always taken if no other transition matches.
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Paper>
+                );
+              })}
             </Box>
           ) : (
             <Box
               sx={{
                 p: 3,
                 textAlign: "center",
-                bgcolor: node.data.isEntry && !localData.eventName ? "action.disabledBackground" : "action.hover",
+                bgcolor: node.data.isEntry && !eventName ? "action.disabledBackground" : "action.hover",
                 borderRadius: 1,
-                border: node.data.isEntry && !localData.eventName ? "1px dashed" : "none",
-                borderColor: node.data.isEntry && !localData.eventName ? "divider" : "transparent",
+                border: node.data.isEntry && !eventName ? "1px dashed" : "none",
+                borderColor: node.data.isEntry && !eventName ? "divider" : "transparent",
               }}
             >
-              <Typography 
-                variant="body2" 
-                color={node.data.isEntry && !localData.eventName ? "text.disabled" : "text.secondary"}
-              >
-                {node.data.isEntry && !localData.eventName
+              <Typography variant="body2" color={node.data.isEntry && !eventName ? "text.disabled" : "text.secondary"}>
+                {node.data.isEntry && !eventName
                   ? "Select an event first to add transitions"
                   : "No transitions. Add a transition to define where the journey moves next."}
               </Typography>
@@ -972,15 +976,7 @@ export default function NodeConfigurationPanel({
       <Divider sx={{ my: 2 }} />
 
       <Box sx={{ display: "flex", gap: 1 }}>
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={() => {
-            onDelete(node.id);
-            onClose();
-          }}
-          sx={{ flex: 1 }}
-        >
+        <Button variant="outlined" color="error" onClick={() => { onDelete(node.id); onClose(); }} sx={{ flex: 1 }}>
           Delete
         </Button>
         <Button variant="contained" onClick={handleSave} sx={{ flex: 1 }}>
@@ -1006,54 +1002,25 @@ export default function NodeConfigurationPanel({
           </Box>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText 
-            id="unsaved-changes-dialog-description"
-            sx={{ 
-              fontSize: "0.95rem",
-              lineHeight: 1.6,
-              color: "text.primary",
-              mb: 1
-            }}
-          >
+          <DialogContentText id="unsaved-changes-dialog-description" sx={{ fontSize: "0.95rem", lineHeight: 1.6, color: "text.primary", mb: 1 }}>
             You have unsaved changes to this node configuration. What would you like to do?
           </DialogContentText>
-          <Alert 
-            severity="info" 
-            icon={<InfoOutlinedIcon />}
-            sx={{ 
-              mt: 2,
-              "& .MuiAlert-icon": {
-                alignItems: "center"
-              }
-            }}
-          >
-            <Typography variant="caption" component="div">
-              If you close without saving, all your changes will be lost.
+          <Alert severity="info" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>Save:</strong> Save your changes and close the panel.
+              <br />
+              <strong>Discard:</strong> Close without saving. Your changes will be lost.
             </Typography>
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
-          <Button 
-            onClick={() => setShowCloseDialog(false)} 
-            variant="outlined"
-            sx={{ minWidth: 100 }}
-          >
+        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+          <Button onClick={() => setShowCloseDialog(false)} color="inherit">
             Cancel
           </Button>
-          <Button 
-            onClick={handleDiscardChanges} 
-            color="error"
-            variant="outlined"
-            sx={{ minWidth: 140 }}
-          >
-            Discard Changes
+          <Button onClick={handleDiscardChanges} color="error" variant="outlined">
+            Discard
           </Button>
-          <Button 
-            onClick={handleSaveAndClose} 
-            variant="contained" 
-            autoFocus
-            sx={{ minWidth: 140 }}
-          >
+          <Button onClick={handleSaveAndClose} variant="contained" autoFocus>
             Save & Close
           </Button>
         </DialogActions>
