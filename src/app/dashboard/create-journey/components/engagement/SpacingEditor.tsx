@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Box, Typography, TextField, Paper } from "@mui/material";
 import { Spacing as SpacingType } from "../../types";
@@ -31,34 +31,44 @@ export default function SpacingEditor({ spacing, onSpacingChange }: SpacingEdito
     reValidateMode: "onBlur",
   });
 
-  // Watch form values
-  const formData = watch();
+  // Watch only specific fields to avoid unnecessary re-renders
+  const margin = watch("margin");
+  const padding = watch("padding");
+
+  // Memoize spacing key to detect actual changes
+  const spacingKey = useMemo(
+    () => JSON.stringify({
+      margin: spacing?.margin,
+      padding: spacing?.padding,
+    }),
+    [spacing?.margin, spacing?.padding]
+  );
 
   // Sync form when spacing prop changes
-  const prevSpacingRef = useRef(spacing);
   useEffect(() => {
-    // Only reset if spacing prop actually changed
-    if (JSON.stringify(prevSpacingRef.current) !== JSON.stringify(spacing)) {
-      reset({
-        margin: spacing?.margin || defaultSpacing.margin,
-        padding: spacing?.padding || defaultSpacing.padding,
-      });
-      prevSpacingRef.current = spacing;
-    }
-  }, [spacing, reset]);
+    reset({
+      margin: spacing?.margin || defaultSpacing.margin,
+      padding: spacing?.padding || defaultSpacing.padding,
+    });
+  }, [spacingKey, reset]);
 
   // Update parent when form values change
-  const prevFormDataRef = useRef(formData);
+  const prevMarginRef = useRef(margin);
+  const prevPaddingRef = useRef(padding);
   useEffect(() => {
-    // Only update if form data actually changed
-    if (JSON.stringify(prevFormDataRef.current) !== JSON.stringify(formData)) {
+    // Only update if values actually changed
+    if (
+      JSON.stringify(prevMarginRef.current) !== JSON.stringify(margin) ||
+      JSON.stringify(prevPaddingRef.current) !== JSON.stringify(padding)
+    ) {
       onSpacingChange({
-        margin: formData.margin,
-        padding: formData.padding,
+        margin: margin || defaultSpacing.margin,
+        padding: padding || defaultSpacing.padding,
       });
-      prevFormDataRef.current = formData;
+      prevMarginRef.current = margin;
+      prevPaddingRef.current = padding;
     }
-  }, [formData, onSpacingChange]);
+  }, [margin, padding, onSpacingChange]);
 
   return (
     <Box>

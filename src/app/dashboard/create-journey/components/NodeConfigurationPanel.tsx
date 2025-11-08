@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Node } from "@xyflow/react";
 import {
@@ -87,11 +87,10 @@ export default function NodeConfigurationPanel({
     reValidateMode: "onBlur",
   });
 
-  // Watch form data - this gives us reactive access to branches
-  const formData = watch();
-  const branches = (formData.branches || []) as Branch[];
-  const engagements = (formData.engagements || []) as Engagement[];
-  const eventName = formData.eventName || "";
+  // Watch only specific form fields to avoid unnecessary re-renders
+  const branches = watch("branches") || [];
+  const engagements = watch("engagements") || [];
+  const eventName = watch("eventName") || "";
 
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [newlyAddedBranchId, setNewlyAddedBranchId] = useState<string | null>(null);
@@ -216,6 +215,17 @@ export default function NodeConfigurationPanel({
     }
   }, [newlyAddedBranchId, branches.length]);
 
+  // Memoize node data key to detect actual changes (not just reference changes)
+  const nodeDataKey = useMemo(
+    () => JSON.stringify({
+      id: node.id,
+      eventName: node.data.eventName,
+      branchesCount: node.data.branches?.length || 0,
+      engagementsCount: node.data.engagements?.length || 0,
+    }),
+    [node.id, node.data.eventName, node.data.branches?.length, node.data.engagements?.length]
+  );
+
   // Sync form with node.data when node changes
   useEffect(() => {
     const hasBranches = node.data.branches && Array.isArray(node.data.branches) && node.data.branches.length > 0;
@@ -244,7 +254,7 @@ export default function NodeConfigurationPanel({
     }
     reset(dataToReset);
     setNewlyAddedBranchId(null);
-  }, [node.data, reset]);
+  }, [nodeDataKey, node.data, reset]);
 
   const hasUnsavedChanges = isDirty;
 
@@ -274,19 +284,18 @@ export default function NodeConfigurationPanel({
     };
   }, [handleCloseClick, onRequestClose]);
 
-  const handleDiscardChanges = () => {
+  const handleDiscardChanges = useCallback(() => {
     setShowCloseDialog(false);
     onClose();
-  };
+  }, [onClose]);
 
-  const handleSaveAndClose = () => {
+  const handleSaveAndClose = useCallback(() => {
     setShowCloseDialog(false);
     handleSave();
-  };
+  }, [handleSave]);
 
-  // Branch handlers - update form directly using setValue (already destructured above)
-
-  const handleAddBranch = () => {
+  // Branch handlers - memoized to prevent re-renders
+  const handleAddBranch = useCallback(() => {
     const newBranchId = `branch-${Date.now()}`;
     const newBranch: Branch = {
       id: newBranchId,
@@ -301,25 +310,25 @@ export default function NodeConfigurationPanel({
     setShowBranchHighlight(false);
     // Mark connection highlight as dismissed so it doesn't re-enable
     connectionHighlightDismissedRef.current = true;
-  };
+  }, [getValues, setValue]);
 
-  const handleUpdateBranch = (branchId: string, updates: Partial<Branch>) => {
+  const handleUpdateBranch = useCallback((branchId: string, updates: Partial<Branch>) => {
     const currentBranches = getValues("branches") || [];
     const updatedBranches = currentBranches.map((branch: Branch) =>
       branch.id === branchId ? { ...branch, ...updates } : branch
     );
     setValue("branches", updatedBranches, { shouldDirty: true });
-  };
+  }, [getValues, setValue]);
 
-  const handleDeleteBranch = (branchId: string) => {
+  const handleDeleteBranch = useCallback((branchId: string) => {
     const currentBranches = getValues("branches") || [];
     const updatedBranches = currentBranches.filter((branch: Branch) => branch.id !== branchId);
     setValue("branches", updatedBranches, { shouldDirty: true });
     onDeleteEdge(`edge-${branchId}`);
-  };
+  }, [getValues, setValue, onDeleteEdge]);
 
-  // Branch filter handlers
-  const handleAddBranchFilter = (branchId: string) => {
+  // Branch filter handlers - memoized to prevent re-renders
+  const handleAddBranchFilter = useCallback((branchId: string) => {
     const newFilter: Condition = {
       id: `filter-${Date.now()}`,
       property: "",
@@ -333,9 +342,9 @@ export default function NodeConfigurationPanel({
         : branch
     );
     setValue("branches", updatedBranches, { shouldDirty: true });
-  };
+  }, [getValues, setValue]);
 
-  const handleUpdateBranchFilter = (branchId: string, filterId: string, updates: Partial<Condition>) => {
+  const handleUpdateBranchFilter = useCallback((branchId: string, filterId: string, updates: Partial<Condition>) => {
     const currentBranches = getValues("branches") || [];
     const updatedBranches = currentBranches.map((branch: Branch) =>
       branch.id === branchId
@@ -348,9 +357,9 @@ export default function NodeConfigurationPanel({
         : branch
     );
     setValue("branches", updatedBranches, { shouldDirty: true });
-  };
+  }, [getValues, setValue]);
 
-  const handleDeleteBranchFilter = (branchId: string, filterId: string) => {
+  const handleDeleteBranchFilter = useCallback((branchId: string, filterId: string) => {
     const currentBranches = getValues("branches") || [];
     const updatedBranches = currentBranches.map((branch: Branch) =>
       branch.id === branchId
@@ -361,10 +370,10 @@ export default function NodeConfigurationPanel({
         : branch
     );
     setValue("branches", updatedBranches, { shouldDirty: true });
-  };
+  }, [getValues, setValue]);
 
-  // Engagement handlers
-  const handleAddEngagement = () => {
+  // Engagement handlers - memoized to prevent re-renders
+  const handleAddEngagement = useCallback(() => {
     const newEngagement: Engagement = {
       id: `engagement-${Date.now()}`,
       type: "tooltip",
@@ -372,26 +381,31 @@ export default function NodeConfigurationPanel({
     };
     const currentEngagements = getValues("engagements") || [];
     setValue("engagements", [...currentEngagements, newEngagement], { shouldDirty: true });
-  };
+  }, [getValues, setValue]);
 
-  const handleUpdateEngagement = (engagementId: string, updates: Partial<Engagement>) => {
+  const handleUpdateEngagement = useCallback((engagementId: string, updates: Partial<Engagement>) => {
     const currentEngagements = getValues("engagements") || [];
     const updatedEngagements = currentEngagements.map((engagement: Engagement) =>
       engagement.id === engagementId ? { ...engagement, ...updates } : engagement
     );
     setValue("engagements", updatedEngagements, { shouldDirty: true });
-  };
+  }, [getValues, setValue]);
 
-  const handleDeleteEngagement = (engagementId: string) => {
+  const handleDeleteEngagement = useCallback((engagementId: string) => {
     const currentEngagements = getValues("engagements") || [];
     const updatedEngagements = currentEngagements.filter((engagement: Engagement) => engagement.id !== engagementId);
     setValue("engagements", updatedEngagements, { shouldDirty: true });
     onDeleteEdge(`engagement-edge-${engagementId}`);
-  };
+  }, [getValues, setValue, onDeleteEdge]);
 
-  const availableTargetNodes = nodes.filter((n) => n.id !== node.id && n.type === "state");
+  // Memoize available target nodes to avoid recalculating on every render
+  const availableTargetNodes = useMemo(
+    () => nodes.filter((n) => n.id !== node.id && n.type === "state"),
+    [nodes, node.id]
+  );
 
-  const renderFilterEditor = (
+  // Memoize filter editor to avoid recreating on every render
+  const renderFilterEditor = useCallback((
     filter: Condition,
     onUpdate: (updates: Partial<Condition>) => void,
     onDelete: () => void
@@ -434,7 +448,7 @@ export default function NodeConfigurationPanel({
         <DeleteIcon fontSize="small" />
       </IconButton>
     </Box>
-  );
+  ), []);
 
   return (
     <Box sx={styles.containerStyles}>

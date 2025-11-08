@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   Box,
@@ -28,21 +28,40 @@ export default function ElementConfigEditor({ element, onUpdate }: ElementConfig
     reValidateMode: "onBlur",
   });
 
-  // Watch all form values
+  // Watch only specific fields to avoid unnecessary re-renders
+  // We watch the entire form but only update when specific fields change
   const formData = watch();
+
+  // Memoize element key to detect actual changes
+  const textValue = element.type === "text" ? (element as TextElement).text : undefined;
+  const imageSource = element.type === "image" ? (element as ImageElement).imageSource : undefined;
+  const elementKey = useMemo(
+    () => JSON.stringify({
+      id: element.id,
+      type: element.type,
+      text: textValue,
+      imageSource: imageSource,
+    }),
+    [element.id, element.type, textValue, imageSource]
+  );
 
   // Sync form when element changes
   useEffect(() => {
     reset(element);
-  }, [element.id, reset]); // Only reset when element ID changes (new element selected)
+  }, [elementKey, reset]); // Only reset when element actually changes
 
   // Update parent when form values change (debounced via onBlur mode)
   // Use a ref to prevent infinite loops
   const prevElementRef = useRef(element);
+  const prevFormDataRef = useRef(formData);
   useEffect(() => {
     // Only update if form data has actually changed and element hasn't changed externally
-    if (prevElementRef.current.id === element.id && JSON.stringify(formData) !== JSON.stringify(prevElementRef.current)) {
+    if (
+      prevElementRef.current.id === element.id && 
+      JSON.stringify(prevFormDataRef.current) !== JSON.stringify(formData)
+    ) {
       onUpdate(formData as Partial<UIElement>);
+      prevFormDataRef.current = formData;
     }
     prevElementRef.current = element;
   }, [formData, element, onUpdate]);

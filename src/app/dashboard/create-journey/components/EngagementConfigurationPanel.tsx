@@ -49,14 +49,31 @@ export default function EngagementConfigurationPanel({
     reValidateMode: "onBlur",
   });
 
-  // Watch form data
-  const formData = watch();
-  const config = formData as EngagementConfig;
+  // Watch only specific form fields to avoid unnecessary re-renders
+  const variant = watch("variant");
+  const contentElements = watch("content.elements");
+  
+  // Memoize config object to avoid recreating on every render
+  const config = useMemo((): EngagementConfig => ({
+    variant: variant || undefined,
+    content: {
+      elements: (contentElements || []) as UIElement[],
+    },
+  }), [variant, contentElements]);
+
+  // Memoize source node key to detect actual changes
+  const sourceNodeKey = useMemo(
+    () => JSON.stringify({
+      engagementId: engagementNode.data.engagementId,
+      engagementsCount: (sourceNode.data as any).engagements?.length || 0,
+    }),
+    [engagementNode.data.engagementId, (sourceNode.data as any).engagements?.length]
+  );
 
   // Sync form when source node changes
   useEffect(() => {
     reset(getInitialConfig());
-  }, [sourceNode.data, engagementNode.data.engagementId, reset, getInitialConfig]);
+  }, [sourceNodeKey, reset, getInitialConfig]);
 
   const onSubmit = (data: EngagementConfig) => {
     onUpdate(engagementNode.data.engagementId, data);
