@@ -450,16 +450,34 @@ export default function NodeConfigurationPanel({
     </Box>
   ), []);
 
+  // Generate dynamic header label based on node state
+  const headerLabel = useMemo(() => {
+    if (node.data.isEntry) {
+      return eventName ? `Configure Entry: ${eventName}` : "Configure Entry Node";
+    }
+    return eventName ? `Configure: ${eventName}` : "Configure Journey Node";
+  }, [node.data.isEntry, eventName]);
+
   return (
     <Box sx={styles.containerStyles}>
       <Box sx={styles.headerStyles}>
-        <Typography variant="h6">Configure Node</Typography>
-        <IconButton size="small" onClick={handleCloseClick}>
+        <Box sx={styles.headerContentStyles}>
+          {node.data.isEntry && (
+            <Chip
+              label="Entry"
+              size="small"
+              color="success"
+              sx={styles.entryChipStyles}
+            />
+          )}
+          <Typography variant="h6" sx={styles.headerTitleStyles}>
+            {headerLabel}
+          </Typography>
+        </Box>
+        <IconButton size="small" onClick={handleCloseClick} sx={styles.closeButtonStyles}>
           <CloseIcon />
         </IconButton>
       </Box>
-
-      <Divider sx={{ mb: 2 }} />
 
       <Box sx={styles.formContainerStyles} component="form" onSubmit={handleSave}>
         {/* Event Name */}

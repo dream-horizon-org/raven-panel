@@ -11,7 +11,41 @@ export const headerStyles: SxProps<Theme> = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  mb: 2,
+  mb: 3,
+  pb: 2,
+  borderBottom: 1,
+  borderColor: "divider",
+};
+
+export const headerContentStyles: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1.5,
+  flex: 1,
+};
+
+export const headerTitleStyles: SxProps<Theme> = {
+  fontWeight: 600,
+  fontSize: "1.25rem",
+  lineHeight: 1.2,
+  color: "text.primary",
+};
+
+export const entryChipStyles: SxProps<Theme> = {
+  height: 24,
+  fontSize: "0.75rem",
+  fontWeight: 600,
+  "& .MuiChip-label": {
+    px: 1,
+  },
+};
+
+export const closeButtonStyles: SxProps<Theme> = {
+  color: "text.secondary",
+  "&:hover": {
+    backgroundColor: "action.hover",
+    color: "text.primary",
+  },
 };
 
 export const formContainerStyles: SxProps<Theme> = {
