@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { Box, Typography, TextField, Paper } from "@mui/material";
 import { Spacing as SpacingType } from "../../types";
 
@@ -12,28 +14,51 @@ interface SpacingEditorProps {
 }
 
 export default function SpacingEditor({ spacing, onSpacingChange }: SpacingEditorProps) {
-  const margin = spacing?.margin || { top: 0, right: 0, bottom: 0, left: 0 };
-  const padding = spacing?.padding || { top: 0, right: 0, bottom: 0, left: 0 };
-
-  const handleMarginChange = (side: keyof SpacingType, value: number) => {
-    onSpacingChange({
-      ...spacing,
-      margin: {
-        ...margin,
-        [side]: value,
-      },
-    });
+  const defaultSpacing = {
+    margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    padding: { top: 0, right: 0, bottom: 0, left: 0 },
   };
 
-  const handlePaddingChange = (side: keyof SpacingType, value: number) => {
-    onSpacingChange({
-      ...spacing,
-      padding: {
-        ...padding,
-        [side]: value,
-      },
-    });
-  };
+  const { control, watch, reset } = useForm<{
+    margin: SpacingType;
+    padding: SpacingType;
+  } & Record<string, unknown>>({
+    defaultValues: {
+      margin: spacing?.margin || defaultSpacing.margin,
+      padding: spacing?.padding || defaultSpacing.padding,
+    },
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+  });
+
+  // Watch form values
+  const formData = watch();
+
+  // Sync form when spacing prop changes
+  const prevSpacingRef = useRef(spacing);
+  useEffect(() => {
+    // Only reset if spacing prop actually changed
+    if (JSON.stringify(prevSpacingRef.current) !== JSON.stringify(spacing)) {
+      reset({
+        margin: spacing?.margin || defaultSpacing.margin,
+        padding: spacing?.padding || defaultSpacing.padding,
+      });
+      prevSpacingRef.current = spacing;
+    }
+  }, [spacing, reset]);
+
+  // Update parent when form values change
+  const prevFormDataRef = useRef(formData);
+  useEffect(() => {
+    // Only update if form data actually changed
+    if (JSON.stringify(prevFormDataRef.current) !== JSON.stringify(formData)) {
+      onSpacingChange({
+        margin: formData.margin,
+        padding: formData.padding,
+      });
+      prevFormDataRef.current = formData;
+    }
+  }, [formData, onSpacingChange]);
 
   return (
     <Box>
@@ -48,37 +73,61 @@ export default function SpacingEditor({ spacing, onSpacingChange }: SpacingEdito
             Margin
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-            <TextField
-              label="Top"
-              type="number"
-              value={margin.top}
-              onChange={(e) => handleMarginChange("top", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="margin.top"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Top"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
-            <TextField
-              label="Right"
-              type="number"
-              value={margin.right}
-              onChange={(e) => handleMarginChange("right", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="margin.right"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Right"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
-            <TextField
-              label="Bottom"
-              type="number"
-              value={margin.bottom}
-              onChange={(e) => handleMarginChange("bottom", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="margin.bottom"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Bottom"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
-            <TextField
-              label="Left"
-              type="number"
-              value={margin.left}
-              onChange={(e) => handleMarginChange("left", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="margin.left"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Left"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
           </Box>
         </Box>
@@ -89,37 +138,61 @@ export default function SpacingEditor({ spacing, onSpacingChange }: SpacingEdito
             Padding
           </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-            <TextField
-              label="Top"
-              type="number"
-              value={padding.top}
-              onChange={(e) => handlePaddingChange("top", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="padding.top"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Top"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
-            <TextField
-              label="Right"
-              type="number"
-              value={padding.right}
-              onChange={(e) => handlePaddingChange("right", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="padding.right"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Right"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
-            <TextField
-              label="Bottom"
-              type="number"
-              value={padding.bottom}
-              onChange={(e) => handlePaddingChange("bottom", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="padding.bottom"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Bottom"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
-            <TextField
-              label="Left"
-              type="number"
-              value={padding.left}
-              onChange={(e) => handlePaddingChange("left", Number(e.target.value) || 0)}
-              size="small"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="padding.left"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Left"
+                  type="number"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
             />
           </Box>
         </Box>

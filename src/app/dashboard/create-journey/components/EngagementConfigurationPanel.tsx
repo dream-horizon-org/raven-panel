@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { Node } from "@xyflow/react";
 import {
   Box,
@@ -37,46 +38,44 @@ export default function EngagementConfigurationPanel({
 }: EngagementConfigurationPanelProps) {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
-  const [localConfig, setLocalConfig] = useState<EngagementConfig>(() => {
-    // Get engagement from source node
+
+  // Get initial config from source node
+  const getInitialConfig = useCallback((): EngagementConfig => {
     const engagement = (sourceNode.data as any).engagements?.find(
       (e: Engagement) => e.id === engagementNode.data.engagementId
     );
     return (engagement?.config as EngagementConfig) || { content: { elements: [] } };
+  }, [sourceNode.data, engagementNode.data.engagementId]);
+
+  const { control, handleSubmit, watch, reset, setValue } = useForm<EngagementConfig & Record<string, unknown>>({
+    defaultValues: getInitialConfig(),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
   });
 
-  const handleSave = useCallback(() => {
-    onUpdate(engagementNode.data.engagementId, localConfig);
-    onClose();
-  }, [engagementNode.data.engagementId, localConfig, onUpdate, onClose]);
+  // Watch form data
+  const formData = watch();
+  const config = formData as EngagementConfig;
 
-  const handleConfigChange = useCallback((updates: Partial<EngagementConfig>) => {
-    setLocalConfig((prev) => ({
-      ...prev,
-      ...updates,
-      content: {
-        ...prev.content,
-        ...updates.content,
-      },
-    }));
-  }, []);
+  // Sync form when source node changes
+  useEffect(() => {
+    reset(getInitialConfig());
+  }, [sourceNode.data, engagementNode.data.engagementId, reset, getInitialConfig]);
+
+  const onSubmit = (data: EngagementConfig) => {
+    onUpdate(engagementNode.data.engagementId, data);
+    onClose();
+  };
+
+  const handleSave = handleSubmit(onSubmit);
 
   const handleVariantSelect = useCallback((variantId: string) => {
-    setLocalConfig((prev) => ({
-      ...prev,
-      variant: variantId,
-    }));
-  }, []);
+    setValue("variant", variantId, { shouldDirty: true });
+  }, [setValue]);
 
   const handleContentChange = useCallback((elements: UIElement[]) => {
-    setLocalConfig((prev) => ({
-      ...prev,
-      content: {
-        ...prev.content,
-        elements,
-      },
-    }));
-  }, []);
+    setValue("content.elements", elements, { shouldDirty: true });
+  }, [setValue]);
 
   return (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -110,7 +109,7 @@ export default function EngagementConfigurationPanel({
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
             <EngagementPreview
               engagementType={engagementNode.data.engagementType}
-              config={localConfig}
+              config={config}
             />
           </Box>
         </Box>
@@ -158,14 +157,14 @@ export default function EngagementConfigurationPanel({
             {activeTab === 0 && (
               <EngagementVariantSelector
                 engagementType={engagementNode.data.engagementType}
-                selectedVariant={localConfig.variant}
+                selectedVariant={config.variant}
                 onSelectVariant={handleVariantSelect}
               />
             )}
 
             {activeTab === 1 && (
               <EngagementContentEditor
-                elements={localConfig.content?.elements || []}
+                elements={config.content?.elements || []}
                 onElementsChange={handleContentChange}
               />
             )}

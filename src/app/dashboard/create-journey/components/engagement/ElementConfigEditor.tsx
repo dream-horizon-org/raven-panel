@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
 import {
   Box,
   Typography,
@@ -20,113 +22,194 @@ interface ElementConfigEditorProps {
 }
 
 export default function ElementConfigEditor({ element, onUpdate }: ElementConfigEditorProps) {
+  const { control, watch, reset, setValue } = useForm<UIElement & Record<string, unknown>>({
+    defaultValues: element,
+    mode: "onBlur",
+    reValidateMode: "onBlur",
+  });
+
+  // Watch all form values
+  const formData = watch();
+
+  // Sync form when element changes
+  useEffect(() => {
+    reset(element);
+  }, [element.id, reset]); // Only reset when element ID changes (new element selected)
+
+  // Update parent when form values change (debounced via onBlur mode)
+  // Use a ref to prevent infinite loops
+  const prevElementRef = useRef(element);
+  useEffect(() => {
+    // Only update if form data has actually changed and element hasn't changed externally
+    if (prevElementRef.current.id === element.id && JSON.stringify(formData) !== JSON.stringify(prevElementRef.current)) {
+      onUpdate(formData as Partial<UIElement>);
+    }
+    prevElementRef.current = element;
+  }, [formData, element, onUpdate]);
+
   if (element.type === "text") {
-    const textElement = element as TextElement;
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <TextField
-          fullWidth
-          label="Text"
-          value={textElement.text || ""}
-          onChange={(e) => onUpdate({ text: e.target.value } as Partial<TextElement>)}
-          multiline
-          rows={2}
-          size="small"
+        <Controller
+          name="text"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              label="Text"
+              multiline
+              rows={2}
+              size="small"
+            />
+          )}
         />
 
-        <FormControl fullWidth size="small">
-          <InputLabel>Text Alignment</InputLabel>
-          <Select
-            value={textElement.textAlignment || "left"}
-            label="Text Alignment"
-            onChange={(e) =>
-              onUpdate({ textAlignment: e.target.value as "left" | "center" | "right" } as Partial<TextElement>)
-            }
-          >
-            <MenuItem value="left">Left</MenuItem>
-            <MenuItem value="center">Center</MenuItem>
-            <MenuItem value="right">Right</MenuItem>
-          </Select>
-        </FormControl>
+        <Controller
+          name="textAlignment"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth size="small">
+              <InputLabel>Text Alignment</InputLabel>
+              <Select
+                {...field}
+                label="Text Alignment"
+              >
+                <MenuItem value="left">Left</MenuItem>
+                <MenuItem value="center">Center</MenuItem>
+                <MenuItem value="right">Right</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        />
 
         <Box sx={{ display: "flex", gap: 2 }}>
-          <TextField
-            label="Text Color"
-            type="color"
-            value={textElement.textColor || "#000000"}
-            onChange={(e) => onUpdate({ textColor: e.target.value } as Partial<TextElement>)}
-            size="small"
-            sx={{ flex: 1 }}
-            InputLabelProps={{ shrink: true }}
+          <Controller
+            name="textColor"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Text Color"
+                type="color"
+                size="small"
+                sx={{ flex: 1 }}
+                InputLabelProps={{ shrink: true }}
+              />
+            )}
           />
-          <TextField
-            label="Font Size (dp)"
-            type="number"
-            value={textElement.fontSize || 16}
-            onChange={(e) => onUpdate({ fontSize: Number(e.target.value) } as Partial<TextElement>)}
-            size="small"
-            sx={{ flex: 1 }}
-            InputLabelProps={{ shrink: true }}
+          <Controller
+            name="fontSize"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Font Size (dp)"
+                type="number"
+                size="small"
+                sx={{ flex: 1 }}
+                InputLabelProps={{ shrink: true }}
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
+            )}
           />
         </Box>
 
-        <TextField
-          fullWidth
-          label="Font Family"
-          value={textElement.fontFamily || ""}
-          onChange={(e) => onUpdate({ fontFamily: e.target.value } as Partial<TextElement>)}
-          size="small"
-          placeholder="e.g., PlusJakartaSans-Bold.ttf"
+        <Controller
+          name="fontFamily"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              label="Font Family"
+              size="small"
+              placeholder="e.g., PlusJakartaSans-Bold.ttf"
+            />
+          )}
         />
 
-        <SpacingEditor
-          spacing={textElement.spacing}
-          onSpacingChange={(spacing) => onUpdate({ spacing } as Partial<TextElement>)}
+        <Controller
+          name="spacing"
+          control={control}
+          render={({ field }) => (
+            <SpacingEditor
+              spacing={field.value}
+              onSpacingChange={(spacing) => {
+                field.onChange(spacing);
+                setValue("spacing", spacing, { shouldDirty: true });
+              }}
+            />
+          )}
         />
       </Box>
     );
   }
 
   if (element.type === "image") {
-    const imageElement = element as ImageElement;
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <TextField
-          fullWidth
-          label="Image Source"
-          value={imageElement.imageSource || ""}
-          onChange={(e) => onUpdate({ imageSource: e.target.value } as Partial<ImageElement>)}
-          size="small"
-          placeholder="URL or path to image"
-          helperText="Supported formats: JPEG, PNG, WEBP and GIF up to 1 MB"
-        />
-
-        <FormControl fullWidth size="small">
-          <InputLabel>Click Action</InputLabel>
-          <Select
-            value={imageElement.clickAction || "none"}
-            label="Click Action"
-            onChange={(e) => onUpdate({ clickAction: e.target.value } as Partial<ImageElement>)}
-          >
-            <MenuItem value="none">None</MenuItem>
-            <MenuItem value="open-url">Open URL</MenuItem>
-            <MenuItem value="deep-link">Deep Link</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControlLabel
-          control={
-            <Switch
-              checked={imageElement.occupyFullWidth || false}
-              onChange={(e) => onUpdate({ occupyFullWidth: e.target.checked } as Partial<ImageElement>)}
+        <Controller
+          name="imageSource"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              fullWidth
+              label="Image Source"
+              size="small"
+              placeholder="URL or path to image"
+              helperText="Supported formats: JPEG, PNG, WEBP and GIF up to 1 MB"
             />
-          }
-          label="Occupy Full Width Of Container"
+          )}
         />
 
-        <SpacingEditor
-          spacing={imageElement.spacing}
-          onSpacingChange={(spacing) => onUpdate({ spacing } as Partial<ImageElement>)}
+        <Controller
+          name="clickAction"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth size="small">
+              <InputLabel>Click Action</InputLabel>
+              <Select
+                {...field}
+                label="Click Action"
+              >
+                <MenuItem value="none">None</MenuItem>
+                <MenuItem value="open-url">Open URL</MenuItem>
+                <MenuItem value="deep-link">Deep Link</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        />
+
+        <Controller
+          name="occupyFullWidth"
+          control={control}
+          render={({ field }) => (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={field.value || false}
+                  onChange={field.onChange}
+                />
+              }
+              label="Occupy Full Width Of Container"
+            />
+          )}
+        />
+
+        <Controller
+          name="spacing"
+          control={control}
+          render={({ field }) => (
+            <SpacingEditor
+              spacing={field.value}
+              onSpacingChange={(spacing) => {
+                field.onChange(spacing);
+                setValue("spacing", spacing, { shouldDirty: true });
+              }}
+            />
+          )}
         />
       </Box>
     );
@@ -136,27 +219,39 @@ export default function ElementConfigEditor({ element, onUpdate }: ElementConfig
     const viewElement = element as ViewElement;
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Orientation</InputLabel>
-          <Select
-            value={viewElement.orientation || "vertical"}
-            label="Orientation"
-            onChange={(e) =>
-              onUpdate({ orientation: e.target.value as "horizontal" | "vertical" } as Partial<ViewElement>)
-            }
-          >
-            <MenuItem value="vertical">Vertical</MenuItem>
-            <MenuItem value="horizontal">Horizontal</MenuItem>
-          </Select>
-        </FormControl>
+        <Controller
+          name="orientation"
+          control={control}
+          render={({ field }) => (
+            <FormControl fullWidth size="small">
+              <InputLabel>Orientation</InputLabel>
+              <Select
+                {...field}
+                label="Orientation"
+              >
+                <MenuItem value="vertical">Vertical</MenuItem>
+                <MenuItem value="horizontal">Horizontal</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        />
 
         <Typography variant="body2" color="text.secondary">
           Children: {viewElement.children?.length || 0} element(s)
         </Typography>
 
-        <SpacingEditor
-          spacing={viewElement.spacing}
-          onSpacingChange={(spacing) => onUpdate({ spacing } as Partial<ViewElement>)}
+        <Controller
+          name="spacing"
+          control={control}
+          render={({ field }) => (
+            <SpacingEditor
+              spacing={field.value}
+              onSpacingChange={(spacing) => {
+                field.onChange(spacing);
+                setValue("spacing", spacing, { shouldDirty: true });
+              }}
+            />
+          )}
         />
       </Box>
     );
