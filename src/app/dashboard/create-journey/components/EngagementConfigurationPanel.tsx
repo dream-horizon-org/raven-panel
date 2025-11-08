@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Node } from "@xyflow/react";
 import {
   Box,
@@ -11,10 +11,6 @@ import {
   Divider,
   Tabs,
   Tab,
-  Paper,
-  Card,
-  CardContent,
-  CardActionArea,
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";

@@ -8,7 +8,7 @@ interface EngagementPreviewProps {
   config: EngagementConfig;
 }
 
-export default function EngagementPreview({ engagementType, config }: EngagementPreviewProps) {
+export default function EngagementPreview({ engagementType: _engagementType, config }: EngagementPreviewProps) {
   const theme = useTheme();
   const elements = config.content?.elements || [];
 

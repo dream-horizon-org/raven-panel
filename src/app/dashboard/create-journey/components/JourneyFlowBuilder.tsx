@@ -553,11 +553,6 @@ export default function JourneyFlowBuilder() {
     [setEdges]
   );
 
-  // This function is no longer needed - nodes are created when configuration is saved
-  // Keeping it for backward compatibility but it does nothing now
-  const handleCreateNodeOrExit = useCallback(() => {
-    // Do nothing - nodes will be created when handleUpdateNode is called (on save)
-  }, []);
 
   const handleClosePanel = () => {
     // If panel has a close handler (for checking unsaved changes), use it
