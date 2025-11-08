@@ -31,6 +31,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { JourneyNodeData, Condition, Branch, Engagement } from "./types";
+import * as styles from "./styles/nodeConfigurationPanelStyles";
 
 interface NodeConfigurationPanelProps {
   node: Node<JourneyNodeData>;
@@ -395,14 +396,14 @@ export default function NodeConfigurationPanel({
     onUpdate: (updates: Partial<Condition>) => void,
     onDelete: () => void
   ) => (
-    <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+    <Box sx={styles.filterEditorStyles}>
       <TextField
         label="Property"
         placeholder="e.g., platform, user.age"
         value={filter.property}
         onChange={(e) => onUpdate({ property: e.target.value })}
         size="small"
-        sx={{ flex: 2 }}
+        sx={styles.filterPropertyFieldStyles}
       />
       <TextField
         select
@@ -410,7 +411,7 @@ export default function NodeConfigurationPanel({
         value={filter.operator}
         onChange={(e) => onUpdate({ operator: e.target.value as Condition["operator"] })}
         size="small"
-        sx={{ flex: 1, minWidth: 120 }}
+        sx={styles.filterOperatorFieldStyles}
       >
         <MenuItem value="=">=</MenuItem>
         <MenuItem value="!=">≠</MenuItem>
@@ -427,17 +428,17 @@ export default function NodeConfigurationPanel({
         value={filter.value}
         onChange={(e) => onUpdate({ value: e.target.value })}
         size="small"
-        sx={{ flex: 2 }}
+        sx={styles.filterValueFieldStyles}
       />
-      <IconButton size="small" onClick={onDelete} color="error" sx={{ mt: 0.5 }}>
+      <IconButton size="small" onClick={onDelete} color="error" sx={styles.filterDeleteButtonStyles}>
         <DeleteIcon fontSize="small" />
       </IconButton>
     </Box>
   );
 
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+    <Box sx={styles.containerStyles}>
+      <Box sx={styles.headerStyles}>
         <Typography variant="h6">Configure Node</Typography>
         <IconButton size="small" onClick={handleCloseClick}>
           <CloseIcon />
@@ -446,9 +447,9 @@ export default function NodeConfigurationPanel({
 
       <Divider sx={{ mb: 2 }} />
 
-      <Box sx={{ flex: 1, overflowY: "auto" }} component="form" onSubmit={handleSave}>
+      <Box sx={styles.formContainerStyles} component="form" onSubmit={handleSave}>
         {/* Event Name */}
-        <Box sx={{ mb: 3, mt: eventName ? 2 : 0 }}>
+        <Box sx={styles.eventNameContainerStyles(!!eventName)}>
           {node.data.isEntry && !eventName && (
             <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ mb: 2 }}>
               <Typography variant="body2">
@@ -491,32 +492,7 @@ export default function NodeConfigurationPanel({
                       ? "⚠️ Please select an event first to enable transitions and engagements"
                       : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
                   }
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      ...(node.data.isEntry && !field.value && {
-                        "& fieldset": {
-                          borderColor: "primary.main",
-                          borderWidth: 2,
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "primary.main",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "primary.main",
-                          borderWidth: 2,
-                        },
-                        animation: "pulse 2s ease-in-out infinite",
-                        "@keyframes pulse": {
-                          "0%, 100%": {
-                            boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
-                          },
-                          "50%": {
-                            boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
-                          },
-                        },
-                      }),
-                    },
-                  }}
+                  sx={styles.eventNameInputStyles(node.data.isEntry || false, !!field.value)}
                 >
                   <MenuItem value="">
                     <em>Select an event</em>
@@ -532,13 +508,13 @@ export default function NodeConfigurationPanel({
           />
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={styles.sectionDividerStyles} />
 
         {/* In-App Presentations */}
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Box sx={styles.engagementContainerStyles}>
+          <Box sx={styles.sectionHeaderStyles}>
             <Box>
-              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={styles.sectionTitleStyles}>
                 In-App Presentations
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -558,24 +534,17 @@ export default function NodeConfigurationPanel({
           </Box>
 
           {engagements.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={styles.engagementListStyles}>
               {engagements.map((engagement: Engagement, index: number) => {
                 const isHighlighted = highlightedEngagementId === engagement.id && showEngagementHighlight;
                 return (
                 <Paper
                   key={engagement.id}
                   elevation={isHighlighted ? 3 : 1}
-                  sx={{
-                    border: "2px solid",
-                    borderColor: isHighlighted ? "primary.main" : "divider",
-                    borderRadius: 2,
-                    p: 2.5,
-                    bgcolor: isHighlighted ? "action.selected" : "background.paper",
-                    transition: "all 0.2s",
-                  }}
+                  sx={styles.engagementPaperStyles(isHighlighted)}
                 >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={styles.engagementHeaderStyles}>
+                    <Box sx={styles.engagementIconContainerStyles}>
                       {engagement.type === "tooltip" && <InfoIcon sx={{ color: "#ff9800" }} />}
                       {engagement.type === "popup" && <OpenInNewIcon sx={{ color: "#ff9800" }} />}
                       {engagement.type === "bottomsheet" && <ViewAgendaIcon sx={{ color: "#ff9800" }} />}
@@ -611,19 +580,19 @@ export default function NodeConfigurationPanel({
                         size="small"
                       >
                         <MenuItem value="tooltip">
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={styles.engagementMenuItemStyles}>
                             <InfoIcon sx={{ fontSize: 18 }} />
                             <Typography>Tooltip</Typography>
                           </Box>
                         </MenuItem>
                         <MenuItem value="popup">
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={styles.engagementMenuItemStyles}>
                             <OpenInNewIcon sx={{ fontSize: 18 }} />
                             <Typography>Popup</Typography>
                           </Box>
                         </MenuItem>
                         <MenuItem value="bottomsheet">
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={styles.engagementMenuItemStyles}>
                             <ViewAgendaIcon sx={{ fontSize: 18 }} />
                             <Typography>Bottom Sheet</Typography>
                       </Box>
@@ -636,16 +605,7 @@ export default function NodeConfigurationPanel({
               })}
             </Box>
           ) : (
-            <Box
-              sx={{
-                p: 2,
-                textAlign: "center",
-                bgcolor: node.data.isEntry && !eventName ? "action.disabledBackground" : "action.hover",
-                borderRadius: 1,
-                border: node.data.isEntry && !eventName ? "1px dashed" : "none",
-                borderColor: node.data.isEntry && !eventName ? "divider" : "transparent",
-              }}
-            >
+            <Box sx={styles.emptyEngagementBoxStyles(node.data.isEntry || false, !!eventName)}>
               <Typography
                 variant="caption"
                 color={node.data.isEntry && !eventName ? "text.disabled" : "text.secondary"}
@@ -658,11 +618,11 @@ export default function NodeConfigurationPanel({
           )}
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={styles.sectionDividerStyles} />
 
         {/* Branches */}
         <Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box sx={styles.sectionHeaderStyles}>
             <Box>
               <Typography variant="subtitle2" fontWeight={600}>
                 Transitions
@@ -693,7 +653,7 @@ export default function NodeConfigurationPanel({
           )}
 
           {branches.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={styles.branchListStyles}>
               {branches.map((branch: Branch, index: number) => {
                 const isHighlighted = highlightedBranchId === branch.id && showBranchHighlight;
                 const isNewlyAdded = newlyAddedBranchId === branch.id;
@@ -710,24 +670,12 @@ export default function NodeConfigurationPanel({
                       }
                     }}
                     elevation={shouldHighlight ? 3 : 1}
-                    sx={{
-                      border: "2px solid",
-                      borderColor: shouldHighlight ? "primary.main" : "divider",
-                      borderRadius: 2,
-                      p: 2.5,
-                      bgcolor: shouldHighlight ? "action.selected" : "background.paper",
-                      transition: "all 0.2s",
-                      ...(shouldHighlight && {
-                        boxShadow: isNewlyAdded
-                          ? "0 4px 16px rgba(25, 118, 210, 0.5)"
-                          : "0 4px 12px rgba(25, 118, 210, 0.3)",
-                      }),
-                    }}
+                    sx={styles.branchPaperStyles(shouldHighlight, isNewlyAdded)}
                   >
                     {/* Transition Flow Header */}
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2.5 }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Box sx={styles.branchHeaderStyles}>
+                      <Box sx={styles.branchContentStyles}>
+                        <Box sx={styles.branchChipContainerStyles}>
                           <Chip
                             label={`Transition ${index + 1}`}
                             size="small"
@@ -736,18 +684,8 @@ export default function NodeConfigurationPanel({
                           />
                         </Box>
                         {/* Visual Flow Indicator */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            mt: 1.5,
-                            p: 1.5,
-                            bgcolor: "action.hover",
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Box sx={{ flex: 1 }}>
+                        <Box sx={styles.flowIndicatorStyles}>
+                          <Box sx={styles.flowStepStyles}>
                             <Typography variant="caption" color="text.secondary" display="block">
                               When
                             </Typography>
@@ -756,7 +694,7 @@ export default function NodeConfigurationPanel({
                             </Typography>
                           </Box>
                           <ArrowForwardIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-                          <Box sx={{ flex: 1 }}>
+                          <Box sx={styles.flowStepStyles}>
                             <Typography variant="caption" color="text.secondary" display="block">
                               AND conditions pass
                             </Typography>
@@ -767,7 +705,7 @@ export default function NodeConfigurationPanel({
                             </Typography>
                           </Box>
                           <ArrowForwardIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-                          <Box sx={{ flex: 1 }}>
+                          <Box sx={styles.flowStepStyles}>
                             <Typography variant="caption" color="text.secondary" display="block">
                               Go to
                             </Typography>
@@ -782,7 +720,7 @@ export default function NodeConfigurationPanel({
                       </IconButton>
                     </Box>
 
-                    <Divider sx={{ my: 2 }} />
+                    <Divider sx={styles.branchDividerStyles} />
 
                     {/* Target Node Selection */}
                     <Box sx={{ mb: 3 }}>
@@ -827,9 +765,9 @@ export default function NodeConfigurationPanel({
 
                     {/* Conditions Section */}
                     <Box>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                      <Box sx={styles.conditionsHeaderStyles}>
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
+                          <Typography variant="subtitle2" fontWeight={600} sx={styles.sectionTitleStyles}>
                             Conditions
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -850,26 +788,8 @@ export default function NodeConfigurationPanel({
                         <Box>
                           {/* AND Logic Header */}
                           {(branch.filters?.length || 0) > 1 && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                                mb: 2,
-                                p: 1.5,
-                                bgcolor: (theme) =>
-                                  theme.palette.mode === "light"
-                                    ? "rgba(25, 118, 210, 0.08)"
-                                    : "rgba(144, 202, 249, 0.16)",
-                                borderRadius: 1,
-                                border: "1px solid",
-                                borderColor: (theme) =>
-                                  theme.palette.mode === "light"
-                                    ? "rgba(25, 118, 210, 0.2)"
-                                    : "rgba(144, 202, 249, 0.3)",
-                              }}
-                            >
-                              <CheckCircleOutlineIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                            <Box sx={styles.andLogicHeaderStyles}>
+                              <CheckCircleOutlineIcon sx={styles.andLogicIconStyles} />
                               <Typography variant="caption" fontWeight={600} color="primary.main">
                                 All conditions must pass (AND logic)
                               </Typography>
@@ -880,52 +800,18 @@ export default function NodeConfigurationPanel({
                             {(branch.filters || []).map((filter: Condition, filterIndex: number) => (
                               <Box key={filter.id}>
                                 {filterIndex > 0 && (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 1,
-                                      my: 1.5,
-                                      position: "relative",
-                                    }}
-                                  >
-                                    <Box sx={{ flex: 1, height: "1px", bgcolor: "divider" }} />
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 0.5,
-                                        px: 1.5,
-                                        py: 0.5,
-                                        bgcolor: "primary.main",
-                                        color: "white",
-                                        borderRadius: 2,
-                                        boxShadow: 1,
-                                      }}
-                                    >
+                                  <Box sx={styles.andConnectorStyles}>
+                                    <Box sx={styles.andConnectorLineStyles} />
+                                    <Box sx={styles.andBadgeStyles}>
                                       <Typography variant="caption" fontWeight={700} sx={{ fontSize: "0.7rem", letterSpacing: 0.5 }}>
                                         AND
                                       </Typography>
                                     </Box>
-                                    <Box sx={{ flex: 1, height: "1px", bgcolor: "divider" }} />
+                                    <Box sx={styles.andConnectorLineStyles} />
                                   </Box>
                                 )}
-                                <Box
-                                  sx={{
-                                    p: 1.5,
-                                    border: "1px solid",
-                                    borderColor: "divider",
-                                    borderRadius: 1,
-                                    bgcolor: "background.paper",
-                                    position: "relative",
-                                    "&:hover": {
-                                      borderColor: "primary.main",
-                                      boxShadow: 1,
-                                    },
-                                    transition: "all 0.2s",
-                                  }}
-                                >
-                                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+                                <Box sx={styles.conditionCardStyles}>
+                                  <Box sx={styles.conditionHeaderStyles}>
                                     <Typography variant="caption" fontWeight={600} color="text.secondary">
                                       Condition {filterIndex + 1}
                                     </Typography>
@@ -941,7 +827,7 @@ export default function NodeConfigurationPanel({
                           </Box>
                         </Box>
                       ) : (
-                        <Box sx={{ p: 1.5, textAlign: "center", bgcolor: "action.hover", borderRadius: 1 }}>
+                        <Box sx={styles.emptyConditionsBoxStyles}>
                           <Typography variant="caption" color="text.secondary">
                             No conditions. Always taken if no other transition matches.
                           </Typography>
@@ -953,16 +839,7 @@ export default function NodeConfigurationPanel({
               })}
             </Box>
           ) : (
-            <Box
-              sx={{
-                p: 3,
-                textAlign: "center",
-                bgcolor: node.data.isEntry && !eventName ? "action.disabledBackground" : "action.hover",
-                borderRadius: 1,
-                border: node.data.isEntry && !eventName ? "1px dashed" : "none",
-                borderColor: node.data.isEntry && !eventName ? "divider" : "transparent",
-              }}
-            >
+            <Box sx={styles.emptyBranchBoxStyles(node.data.isEntry || false, !!eventName)}>
               <Typography variant="body2" color={node.data.isEntry && !eventName ? "text.disabled" : "text.secondary"}>
                 {node.data.isEntry && !eventName
                   ? "Select an event first to add transitions"
@@ -973,13 +850,13 @@ export default function NodeConfigurationPanel({
         </Box>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={styles.footerDividerStyles} />
 
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <Button variant="outlined" color="error" onClick={() => { onDelete(node.id); onClose(); }} sx={{ flex: 1 }}>
+      <Box sx={styles.actionButtonsContainerStyles}>
+        <Button variant="outlined" color="error" onClick={() => { onDelete(node.id); onClose(); }} sx={styles.actionButtonStyles}>
           Delete
         </Button>
-        <Button variant="contained" onClick={handleSave} sx={{ flex: 1 }}>
+        <Button variant="contained" onClick={handleSave} sx={styles.actionButtonStyles}>
           Save
         </Button>
       </Box>
@@ -994,15 +871,15 @@ export default function NodeConfigurationPanel({
         fullWidth
       >
         <DialogTitle id="unsaved-changes-dialog-title">
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <WarningAmberIcon sx={{ color: "warning.main", fontSize: 28 }} />
+          <Box sx={styles.dialogTitleContainerStyles}>
+            <WarningAmberIcon sx={styles.dialogTitleIconStyles} />
             <Typography variant="h6" component="span">
               Unsaved Changes
             </Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText id="unsaved-changes-dialog-description" sx={{ fontSize: "0.95rem", lineHeight: 1.6, color: "text.primary", mb: 1 }}>
+          <DialogContentText id="unsaved-changes-dialog-description" sx={styles.dialogContentTextStyles}>
             You have unsaved changes to this node configuration. What would you like to do?
           </DialogContentText>
           <Alert severity="info" sx={{ mt: 2 }}>
@@ -1013,7 +890,7 @@ export default function NodeConfigurationPanel({
             </Typography>
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+        <DialogActions sx={styles.dialogActionsStyles}>
           <Button onClick={() => setShowCloseDialog(false)} color="inherit">
             Cancel
           </Button>
