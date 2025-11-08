@@ -376,7 +376,7 @@ export default function NodeConfigurationPanel({
 
       <Box sx={{ flex: 1, overflowY: "auto" }}>
         {/* Event Name */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, mt: localData.eventName ? 2 : 0 }}>
           {node.data.isEntry && !localData.eventName && (
             <Alert 
               severity="info" 
