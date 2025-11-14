@@ -1,4 +1,4 @@
-import { PropertyType } from "../types/journeyTypes";
+import { OperatorType, PropertyType } from "../types/journeyTypes";
 
 export type FilterOperator = "=" | ">" | "<" | ">=" | "<=";
 
@@ -11,6 +11,14 @@ export const OPERATORS: Array<{
   { value: "<", label: "<" },
   { value: ">=", label: ">=" },
   { value: "<=", label: "<=" },
+];
+
+export const OPERATOR_TYPES: Array<{
+  value: OperatorType;
+  label: string;
+}> = [
+  { value: "AND", label: "AND" },
+  { value: "OR", label: "OR" },
 ];
 
 export const EVENT_OPTIONS = [
@@ -99,34 +107,50 @@ export const JOURNEY_TEXT = {
 } as const;
 
 export const getJourneyFormDefaults = () => ({
-  name: "",
-  cohort: "",
-  event: "",
-  condition: {
-    operator: "AND" as const,
-    comparisons: [
-      {
-        propertyName: "",
-        propertyType: "string" as const,
-        comparisonType: "=" as const,
-        comparisonValue: "",
-      },
-    ],
+  ctaMetadata: {
+    ctaTitle: "",
+    description: "",
+    tags: [],
+    team: "",
+  },
+  selectCohort: {
+    includedCohorts: [],
+    exculdedCohorts: [],
+    rollout: "",
+    maximumUserCount: "",
+    pilotUserId: "",
   },
   schedule: {
-    startType: "immediate" as const,
-    startDate: "",
-    startTime: "",
-    endType: "scheduled" as const,
-    endDate: "",
-    endTime: "",
+    startDateTime: null,
+    endDateTime: null,
+    ctafrequencyInSession: {
+      value: null,
+    },
+    ctaFrequencyInDays: {
+      value: null,
+      days: { id: 0, label: "" },
+      limit: null,
+    },
+    ctaFrequencyInCount: {
+      value: null,
+    },
+    priority: null,
   },
-  journeyFrequency: {
-    timesInSession: 1,
-    maxTimesInPeriod: 1,
-    periodValue: 1,
-    periodUnit: "days" as const,
-    maxTimesInLifetime: 1,
+  ruleEngine: {
+    currentDropdownSelectedEvent: null,
+    eventInfo: [],
+  },
+  contextParams: [],
+  stateMachine: {
+    states: [],
+    events: [],
+  },
+  filterFunctionSeleted: {
+    filterSelected: "",
+  },
+  nudgeSelection: {
+    actions: [],
+    resetStates: [],
   },
 });
 

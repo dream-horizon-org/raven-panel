@@ -74,6 +74,11 @@ export const eventTriggerSectionStyles = {
       color: "primary.dark",
     },
   },
+  operatorSection: {
+    mb: 2,
+    display: "flex",
+    alignItems: "center",
+  },
   filtersList: {
     display: "flex",
     flexDirection: "column",

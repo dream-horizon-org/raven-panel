@@ -5,8 +5,12 @@ import {
   Typography,
   Autocomplete,
   TextField,
-  Button,
   Tooltip,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
@@ -15,80 +19,186 @@ import {
   Controller,
   FieldValues,
   useWatch,
+  useFieldArray,
   useFormContext,
+  Path,
+  FieldArrayPath,
 } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { eventTriggerSectionStyles } from "../styles/eventTriggerSectionStyles";
-import { CreateJourneyFormData } from "../types/journeyTypes";
-import { JOURNEY_TEXT } from "../constants/journeyConstants";
+import {
+  CreateJourneyFormData,
+  Filter,
+  EventInfo,
+  OperatorType,
+} from "../types/journeyTypes";
+import {
+  JOURNEY_TEXT,
+  OPERATOR_TYPES,
+  OPERATORS,
+} from "../constants/journeyConstants";
 import FilterRow from "./FilterRow";
 
 interface EventTriggerSectionProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
-  fields: Array<{ id: string }>;
-  onAddFilter: () => void;
-  onRemoveFilter: (index: number) => void;
-  onOperatorChange: (operator: "AND" | "OR") => void;
-  operator: "AND" | "OR";
-  availableProperties: string[];
-  isLoadingFilters: boolean;
   events: Array<{
     metadata: { eventName: string };
     properties: Array<{ propertyName: string; type: string }>;
   }>;
   isLoadingEvents: boolean;
+  isLoading: boolean;
+  availableProperties: string[];
+  isLoadingFilters: boolean;
   systemProperties: string[];
   systemPropertyTypes: Map<string, string>;
-  isLoading: boolean;
 }
 
 export default function EventTriggerSection({
   control,
   errors,
-  fields,
-  onAddFilter,
-  onRemoveFilter,
-  onOperatorChange,
-  operator,
-  availableProperties,
-  isLoadingFilters,
   events,
   isLoadingEvents,
+  isLoading,
+  availableProperties,
+  isLoadingFilters,
   systemProperties,
   systemPropertyTypes,
-  isLoading,
 }: EventTriggerSectionProps) {
-  const { setValue } = useFormContext<CreateJourneyFormData>();
   const theme = useTheme();
+  const { setValue } = useFormContext<CreateJourneyFormData>();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const selectedEventName = useWatch({ control, name: "event" });
+  const selectedEvent = useWatch({
+    control,
+    name: "ruleEngine.currentDropdownSelectedEvent",
+  });
+
+  const eventInfo = useWatch({
+    control,
+    name: "ruleEngine.eventInfo",
+  });
+
+  // Find the selected event's EventInfo index, create if doesn't exist
+  const selectedEventIndex = useMemo(() => {
+    if (!selectedEvent?.label || !eventInfo) return -1;
+    const index = eventInfo.findIndex(
+      (e) => e?.eventname === selectedEvent.label
+    );
+    return index;
+  }, [selectedEvent, eventInfo]);
+
+  // Clean up incomplete EventInfo entries on mount
+  useEffect(() => {
+    const currentEventInfo = control._formValues.ruleEngine?.eventInfo || [];
+    const cleanedEventInfo = currentEventInfo.filter(
+      (e: EventInfo | unknown): e is EventInfo =>
+        !!e &&
+        typeof e === "object" &&
+        "eventname" in e &&
+        "currentState" in e &&
+        Array.isArray((e as EventInfo).currentState) &&
+        (e as EventInfo).currentState.length > 0
+    );
+
+    if (cleanedEventInfo.length !== currentEventInfo.length) {
+      setValue("ruleEngine.eventInfo", cleanedEventInfo);
+    }
+  }, []); // Only run once on mount
+
+  // Ensure EventInfo exists for selected event
+  useEffect(() => {
+    if (selectedEvent?.label && selectedEventIndex < 0) {
+      const currentEventInfo = control._formValues.ruleEngine?.eventInfo || [];
+
+      // Remove any incomplete entries (missing eventname or invalid structure)
+      const cleanedEventInfo = currentEventInfo.filter(
+        (e: EventInfo | unknown): e is EventInfo =>
+          !!e &&
+          typeof e === "object" &&
+          "eventname" in e &&
+          "currentState" in e &&
+          Array.isArray((e as EventInfo).currentState) &&
+          (e as EventInfo).currentState.length > 0
+      );
+
+      // Create new EventInfo entry with default structure
+      const newEventInfo = {
+        eventname: selectedEvent.label,
+        currentState: [
+          {
+            currentState: 0,
+            nextState: [
+              {
+                transitionTo: 1,
+                filters: {
+                  operator: "AND" as const,
+                  filter: [],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      setValue("ruleEngine.eventInfo", [...cleanedEventInfo, newEventInfo]);
+    }
+  }, [selectedEvent, selectedEventIndex, setValue, control]);
+
+  // Use the found index or calculate the correct index
+  const filterEventIndex = useMemo(() => {
+    if (selectedEventIndex >= 0) {
+      return selectedEventIndex;
+    }
+    // If not found yet, use the last index (will be updated when EventInfo is created)
+    const currentEventInfo = control._formValues.ruleEngine?.eventInfo || [];
+    const cleanedEventInfo = currentEventInfo.filter(
+      (e: EventInfo | unknown): e is EventInfo =>
+        !!e &&
+        typeof e === "object" &&
+        "eventname" in e &&
+        !!(e as EventInfo).eventname
+    );
+    return cleanedEventInfo.length > 0 ? cleanedEventInfo.length - 1 : 0;
+  }, [selectedEventIndex, control]);
+
+  // Use the first currentState's first nextState's filters
+  const filterPath = useMemo(
+    () =>
+      `ruleEngine.eventInfo.${filterEventIndex}.currentState.0.nextState.0.filters` as const,
+    [filterEventIndex]
+  );
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `${filterPath}.filter` as FieldArrayPath<CreateJourneyFormData>,
+  });
+
+  const conditionOperator = useWatch({
+    control,
+    name: `${filterPath}.operator` as Path<CreateJourneyFormData>,
+  });
 
   const { combinedProperties, propertyTypeMap } = useMemo(() => {
     const eventProperties: string[] = [];
     const typeMap = new Map<string, string>();
 
-    if (selectedEventName && events) {
-      const selectedEvent = events.find(
-        (e) => e.metadata.eventName === selectedEventName
+    if (selectedEvent && selectedEvent.label && events) {
+      const selectedEventObj = events.find(
+        (e) => e.metadata.eventName === selectedEvent.label
       );
-      if (selectedEvent?.properties) {
-        selectedEvent.properties.forEach((prop) => {
+      if (selectedEventObj?.properties) {
+        selectedEventObj.properties.forEach((prop) => {
           eventProperties.push(prop.propertyName);
           typeMap.set(prop.propertyName, prop.type || "string");
         });
       }
     }
 
-    // Add system properties - we need to get their types from the systemPropertiesData
-    // For now, default to "string" if type not available
-    // Add system properties with their types from systemPropertyTypes map
     systemProperties.forEach((propName) => {
       if (!typeMap.has(propName)) {
-        // Use type from systemPropertyTypes if available, otherwise default to "string"
         const systemType = systemPropertyTypes.get(propName);
         typeMap.set(propName, systemType || "string");
       }
@@ -101,7 +211,7 @@ export default function EventTriggerSection({
       combinedProperties: uniqueProperties,
       propertyTypeMap: typeMap,
     };
-  }, [selectedEventName, events, systemProperties]);
+  }, [selectedEvent, events, systemProperties, systemPropertyTypes]);
 
   const filteredEvents = useMemo(() => {
     if (!events) return [];
@@ -134,28 +244,117 @@ export default function EventTriggerSection({
       <Box sx={eventTriggerSectionStyles.formSection}>
         <Box sx={eventTriggerSectionStyles.eventFieldContainer}>
           <Controller
-            name="event"
+            name="ruleEngine.currentDropdownSelectedEvent"
             control={control}
-            rules={{ required: JOURNEY_TEXT.VALIDATION.EVENT_REQUIRED }}
+            // rules={{ required: JOURNEY_TEXT.VALIDATION.EVENT_REQUIRED }}
             render={({ field }: { field: FieldValues }) => (
               <Box sx={eventTriggerSectionStyles.eventField}>
                 <Autocomplete
                   options={filteredEvents}
                   getOptionLabel={(option) => option.metadata.eventName}
-                  isOptionEqualToValue={(option, value) =>
-                    option.metadata.eventName === value.metadata.eventName
-                  }
+                  isOptionEqualToValue={(option, value) => {
+                    if (
+                      !value ||
+                      typeof value !== "object" ||
+                      !("label" in value)
+                    ) {
+                      return false;
+                    }
+                    return (
+                      option.metadata.eventName ===
+                      (value as { label: string }).label
+                    );
+                  }}
                   loading={isLoading}
                   onInputChange={(_, newInputValue) => {
                     setSearchTerm(newInputValue);
                   }}
                   onChange={(_, newValue) => {
-                    field.onChange(newValue ? newValue.metadata.eventName : "");
+                    if (newValue) {
+                      const eventName = newValue.metadata.eventName;
+                      field.onChange({
+                        id: events.indexOf(newValue) + 1,
+                        label: eventName,
+                      });
+
+                      // Ensure EventInfo exists for this event with default structure
+                      const currentEventInfo =
+                        control._formValues.ruleEngine?.eventInfo || [];
+
+                      // Remove any incomplete entries (missing eventname)
+                      const cleanedEventInfo = currentEventInfo.filter(
+                        (e: EventInfo | unknown): e is EventInfo =>
+                          !!e &&
+                          typeof e === "object" &&
+                          "eventname" in e &&
+                          !!(e as EventInfo).eventname
+                      );
+
+                      const eventInfoIndex = cleanedEventInfo.findIndex(
+                        (e: EventInfo) => e.eventname === eventName
+                      );
+
+                      if (eventInfoIndex < 0) {
+                        // Create new EventInfo entry with default structure
+                        const newEventInfo = {
+                          eventname: eventName,
+                          currentState: [
+                            {
+                              currentState: 0,
+                              nextState: [
+                                {
+                                  transitionTo: 1,
+                                  filters: {
+                                    operator: "AND" as const,
+                                    filter: [],
+                                  },
+                                },
+                              ],
+                            },
+                          ],
+                        };
+                        setValue("ruleEngine.eventInfo", [
+                          ...cleanedEventInfo,
+                          newEventInfo,
+                        ]);
+                      } else {
+                        // Update existing entry to ensure it has proper structure
+                        const existingEntry = cleanedEventInfo[eventInfoIndex];
+                        if (
+                          !existingEntry.currentState ||
+                          existingEntry.currentState.length === 0
+                        ) {
+                          cleanedEventInfo[eventInfoIndex] = {
+                            ...existingEntry,
+                            currentState: [
+                              {
+                                currentState: 0,
+                                nextState: [
+                                  {
+                                    transitionTo: 1,
+                                    filters: {
+                                      operator: "AND" as const,
+                                      filter:
+                                        existingEntry.currentState?.[0]
+                                          ?.nextState?.[0]?.filters?.filter ||
+                                        [],
+                                    },
+                                  },
+                                ],
+                              },
+                            ],
+                          };
+                          setValue("ruleEngine.eventInfo", cleanedEventInfo);
+                        }
+                      }
+                    } else {
+                      field.onChange(null);
+                    }
                   }}
                   value={
-                    field.value
+                    selectedEvent && selectedEvent.label
                       ? events.find(
-                          (e) => e.metadata.eventName === field.value
+                          (e) => e.metadata.eventName === selectedEvent.label
                         ) || null
                       : null
                   }
@@ -163,8 +362,10 @@ export default function EventTriggerSection({
                     <TextField
                       {...params}
                       label={JOURNEY_TEXT.SECTIONS.EVENT_TRIGGER.LABEL}
-                      error={!!errors.event}
-                      helperText={errors.event?.message}
+                      error={!!errors.ruleEngine?.currentDropdownSelectedEvent}
+                      helperText={
+                        errors.ruleEngine?.currentDropdownSelectedEvent?.message
+                      }
                       fullWidth
                     />
                   )}
@@ -187,7 +388,16 @@ export default function EventTriggerSection({
           />
           <Button
             startIcon={<FilterListIcon />}
-            onClick={onAddFilter}
+            onClick={() => {
+              const newFilter: Filter = {
+                propertyName: { label: "", isLocal: false },
+                propertyType: "string",
+                comparisonType: "=",
+                comparisonValue: "",
+                componentType: "filter",
+              };
+              append(newFilter);
+            }}
             sx={eventTriggerSectionStyles.addFilterButton}
             variant="outlined"
             size="small"
@@ -197,6 +407,31 @@ export default function EventTriggerSection({
         </Box>
       </Box>
 
+      {fields.length > 0 && (
+        <Box sx={eventTriggerSectionStyles.operatorSection}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel>Operator</InputLabel>
+            <Controller
+              name={`${filterPath}.operator` as Path<CreateJourneyFormData>}
+              control={control}
+              render={({ field }: { field: FieldValues }) => (
+                <Select
+                  {...field}
+                  label="Operator"
+                  value={field.value || "AND"}
+                >
+                  {OPERATOR_TYPES.map((op) => (
+                    <MenuItem key={op.value} value={op.value || "AND"}>
+                      {op.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
+            />
+          </FormControl>
+        </Box>
+      )}
+
       <Box sx={eventTriggerSectionStyles.filtersList}>
         {fields.map((fieldItem, index) => (
           <FilterRow
@@ -204,10 +439,11 @@ export default function EventTriggerSection({
             control={control}
             errors={errors}
             index={index}
-            onRemove={() => onRemoveFilter(index)}
+            onRemove={() => remove(index)}
             availableProperties={combinedProperties}
             isLoadingFilters={isLoadingFilters}
             propertyTypeMap={propertyTypeMap}
+            filterPath={filterPath}
           />
         ))}
       </Box>

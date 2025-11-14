@@ -1,9 +1,9 @@
 export const THEME_COLORS = {
   PRIMARY: {
-    light: "#A51AFD",
-    dark: "#9333ea",
-    lightVariant: "#a855f7",
-    darkVariant: "#7e22ce",
+    light: "#1E293B",
+    dark: "#64748B",
+    lightVariant: "#334155",
+    darkVariant: "#475569",
   },
 
   SECONDARY: {

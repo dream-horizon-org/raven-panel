@@ -47,29 +47,44 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
           </Typography>
         </Box>
         <Controller
-          name="cohort"
+          name="selectCohort.includedCohorts"
           control={control}
-          render={({ field }: { field: FieldValues }) => (
-            <FormControl fullWidth error={!!errors.cohort}>
-              <InputLabel>{JOURNEY_TEXT.SECTIONS.COHORT.LABEL}</InputLabel>
-              <Select {...field} label={JOURNEY_TEXT.SECTIONS.COHORT.TITLE}>
-                {COHORT_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.cohort && (
-                <Typography
-                  variant="caption"
-                  color="error"
-                  sx={{ mt: 0.5, ml: 1.5 }}
+          render={({ field }: { field: FieldValues }) => {
+            const value =
+              Array.isArray(field.value) && field.value.length > 0
+                ? field.value[0]
+                : "";
+            return (
+              <FormControl
+                fullWidth
+                error={!!errors.selectCohort?.includedCohorts}
+              >
+                <InputLabel>{JOURNEY_TEXT.SECTIONS.COHORT.LABEL}</InputLabel>
+                <Select
+                  value={value}
+                  onChange={(e) => {
+                    field.onChange([e.target.value]);
+                  }}
+                  label={JOURNEY_TEXT.SECTIONS.COHORT.TITLE}
                 >
-                  {errors.cohort.message}
-                </Typography>
-              )}
-            </FormControl>
-          )}
+                  {COHORT_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.selectCohort?.includedCohorts && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 0.5, ml: 1.5 }}
+                  >
+                    {errors.selectCohort.includedCohorts.message}
+                  </Typography>
+                )}
+              </FormControl>
+            );
+          }}
         />
       </Box>
     </Box>
