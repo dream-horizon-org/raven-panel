@@ -34,14 +34,14 @@ export const JOURNEY_TEXT = {
   },
   SECTIONS: {
     COHORT: {
-      TITLE: "Cohort",
-      TOOLTIP: "Cohort information",
+      TITLE: "Segments",
+      TOOLTIP: "Segment information",
       DESCRIPTION: "Select whether you want to target all users or segments",
       LABEL: "User Set",
     },
     EVENT_TRIGGER: {
-      TITLE: "Event Trigger",
-      TOOLTIP: "Event Trigger information",
+      TITLE: "Trigger",
+      TOOLTIP: "Event triggered journeys will start when a specific event occurs",
       DESCRIPTION: "Select the event that will trigger this journey",
       LABEL: "Event",
     },
@@ -79,7 +79,7 @@ export const JOURNEY_TEXT = {
     },
   },
   FILTERS: {
-    BUTTON: "Filter property",
+    BUTTON: "Add Filter",
     PROPERTY: "Property",
     OPERATOR: "Operator",
     VALUE: "Value",

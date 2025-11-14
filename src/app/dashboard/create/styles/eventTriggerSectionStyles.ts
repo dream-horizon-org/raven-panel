@@ -52,7 +52,7 @@ export const eventTriggerSectionStyles = {
   fieldSubtext: {
     fontSize: "0.75rem",
     color: "text.secondary",
-    ml: 4.25,
+    ml: 0,
   },
   eventFieldContainer: {
     display: "flex",
@@ -60,14 +60,28 @@ export const eventTriggerSectionStyles = {
     alignItems: "flex-start",
   },
   eventField: {
-    flex: 1,
+    width: "30%",
+    "& .MuiOutlinedInput-root": {
+      height: "36px",
+      borderRadius: "8px",
+      display: "flex",
+      alignItems: "center",
+    },
+    "& .MuiInputBase-input": {
+      padding: "8px 14px",
+      fontSize: "0.875rem",
+      "&::placeholder": {
+        opacity: 1,
+        color: "text.secondary",
+      },
+    },
   },
   addFilterButton: {
     textTransform: "none",
     borderRadius: "8px",
     borderColor: "primary.main",
     color: "primary.main",
-    mt: 1.5,
+    height: "36px",
     "&:hover": {
       borderColor: "primary.dark",
       bgcolor: "primary.light",
@@ -79,4 +93,23 @@ export const eventTriggerSectionStyles = {
     flexDirection: "column",
     gap: 2,
   },
+  filterRowContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1.5,
+  },
+  andChip: (theme: Theme): SxProps<Theme> => ({
+    bgcolor:
+      theme.palette.mode === "light"
+        ? "rgba(165, 26, 253, 0.1)"
+        : "rgba(165, 26, 253, 0.2)",
+    color: "primary.main",
+    fontWeight: 600,
+    fontSize: "0.75rem",
+    height: "24px",
+    flexShrink: 0,
+    "& .MuiChip-label": {
+      px: 1.5,
+    },
+  }),
 };

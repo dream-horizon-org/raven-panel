@@ -4,7 +4,6 @@ import {
   Box,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   IconButton,
@@ -15,7 +14,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Controller, FieldValues, useWatch, useFormContext } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { filterRowStyles } from "../styles/filterRowStyles";
 import { CreateJourneyFormData } from "../types/journeyTypes";
 import { OPERATORS, JOURNEY_TEXT } from "../constants/journeyConstants";
@@ -43,6 +42,10 @@ export default function FilterRow({
   const { setValue } = useFormContext<CreateJourneyFormData>();
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
+  const propertyInputRef = useRef<HTMLInputElement>(null);
+  const valueInputRef = useRef<HTMLInputElement>(null);
+  const [propertyFieldWidth, setPropertyFieldWidth] = useState(250);
+  const [valueFieldWidth, setValueFieldWidth] = useState(250);
 
   // Get selected property name to determine input type
   const selectedProperty = useWatch({
@@ -76,6 +79,41 @@ export default function FilterRow({
     control,
     name: `condition.comparisons.${index}.comparisonValue` as `condition.comparisons.${number}.comparisonValue`,
   });
+
+  // Adjust width based on selected property name
+  useEffect(() => {
+    if (selectedProperty && propertyInputRef.current) {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (context) {
+        context.font = "0.875rem Inter, sans-serif";
+        const textWidth = context.measureText(selectedProperty).width;
+        const minWidth = 250;
+        const calculatedWidth = Math.max(minWidth, textWidth + 50);
+        setPropertyFieldWidth(Math.min(calculatedWidth, 500));
+      }
+    } else {
+      setPropertyFieldWidth(250);
+    }
+  }, [selectedProperty]);
+
+  // Adjust width based on comparison value
+  useEffect(() => {
+    if (currentComparisonValue && valueInputRef.current) {
+      const valueStr = String(currentComparisonValue);
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (context) {
+        context.font = "0.875rem Inter, sans-serif";
+        const textWidth = context.measureText(valueStr).width;
+        const minWidth = 250;
+        const calculatedWidth = Math.max(minWidth, textWidth + 50);
+        setValueFieldWidth(Math.min(calculatedWidth, 500));
+      }
+    } else {
+      setValueFieldWidth(250);
+    }
+  }, [currentComparisonValue]);
 
   // Update propertyType when propertyName changes and convert value if needed
   useEffect(() => {
@@ -145,15 +183,18 @@ export default function FilterRow({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={JOURNEY_TEXT.FILTERS.PROPERTY}
+                  inputRef={propertyInputRef}
+                  placeholder={JOURNEY_TEXT.FILTERS.PROPERTY}
                   error={
                     !!errors.condition?.comparisons?.[index]?.propertyName
                   }
                   helperText={
                     errors.condition?.comparisons?.[index]?.propertyName?.message
                   }
-                  size="small"
-                  sx={filterRowStyles.filterField}
+                  sx={{
+                    ...filterRowStyles.filterField,
+                    width: `${propertyFieldWidth}px`,
+                  }}
                 />
               )}
               ListboxProps={{
@@ -168,7 +209,10 @@ export default function FilterRow({
                   ? "No properties found"
                   : "No properties available"
               }
-              sx={filterRowStyles.filterField}
+              sx={{
+                ...filterRowStyles.filterField,
+                width: `${propertyFieldWidth}px`,
+              }}
             />
           )}
         />
@@ -178,12 +222,26 @@ export default function FilterRow({
           control={control}
           render={({ field }: { field: FieldValues }) => (
             <FormControl
-              fullWidth
-              sx={filterRowStyles.filterField}
-              size="small"
+              sx={{
+                ...filterRowStyles.filterField,
+                width: "80px",
+                minWidth: "80px",
+              }}
             >
-              <InputLabel>{JOURNEY_TEXT.FILTERS.OPERATOR}</InputLabel>
-              <Select {...field} label={JOURNEY_TEXT.FILTERS.OPERATOR}>
+              <Select
+                {...field}
+                displayEmpty
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <span style={{ color: theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.6)" }}>
+                        {JOURNEY_TEXT.FILTERS.OPERATOR}
+                      </span>
+                    );
+                  }
+                  return OPERATORS.find((op) => op.value === selected)?.label || (selected as string);
+                }}
+              >
                 {OPERATORS.map((op) => (
                   <MenuItem key={op.value} value={op.value}>
                     {op.label}
@@ -202,18 +260,28 @@ export default function FilterRow({
             if (inputType === "select") {
               return (
                 <FormControl
-                  fullWidth
                   error={
                     !!errors.condition?.comparisons?.[index]?.comparisonValue
                   }
-                  sx={filterRowStyles.filterField}
-                  size="small"
+                  sx={{
+                    ...filterRowStyles.filterField,
+                    width: `${valueFieldWidth}px`,
+                  }}
                 >
-                  <InputLabel>{JOURNEY_TEXT.FILTERS.VALUE}</InputLabel>
                   <Select
                     {...field}
-                    label={JOURNEY_TEXT.FILTERS.VALUE}
+                    displayEmpty
                     value={field.value || ""}
+                    renderValue={(selected) => {
+                      if (!selected) {
+                        return (
+                          <span style={{ color: theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.6)" }}>
+                            {JOURNEY_TEXT.FILTERS.VALUE}
+                          </span>
+                        );
+                      }
+                      return selected === "true" ? "True" : "False";
+                    }}
                   >
                     <MenuItem value="true">True</MenuItem>
                     <MenuItem value="false">False</MenuItem>
@@ -239,9 +307,9 @@ export default function FilterRow({
             return (
               <TextField
                 {...field}
+                inputRef={valueInputRef}
                 type={inputType}
-                label={JOURNEY_TEXT.FILTERS.VALUE}
-                fullWidth
+                placeholder={JOURNEY_TEXT.FILTERS.VALUE}
                 error={
                   !!errors.condition?.comparisons?.[index]?.comparisonValue
                 }
@@ -249,9 +317,10 @@ export default function FilterRow({
                   errors.condition?.comparisons?.[index]?.comparisonValue
                     ?.message
                 }
-                sx={filterRowStyles.filterField}
-                size="small"
-                placeholder={JOURNEY_TEXT.FILTERS.PLACEHOLDER}
+                sx={{
+                  ...filterRowStyles.filterField,
+                  width: `${valueFieldWidth}px`,
+                }}
                 value={
                   isNumeric && typeof field.value === "number"
                     ? field.value

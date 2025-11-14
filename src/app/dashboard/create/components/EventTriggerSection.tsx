@@ -7,6 +7,7 @@ import {
   TextField,
   Button,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
@@ -162,7 +163,7 @@ export default function EventTriggerSection({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={JOURNEY_TEXT.SECTIONS.EVENT_TRIGGER.LABEL}
+                      placeholder={JOURNEY_TEXT.SECTIONS.EVENT_TRIGGER.LABEL}
                       error={!!errors.event}
                       helperText={errors.event?.message}
                       fullWidth
@@ -190,7 +191,6 @@ export default function EventTriggerSection({
             onClick={onAddFilter}
             sx={eventTriggerSectionStyles.addFilterButton}
             variant="outlined"
-            size="small"
           >
             {JOURNEY_TEXT.FILTERS.BUTTON}
           </Button>
@@ -199,16 +199,24 @@ export default function EventTriggerSection({
 
       <Box sx={eventTriggerSectionStyles.filtersList}>
         {fields.map((fieldItem, index) => (
-          <FilterRow
-            key={fieldItem.id}
-            control={control}
-            errors={errors}
-            index={index}
-            onRemove={() => onRemoveFilter(index)}
-            availableProperties={combinedProperties}
-            isLoadingFilters={isLoadingFilters}
-            propertyTypeMap={propertyTypeMap}
-          />
+          <Box key={fieldItem.id} sx={eventTriggerSectionStyles.filterRowContainer}>
+            {index > 0 && (
+              <Chip
+                label="AND"
+                size="small"
+                sx={eventTriggerSectionStyles.andChip(theme)}
+              />
+            )}
+            <FilterRow
+              control={control}
+              errors={errors}
+              index={index}
+              onRemove={() => onRemoveFilter(index)}
+              availableProperties={combinedProperties}
+              isLoadingFilters={isLoadingFilters}
+              propertyTypeMap={propertyTypeMap}
+            />
+          </Box>
         ))}
       </Box>
     </Box>
