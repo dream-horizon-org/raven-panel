@@ -8,8 +8,6 @@ import {
   FormControlLabel,
   TextField,
 } from "@mui/material";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { useTheme } from "@mui/material/styles";
 import { Controller, FieldValues } from "react-hook-form";
@@ -101,11 +99,6 @@ export default function ScheduleSection({
                           type="date"
                           size="small"
                           sx={scheduleSectionStyles.dateField}
-                          InputProps={{
-                            endAdornment: (
-                              <CalendarTodayIcon fontSize="small" />
-                            ),
-                          }}
                         />
                       )}
                     />
@@ -128,9 +121,6 @@ export default function ScheduleSection({
                           type="time"
                           size="small"
                           sx={scheduleSectionStyles.timeField}
-                          InputProps={{
-                            endAdornment: <AccessTimeIcon fontSize="small" />,
-                          }}
                         />
                       )}
                     />
@@ -169,9 +159,6 @@ export default function ScheduleSection({
                   type="date"
                   size="small"
                   sx={scheduleSectionStyles.dateField}
-                  InputProps={{
-                    endAdornment: <CalendarTodayIcon fontSize="small" />,
-                  }}
                 />
               )}
             />
@@ -187,9 +174,6 @@ export default function ScheduleSection({
                   type="time"
                   size="small"
                   sx={scheduleSectionStyles.timeField}
-                  InputProps={{
-                    endAdornment: <AccessTimeIcon fontSize="small" />,
-                  }}
                 />
               )}
             />
