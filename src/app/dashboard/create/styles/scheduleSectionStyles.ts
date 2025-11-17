@@ -51,7 +51,7 @@ export const scheduleSectionStyles = {
   fieldSubtext: {
     fontSize: "0.75rem",
     color: "text.secondary",
-    ml: 4.25,
+    ml: 0,
   },
   sectionTitleContainer: {
     display: "flex",
