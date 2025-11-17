@@ -66,11 +66,11 @@ export const JOURNEY_TEXT = {
     JOURNEY_FREQUENCY: {
       TITLE: "Journey Frequency",
       TOOLTIP: "Journey Frequency information",
-      TIMES_IN_SESSION: "Show Journey",
+      TIMES_IN_SESSION: "Allow user to enter journey",
       TIMES_IN_SESSION_SUFFIX: "time(s) in a session",
-      MAX_TIMES_IN_PERIOD: "Show Journey a maximum of",
+      MAX_TIMES_IN_PERIOD: "Allow user to enter journey up to",
       MAX_TIMES_IN_PERIOD_MIDDLE: "time(s) in",
-      MAX_TIMES_IN_LIFETIME: "Show Journey a maximum of",
+      MAX_TIMES_IN_LIFETIME: "Allow user to enter journey up to",
       MAX_TIMES_IN_LIFETIME_SUFFIX: "time(s) in lifetime",
     },
     UI_CONTENT: {
