@@ -31,19 +31,13 @@ export type Cohort = {
 };
 
 export type Schedule = {
-  startDateTime: string | null;
-  endDateTime: string | null;
-  ctafrequencyInSession: {
-    value: number | null;
-  };
-  ctaFrequencyInDays: {
-    value: number | null;
-    days: { id: number; label: string };
-    limit: number | null;
-  };
-  ctaFrequencyInCount: {
-    value: number | null;
-  };
+  startType?: "immediate" | "scheduled";
+  startDate?: string | null;
+  startTime?: string | null;
+  startDateTime?: string | null;
+  endDate?: string | null;
+  endTime?: string | null;
+  endDateTime?: string | null;
   priority: number | null;
 };
 
@@ -120,7 +114,7 @@ export type StateTransitionStringified = {
 
 export enum NudgeType {
   TOOLTIP = "TOOLTIP",
-  BOTTOMSHEET = "BOTTOMSHEET",
+  NUDGE_UI = "NUDGE_UI",
   POPUP = "POPUP",
 }
 
@@ -310,10 +304,19 @@ export type ContentElement = {
   occupyFullWidth?: boolean;
 };
 
+export type JourneyFrequency = {
+  timesInSession?: number;
+  maxTimesInPeriod?: number;
+  periodValue?: number;
+  periodUnit?: string;
+  maxTimesInLifetime?: number;
+};
+
 export type CampaignFormType = {
   ctaMetadata: Metadata;
   selectCohort: Cohort;
   schedule: Schedule;
+  journeyFrequency?: JourneyFrequency;
   ruleEngine: RuleEngineType;
   contextParams: { id: number; label: string }[];
   stateMachine: StateMachineType;

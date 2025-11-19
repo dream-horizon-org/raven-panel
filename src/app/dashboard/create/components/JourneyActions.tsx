@@ -9,11 +9,13 @@ import { JOURNEY_TEXT } from "../constants/journeyConstants";
 interface JourneyActionsProps {
   activeTab: "setup" | "ui";
   onNext: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function JourneyActions({
   activeTab,
   onNext,
+  isSubmitting = false,
 }: JourneyActionsProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function JourneyActions({
       </Button>
       {activeTab === "setup" ? (
         <Button
+          type="button"
           onClick={onNext}
           variant="contained"
           sx={journeyActionsStyles.submitButton(theme)}
@@ -42,8 +45,9 @@ export default function JourneyActions({
           variant="contained"
           sx={journeyActionsStyles.submitButton(theme)}
           size="large"
+          disabled={isSubmitting}
         >
-          {JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
+          {isSubmitting ? "Creating..." : JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
         </Button>
       )}
     </Box>

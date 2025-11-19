@@ -1,9 +1,14 @@
 "use client";
 
-import { Box, Typography, Card, CardContent, IconButton } from "@mui/material";
+import { Box, Typography, Card, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { Control, FieldErrors, useWatch } from "react-hook-form";
-import { Controller, FieldValues } from "react-hook-form";
+import {
+  Control,
+  FieldErrors,
+  useWatch,
+  Controller,
+  FieldValues,
+} from "react-hook-form";
 import {
   CreateJourneyFormData,
   NudgeType,
@@ -16,26 +21,415 @@ interface TemplateTabProps {
   errors: FieldErrors<CreateJourneyFormData>;
 }
 
-// Template generator functions that create the ReactNativeJson structure
+/* ----------------- POPUP TEMPLATES (unchanged) ----------------- */
+export const getDefaultPopupTemplate = (): ReactNativeJson => ({
+  type: "POPUP",
+  props: {
+    testID: "testID-49",
+  },
+  actions: [],
+  styles: {},
+  children: [
+    {
+      type: "View",
+      props: {
+        testID: "testID-50",
+      },
+      actions: [],
+      styles: {
+        backgroundColor: "#ffff",
+        borderRadius: 12,
+        height: 250,
+        width: "80%",
+        paddingLeft: 4,
+        paddingRight: 4,
+        paddingTop: 4,
+        paddingBottom: 4,
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      children: [
+        {
+          type: "View",
+          props: {
+            testID: "testID-51",
+          },
+          actions: [],
+          styles: {
+            flex: 1,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+          children: [
+            {
+              type: "Image",
+              props: {
+                uri:
+                  "https://d13ir53smqqeyp.cloudfront.net/contain/site-banners/5Team21May.jpg",
+                resizeMode: "cover",
+                testID: "testID-38",
+              },
+              actions: [],
+              styles: {
+                height: 100,
+                width: 120,
+                marginBottom: 12,
+              },
+            },
+          ],
+        },
+        {
+          type: "View",
+          props: {
+            testID: "testID-52",
+          },
+          actions: [],
+          styles: {
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+          children: [
+            {
+              type: "Text",
+              props: {
+                title: [
+                  {
+                    value: "Lifetime free card for you!",
+                    isTemplateString: false,
+                  },
+                ],
+                fontWeight: "bold",
+                testID: "testID-57",
+              },
+              actions: [],
+              styles: {
+                fontSize: 16,
+              },
+            },
+            {
+              type: "Text",
+              props: {
+                title: [
+                  {
+                    value: "Experience life unlimited",
+                    isTemplateString: false,
+                  },
+                ],
+                fontWeight: "regular",
+                testID: "testID-58",
+              },
+              actions: [],
+              styles: {
+                marginBottom: 12,
+                fontSize: 14,
+              },
+            },
+          ],
+        },
+        {
+          type: "View",
+          props: {
+            testID: "testID-53",
+          },
+          actions: [],
+          styles: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          },
+          children: [
+            {
+              type: "View",
+              props: {
+                testID: "testID-54",
+              },
+              actions: [],
+              styles: {
+                backgroundColor: "#e0e0e0",
+                borderRadius: 8,
+                marginRight: 12,
+                marginBottom: 12,
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+              children: [
+                {
+                  type: "Button",
+                  props: {
+                    title: [
+                      {
+                        value: "Dismiss",
+                        isTemplateString: false,
+                      },
+                    ],
+                    fontWeight: "bold",
+                    testID: "testID-79",
+                  },
+                  actions: [
+                    {
+                      name: "dismiss",
+                      type: "dismiss",
+                      params: {},
+                    },
+                  ],
+                  styles: {
+                    width: 100,
+                    marginTop: 8,
+                    marginBottom: 10,
+                    textAlign: "center",
+                    fontSize: 14,
+                  },
+                },
+              ],
+            },
+            {
+              type: "View",
+              props: {
+                testID: "testID-55",
+              },
+              actions: [],
+              styles: {
+                backgroundColor: "black",
+                borderRadius: 8,
+                width: 100,
+                marginRight: 12,
+                marginBottom: 12,
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+              children: [
+                {
+                  type: "Button",
+                  props: {
+                    title: [
+                      {
+                        value: "Explore",
+                        isTemplateString: false,
+                      },
+                    ],
+                    fontWeight: "bold",
+                    testID: "testID-80",
+                  },
+                  actions: [
+                    {
+                      name: "dismiss",
+                      type: "dismiss",
+                      params: {},
+                    },
+                  ],
+                  styles: {
+                    marginTop: 8,
+                    marginBottom: 10,
+                    textAlign: "center",
+                    color: "#fff",
+                    fontSize: 14,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
+
+export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
+  type: "POPUP",
+  props: { testID: "testID-7" },
+  actions: [],
+  styles: {},
+  children: [
+    {
+      type: "View",
+      props: { testID: "testID-8" },
+      actions: [],
+      styles: {
+        backgroundColor: "#ffff",
+        borderRadius: 12,
+        height: 240,
+        width: "80%",
+        paddingBottom: 16,
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      children: [
+        {
+          type: "View",
+          props: { testID: "testID-9" },
+          actions: [],
+          styles: {
+            width: "95%",
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+          },
+          children: [
+            {
+              type: "Image",
+              props: {
+                uri:
+                  "https://d13ir53smqqeyp.cloudfront.net/contain/site-banners/Close.svg",
+                resizeMode: "contain",
+                testID: "testID-641",
+              },
+              actions: [{ name: "dismiss", type: "dismiss", params: {} }],
+              styles: {
+                height: 20,
+                width: 20,
+                marginLeft: 12,
+                marginRight: 4,
+                marginTop: 4,
+                marginBottom: 4,
+              },
+            },
+          ],
+        },
+        {
+          type: "View",
+          props: { testID: "testID-10" },
+          actions: [],
+          styles: {
+            flex: 1,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+          children: [
+            {
+              type: "Image",
+              props: {
+                uri:
+                  "https://d13ir53smqqeyp.cloudfront.net/contain/site-banners/5Team21May.jpg",
+                resizeMode: "cover",
+                testID: "testID-656",
+              },
+              actions: [],
+              styles: { height: 100, width: 120, marginBottom: 12 },
+            },
+          ],
+        },
+        {
+          type: "View",
+          props: { testID: "testID-11" },
+          actions: [],
+          styles: {
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+          children: [
+            {
+              type: "Text",
+              props: {
+                title: [
+                  {
+                    value: "Lifetime free card for you!!",
+                    isTemplateString: false,
+                  },
+                ],
+                fontWeight: "bold",
+                testID: "testID-682",
+              },
+              actions: [],
+              styles: { fontSize: 16 },
+            },
+            {
+              type: "Text",
+              props: {
+                title: [
+                  {
+                    value: "Experience life unlimited!",
+                    isTemplateString: false,
+                  },
+                ],
+                fontWeight: "regular",
+                testID: "testID-683",
+              },
+              actions: [],
+              styles: {},
+            },
+          ],
+        },
+        {
+          type: "View",
+          props: { testID: "testID-12" },
+          actions: [],
+          styles: {
+            backgroundColor: "yellow",
+            borderRadius: 8,
+            marginTop: 8,
+            marginBottom: 8,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+          children: [
+            {
+              type: "View",
+              props: { testID: "testID-13" },
+              actions: [],
+              styles: {
+                backgroundColor: "black",
+                borderRadius: 8,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+              children: [
+                {
+                  type: "Button",
+                  props: {
+                    title: [{ value: "Apply now", isTemplateString: false }],
+                    fontWeight: "bold",
+                    testID: "testID-704",
+                  },
+                  actions: [{ name: "dismiss", type: "dismiss", params: {} }],
+                  styles: {
+                    width: 100,
+                    marginLeft: 10,
+                    marginRight: 10,
+                    marginTop: 10,
+                    marginBottom: 10,
+                    paddingLeft: 16,
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#ffff",
+                    fontSize: 14,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
+/* --------------------------------------------------------------- */
+
 const generateTemplate = (
   type: NudgeType,
   variant: string
 ): ReactNativeJson => {
   const timestamp = Date.now();
   const baseTemplate = {
-    type: type,
-    props: {
-      testID: `testID-${timestamp}`,
-      templateVariantId: variant, // Store variant ID to identify selected template
-    },
+    type,
+    props: { testID: `testID-${timestamp}`, templateVariantId: variant },
     actions: [],
     styles: {},
     children: [],
   };
 
-  if (type === NudgeType.BOTTOMSHEET) {
+  if (type === NudgeType.NUDGE_UI) {
     if (variant === "bottomsheet-cta") {
-      // BottomSheet with CTA - more complex structure
       return {
         ...baseTemplate,
         children: [
@@ -92,14 +486,9 @@ const generateTemplate = (
                   },
                   {
                     type: "View",
-                    props: {
-                      testID: "testID-74",
-                    },
+                    props: { testID: "testID-74" },
                     actions: [],
-                    styles: {
-                      height: 22,
-                      width: 22,
-                    },
+                    styles: { height: 22, width: 22 },
                   },
                 ],
               },
@@ -129,8 +518,6 @@ const generateTemplate = (
                   marginBottom: 12,
                 },
               },
-
-              /* ---------- BUTTON ROW (side-by-side) ---------- */
               {
                 type: "View",
                 props: { testID: "button-row" },
@@ -213,13 +600,12 @@ const generateTemplate = (
                   },
                 ],
               },
-              /* ---------- END BUTTON ROW ---------- */
             ],
           },
         ],
       } as ReactNativeJson;
     }
-    // Basic BottomSheet
+
     return {
       ...baseTemplate,
       children: [
@@ -263,27 +649,14 @@ const generateTemplate = (
                     resizeMode: "contain",
                     testID: `testID-${timestamp + 3}`,
                   },
-                  actions: [
-                    {
-                      name: "dismiss",
-                      type: "dismiss",
-                      params: {},
-                    },
-                  ],
-                  styles: {
-                    height: 22,
-                    width: 22,
-                    marginLeft: 2,
-                  },
+                  actions: [{ name: "dismiss", type: "dismiss", params: {} }],
+                  styles: { height: 22, width: 22, marginLeft: 2 },
                 },
                 {
                   type: "Text",
                   props: {
                     title: [
-                      {
-                        value: "Allow Notifications",
-                        isTemplateString: false,
-                      },
+                      { value: "Allow Notifications", isTemplateString: false },
                     ],
                     fontWeight: "bold",
                     testID: `testID-${timestamp + 4}`,
@@ -299,10 +672,7 @@ const generateTemplate = (
                   type: "View",
                   props: { testID: `testID-${timestamp + 5}` },
                   actions: [],
-                  styles: {
-                    height: 22,
-                    width: 22,
-                  },
+                  styles: { height: 22, width: 22 },
                 },
               ],
             },
@@ -310,11 +680,7 @@ const generateTemplate = (
               type: "View",
               props: { testID: `testID-${timestamp + 6}` },
               actions: [],
-              styles: {
-                backgroundColor: "#E5E7EB",
-                height: 1,
-                width: "100%",
-              },
+              styles: { backgroundColor: "#E5E7EB", height: 1, width: "100%" },
             },
             {
               type: "Image",
@@ -335,21 +701,12 @@ const generateTemplate = (
             {
               type: "Button",
               props: {
-                title: [
-                  {
-                    value: "ALLOW",
-                    isTemplateString: false,
-                  },
-                ],
+                title: [{ value: "ALLOW", isTemplateString: false }],
                 fontWeight: "bold",
                 testID: `testID-${timestamp + 8}`,
               },
               actions: [
-                {
-                  name: "dismiss",
-                  type: "dismiss",
-                  params: {},
-                },
+                { name: "dismiss", type: "dismiss", params: {} },
                 {
                   name: "emitNativeEvent",
                   type: "emitNativeEvent",
@@ -358,12 +715,7 @@ const generateTemplate = (
                     eventParams: [
                       {
                         name: "111",
-                        value: [
-                          {
-                            value: "2",
-                            isTemplateString: false,
-                          },
-                        ],
+                        value: [{ value: "2", isTemplateString: false }],
                         type: "string",
                       },
                     ],
@@ -391,86 +743,29 @@ const generateTemplate = (
 
   if (type === NudgeType.POPUP) {
     if (variant === "popup-single-button") {
-      // Popup with single button
+      const template = getPopupWithSingleButtonTemplate();
       return {
-        ...baseTemplate,
-        children: [
-          {
-            type: "View",
-            props: { testID: `testID-${timestamp + 1}` },
-            actions: [],
-            styles: {
-              backgroundColor: "#FFFFFF",
-              borderRadius: 12,
-              paddingTop: 16,
-              paddingBottom: 16,
-              paddingLeft: 16,
-              paddingRight: 16,
-              flexDirection: "column",
-            },
-            children: [
-              {
-                type: "View",
-                props: { testID: `testID-${timestamp + 2}` },
-                actions: [],
-                styles: {
-                  flexDirection: "row",
-                  justifyContent: "flex-end",
-                },
-                children: [
-                  {
-                    type: "Image",
-                    props: {
-                      uri:
-                        "https://d13ir53smqqeyp.cloudfront.net/contain/site-banners/Close.svg",
-                      resizeMode: "contain",
-                      testID: `testID-${timestamp + 3}`,
-                    },
-                    actions: [
-                      {
-                        name: "dismiss",
-                        type: "dismiss",
-                        params: {},
-                      },
-                    ],
-                    styles: {
-                      height: 24,
-                      width: 24,
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+        ...template,
+        props: {
+          ...template.props,
+          testID: `testID-${timestamp}`,
+          templateVariantId: variant,
+        },
       } as ReactNativeJson;
     }
-    // Basic Popup
+    const template = getDefaultPopupTemplate();
     return {
-      ...baseTemplate,
-      children: [
-        {
-          type: "View",
-          props: { testID: `testID-${timestamp + 1}` },
-          actions: [],
-          styles: {
-            backgroundColor: "#FFFFFF",
-            borderRadius: 12,
-            paddingTop: 16,
-            paddingBottom: 16,
-            paddingLeft: 16,
-            paddingRight: 16,
-            flexDirection: "column",
-          },
-          children: [],
-        },
-      ],
+      ...template,
+      props: {
+        ...template.props,
+        testID: `testID-${timestamp}`,
+        templateVariantId: variant,
+      },
     } as ReactNativeJson;
   }
 
   if (type === NudgeType.TOOLTIP) {
     if (variant === "tooltip-arrow") {
-      // Tooltip with arrow
       return {
         ...baseTemplate,
         children: [
@@ -492,7 +787,6 @@ const generateTemplate = (
         ],
       } as ReactNativeJson;
     }
-    // Basic Tooltip
     return {
       ...baseTemplate,
       children: [
@@ -534,7 +828,7 @@ const TEMPLATE_OPTIONS: Record<
       description: "Tooltip with pointing arrow",
     },
   ],
-  [NudgeType.BOTTOMSHEET]: [
+  [NudgeType.NUDGE_UI]: [
     {
       id: "basic-bottomsheet",
       label: "Basic BottomSheet",
@@ -547,11 +841,7 @@ const TEMPLATE_OPTIONS: Record<
     },
   ],
   [NudgeType.POPUP]: [
-    {
-      id: "basic-popup",
-      label: "Basic Popup",
-      description: "Standard popup",
-    },
+    { id: "basic-popup", label: "Basic Popup", description: "Standard popup" },
     {
       id: "popup-single-button",
       label: "Popup with Single Button",
@@ -560,11 +850,8 @@ const TEMPLATE_OPTIONS: Record<
   ],
 };
 
-export default function TemplateTab({ control, errors }: TemplateTabProps) {
-  const actions = useWatch({
-    control,
-    name: "nudgeSelection.actions",
-  });
+export default function TemplateTab({ control }: TemplateTabProps) {
+  const actions = useWatch({ control, name: "nudgeSelection.actions" });
   const engagementType = actions?.[0]?.type as NudgeType | undefined;
 
   const templates = engagementType
@@ -575,7 +862,7 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
     if (!type) return "Choose a template variant for your engagement";
     const typeLabels: Record<NudgeType, string> = {
       [NudgeType.TOOLTIP]: "tooltip",
-      [NudgeType.BOTTOMSHEET]: "bottom sheet",
+      [NudgeType.NUDGE_UI]: "bottom sheet",
       [NudgeType.POPUP]: "popup",
     };
     return `Choose a template variant for your ${typeLabels[type]} engagement`;
@@ -587,6 +874,7 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
       <Typography sx={templateTabStyles.subtitle}>
         {getTemplateDescription(engagementType)}
       </Typography>
+
       {!engagementType ? (
         <Typography sx={{ mt: 2, color: "text.secondary" }}>
           Please select an engagement type first
@@ -599,11 +887,9 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
             render={({ field }: { field: FieldValues }) => (
               <>
                 {templates.map((template) => {
-                  // Check if the current template matches this specific template variant
                   let isSelected = false;
                   if (field.value) {
                     const currentTemplate = field.value as ReactNativeJson;
-                    // Store template variant ID in props to identify which template is selected
                     const storedVariantId =
                       currentTemplate.props?.templateVariantId;
                     isSelected = storedVariantId === template.id;
@@ -617,20 +903,11 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                     field.onChange(templateJson);
                   };
 
-                  // Generate preview template for visual display
-                  const previewTemplate = generateTemplate(
-                    engagementType!,
-                    template.id
-                  );
-
                   return (
                     <Card
                       key={template.id}
                       sx={{
                         ...templateTabStyles.templateCard,
-                        ...(isSelected
-                          ? templateTabStyles.templateCardSelected
-                          : {}),
                         position: "relative",
                         cursor: "pointer",
                         overflow: "hidden",
@@ -639,13 +916,17 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                         bgcolor: "#FFFFFF",
                         borderRadius: 3,
                         border: "1px solid",
-                        borderColor: "#E0E0E0",
-                        boxShadow: 2,
+                        borderColor: isSelected ? "success.main" : "#E0E0E0",
+                        boxShadow: isSelected ? 4 : 2,
+                        outline: isSelected ? "2px solid" : "none",
+                        outlineColor: isSelected ? "success.main" : undefined,
+                        transition:
+                          "border-color 120ms ease, box-shadow 120ms ease",
                       }}
                       onClick={handleTemplateSelect}
                     >
-                      {/* Render preview based on engagement type */}
-                      {engagementType === NudgeType.BOTTOMSHEET && (
+                      {/* ---------- PREVIEW AREA ---------- */}
+                      {engagementType === NudgeType.NUDGE_UI && (
                         <Box
                           sx={{
                             width: "100%",
@@ -655,9 +936,9 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                             overflow: "hidden",
                             display: "flex",
                             alignItems: "flex-end",
+                            borderRadius: 1,
                           }}
                         >
-                          {/* Bottomsheet container */}
                           <Box
                             sx={{
                               width: "100%",
@@ -673,17 +954,17 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                               flexDirection: "column",
                               minHeight: "70%",
                               maxHeight: "85%",
+                              zIndex: 1,
                             }}
                           >
-                            {/* Handle bar */}
                             <Box
                               sx={{
                                 width: "100%",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                pt: 1.5,
-                                pb: 1,
+                                pt: 1,
+                                pb: 0.75,
                                 flexShrink: 0,
                               }}
                             >
@@ -696,12 +977,11 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                                 }}
                               />
                             </Box>
-                            {/* Content section */}
                             <Box
                               sx={{
-                                px: 2,
-                                pt: 1,
-                                pb: 3,
+                                px: 1.5,
+                                pt: 0.75,
+                                pb: 2,
                                 display: "flex",
                                 flexDirection: "column",
                                 flex: 1,
@@ -709,14 +989,22 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                                 minHeight: 0,
                               }}
                             >
-                              {/* Text content */}
-                              <Box sx={{ textAlign: "center" }}>
+                              <Box
+                                sx={{
+                                  textAlign: "center",
+                                  width: "100%",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                }}
+                              >
                                 <Typography
                                   sx={{
                                     fontSize: "0.875rem",
                                     fontWeight: 600,
                                     mb: 0.5,
                                     color: "text.primary",
+                                    lineHeight: 1.2,
                                   }}
                                 >
                                   {template.id === "bottomsheet-cta"
@@ -727,6 +1015,7 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                                   sx={{
                                     fontSize: "0.75rem",
                                     color: "text.secondary",
+                                    lineHeight: 1.2,
                                   }}
                                 >
                                   {template.id === "bottomsheet-cta"
@@ -734,23 +1023,23 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                                     : "Book from our curated selection of beach stays now"}
                                 </Typography>
                               </Box>
-                              {/* Buttons - always at bottom */}
                               <Box
                                 sx={{
                                   display: "flex",
-                                  gap: 1.5,
+                                  gap: 1,
                                   justifyContent: "center",
-                                  mt: 2,
+                                  mt: 1.5,
                                   flexShrink: 0,
+                                  width: "100%",
+                                  alignItems: "center",
                                 }}
                               >
                                 {template.id === "bottomsheet-cta" ? (
                                   <>
-                                    {/* Two buttons for 2 CTA variant */}
                                     <Box
                                       sx={{
-                                        px: 2,
-                                        py: 0.75,
+                                        px: 1.5,
+                                        py: 0.625,
                                         borderRadius: 1,
                                         fontSize: "0.75rem",
                                         border: "1px solid",
@@ -759,37 +1048,42 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                                         color: "text.primary",
                                         cursor: "default",
                                         fontWeight: 500,
+                                        textAlign: "center",
+                                        minWidth: 80,
                                       }}
                                     >
                                       Dismiss
                                     </Box>
                                     <Box
                                       sx={{
-                                        px: 2,
-                                        py: 0.75,
+                                        px: 1.5,
+                                        py: 0.625,
                                         borderRadius: 1,
                                         fontSize: "0.75rem",
                                         bgcolor: "#000000",
                                         color: "white",
                                         cursor: "default",
                                         fontWeight: 500,
+                                        textAlign: "center",
+                                        minWidth: 80,
                                       }}
                                     >
                                       Explore
                                     </Box>
                                   </>
                                 ) : (
-                                  /* Single button for basic variant */
                                   <Box
                                     sx={{
-                                      px: 2.5,
-                                      py: 0.75,
+                                      px: 2,
+                                      py: 0.625,
                                       borderRadius: 1,
                                       fontSize: "0.75rem",
                                       bgcolor: "#000000",
                                       color: "white",
                                       cursor: "default",
                                       fontWeight: 500,
+                                      textAlign: "center",
+                                      minWidth: 100,
                                     }}
                                   >
                                     Book now
@@ -800,62 +1094,181 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                           </Box>
                         </Box>
                       )}
+
                       {engagementType === NudgeType.POPUP && (
                         <Box
                           sx={{
                             width: "100%",
-                            minHeight: 200,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            p: 2,
+                            height: 250,
+                            position: "relative",
+                            overflow: "hidden",
+                            borderRadius: 1,
+                            bgcolor: "#F5F5F5",
                           }}
                         >
-                          <Typography
+                          {/* Backdrop */}
+                          <Box
                             sx={{
-                              fontSize: "0.875rem",
-                              fontWeight: 500,
-                              textAlign: "center",
+                              position: "absolute",
+                              inset: 0,
+                              bgcolor: "rgba(0, 0, 0, 0.5)",
+                              zIndex: 0,
+                            }}
+                          />
+                          {/* Dialog */}
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              inset: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              zIndex: 1,
+                              pointerEvents: "none",
                             }}
                           >
-                            {template.label}
-                          </Typography>
+                            <Box
+                              sx={{
+                                position: "relative",
+                                width: 280,
+                                maxWidth: "82%",
+                                borderRadius: 3,
+                                boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                                bgcolor: "#FFFFFF",
+                                display: "flex",
+                                flexDirection: "column",
+                                overflow: "hidden",
+                                px: 2,
+                                py: 1.5,
+                              }}
+                            >
+                              {/* Image */}
+                              <Box
+                                sx={{
+                                  width: 80,
+                                  height: 60,
+                                  bgcolor: "#F5F5F5",
+                                  borderRadius: 1,
+                                  mb: 1,
+                                  alignSelf: "center",
+                                }}
+                              />
+                              {/* Copy */}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  width: "100%",
+                                  mb: 1.5,
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.875rem",
+                                    fontWeight: 600,
+                                    textAlign: "center",
+                                    color: "text.primary",
+                                    mb: 0.5,
+                                    lineHeight: 1.2,
+                                  }}
+                                >
+                                  {template.id === "popup-single-button"
+                                    ? "Lifetime free card for you!!"
+                                    : "Lifetime free card for you!"}
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textAlign: "center",
+                                    lineHeight: 1.2,
+                                  }}
+                                >
+                                  {template.id === "popup-single-button"
+                                    ? "Experience life unlimited!"
+                                    : "Experience life unlimited"}
+                                </Typography>
+                              </Box>
+                              {/* Buttons */}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                  justifyContent: "center",
+                                  width: "100%",
+                                  alignItems: "center",
+                                }}
+                              >
+                                {template.id === "popup-single-button" ? (
+                                  <Box
+                                    sx={{
+                                      px: 2,
+                                      py: 0.625,
+                                      borderRadius: 1,
+                                      fontSize: "0.75rem",
+                                      bgcolor: "#000000",
+                                      color: "white",
+                                      fontWeight: 500,
+                                      textAlign: "center",
+                                      minWidth: 100,
+                                    }}
+                                  >
+                                    Apply now
+                                  </Box>
+                                ) : (
+                                  <>
+                                    <Box
+                                      sx={{
+                                        px: 1.5,
+                                        py: 0.625,
+                                        borderRadius: 1,
+                                        fontSize: "0.75rem",
+                                        border: "1px solid",
+                                        borderColor: "divider",
+                                        bgcolor: "#E0E0E0",
+                                        color: "text.primary",
+                                        fontWeight: 500,
+                                        textAlign: "center",
+                                        minWidth: 80,
+                                      }}
+                                    >
+                                      Dismiss
+                                    </Box>
+                                    <Box
+                                      sx={{
+                                        px: 1.5,
+                                        py: 0.625,
+                                        borderRadius: 1,
+                                        fontSize: "0.75rem",
+                                        bgcolor: "#000000",
+                                        color: "white",
+                                        fontWeight: 500,
+                                        textAlign: "center",
+                                        minWidth: 80,
+                                      }}
+                                    >
+                                      Explore
+                                    </Box>
+                                  </>
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
                         </Box>
                       )}
-                      {engagementType === NudgeType.TOOLTIP && (
-                        <Box
-                          sx={{
-                            width: "100%",
-                            minHeight: 200,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            p: 2,
-                            bgcolor: "#333333",
-                            borderRadius: 8,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontSize: "0.75rem",
-                              color: "#FFFFFF",
-                              textAlign: "center",
-                            }}
-                          >
-                            {template.label}
-                          </Typography>
-                        </Box>
-                      )}
+                      {/* ---------- /PREVIEW AREA ---------- */}
+
+                      {/* Top-right "+" always visible */}
                       <IconButton
                         sx={{
                           position: "absolute",
                           top: 8,
                           right: 8,
+                          zIndex: 3,
                           bgcolor: "primary.main",
                           color: "white",
-                          "&:hover": {
-                            bgcolor: "primary.dark",
-                          },
+                          "&:hover": { bgcolor: "primary.dark" },
                         }}
                         size="small"
                         onClick={(e) => {
@@ -865,18 +1278,22 @@ export default function TemplateTab({ control, errors }: TemplateTabProps) {
                       >
                         <AddIcon fontSize="small" />
                       </IconButton>
+
+                      {/* Selected badge */}
                       {isSelected && (
                         <Box
                           sx={{
                             position: "absolute",
                             top: 8,
                             left: 8,
+                            zIndex: 3,
                             bgcolor: "success.main",
                             color: "white",
                             px: 1,
                             py: 0.5,
                             borderRadius: 1,
                             fontSize: "0.75rem",
+                            lineHeight: 1,
                           }}
                         >
                           Selected

@@ -7,6 +7,7 @@ import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
 import { useTheme } from "@mui/material/styles";
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
 import { generateRandomJourneyName } from "../utils/journeyUtils";
 import { CreateJourneyFormData } from "../types/journeyTypes";
@@ -23,8 +24,11 @@ import JourneyFrequencySection from "./JourneyFrequencySection";
 import JourneyActions from "./JourneyActions";
 import EngagementSelector from "./EngagementSelector";
 import EngagementSidePanel from "./EngagementSidePanel";
+import { createJourney } from "@/api/services/createJourney.service";
+import { toast } from "sonner";
 
 export default function CreateJourneyPage() {
+  const router = useRouter();
   const theme = useTheme();
   const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
   const {
@@ -122,8 +126,48 @@ export default function CreateJourneyPage() {
     trigger,
   } = methods;
 
-  const onFormSubmit = (data: CreateJourneyFormData) => {
-    console.log(data);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const onFormSubmit = async (data: CreateJourneyFormData) => {
+    console.log("data", data);
+
+    // Validate that templates are present
+    if (
+      !data.nudgeSelection?.actions ||
+      data.nudgeSelection.actions.length === 0
+    ) {
+      console.error("Error: No actions/templates configured");
+      toast.error(
+        "Please configure at least one engagement template before creating the journey."
+      );
+      return;
+    }
+
+    // Validate that each action has a template
+    const actionsWithoutTemplate = data.nudgeSelection.actions.filter(
+      (action) => !action.template
+    );
+
+    if (actionsWithoutTemplate.length > 0) {
+      console.error("Error: Some actions are missing templates");
+      toast.error(
+        "Please ensure all actions have templates configured before creating the journey."
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await createJourney(data);
+      console.log("Journey created successfully:", response);
+      toast.success("Journey created successfully!");
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error creating journey:", error);
+      toast.error("Failed to create journey. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const [activeTab, setActiveTab] = useState<"setup" | "ui">("setup");
@@ -143,14 +187,9 @@ export default function CreateJourneyPage() {
     }
   };
 
-  const handleNext = async () => {
-    const isValid = await trigger([
-      "ctaMetadata.ctaTitle",
-      "ruleEngine.currentDropdownSelectedEvent",
-    ]);
-    if (isValid) {
-      setActiveTab("ui");
-    }
+  const handleNext = () => {
+    // Simply move to content tab without validation
+    setActiveTab("ui");
   };
 
   const isLoading =
@@ -208,7 +247,11 @@ export default function CreateJourneyPage() {
                 errors={errors}
               />
 
-              <JourneyActions activeTab={activeTab} onNext={handleNext} />
+              <JourneyActions
+                activeTab={activeTab}
+                onNext={handleNext}
+                isSubmitting={isSubmitting}
+              />
             </form>
           </Box>
         </Box>

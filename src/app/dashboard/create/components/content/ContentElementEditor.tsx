@@ -297,9 +297,44 @@ export default function ContentElementEditor({
       }}
     >
       <Box sx={contentElementEditorStyles.header}>
-        <Typography sx={contentElementEditorStyles.elementLabel}>
-          {element.type}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+          <Typography sx={contentElementEditorStyles.elementLabel}>
+            {element.type}
+          </Typography>
+          {element.type === "View" && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={
+                  element.styles?.flexDirection === "row"
+                    ? "horizontal"
+                    : "vertical"
+                }
+                onChange={(e) => {
+                  const flexDirection =
+                    e.target.value === "horizontal" ? "row" : "column";
+                  const currentStyles = element.styles || {};
+                  updateElement({
+                    styles: {
+                      ...currentStyles,
+                      flexDirection,
+                      flex: 1,
+                    },
+                  });
+                }}
+                sx={{
+                  height: 28,
+                  fontSize: "0.75rem",
+                  "& .MuiSelect-select": {
+                    py: 0.5,
+                  },
+                }}
+              >
+                <MenuItem value="vertical">Vertical</MenuItem>
+                <MenuItem value="horizontal">Horizontal</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        </Box>
         <Box>
           <IconButton size="small" onClick={() => {}}>
             <ContentCopyIcon fontSize="small" />

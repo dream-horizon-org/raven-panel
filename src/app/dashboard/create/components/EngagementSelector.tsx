@@ -33,14 +33,14 @@ interface EngagementSelectorProps {
 
 const ENGAGEMENT_TYPES: { value: NudgeType; label: string }[] = [
   { value: NudgeType.TOOLTIP, label: "Tooltip" },
-  { value: NudgeType.BOTTOMSHEET, label: "BottomSheet" },
+  { value: NudgeType.NUDGE_UI, label: "BottomSheet" },
   { value: NudgeType.POPUP, label: "Popup" },
 ];
 
 const getEngagementLabel = (type: NudgeType): string => {
   const typeMap: Record<NudgeType, string> = {
     [NudgeType.TOOLTIP]: "Tooltip",
-    [NudgeType.BOTTOMSHEET]: "BottomSheet",
+    [NudgeType.NUDGE_UI]: "BottomSheet",
     [NudgeType.POPUP]: "Popup",
   };
   return typeMap[type] || type;

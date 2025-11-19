@@ -121,19 +121,13 @@ export const getJourneyFormDefaults = () => ({
     pilotUserId: "",
   },
   schedule: {
+    startType: "immediate",
+    startDate: null,
+    startTime: null,
     startDateTime: null,
+    endDate: null,
+    endTime: null,
     endDateTime: null,
-    ctafrequencyInSession: {
-      value: null,
-    },
-    ctaFrequencyInDays: {
-      value: null,
-      days: { id: 0, label: "" },
-      limit: null,
-    },
-    ctaFrequencyInCount: {
-      value: null,
-    },
     priority: null,
   },
   ruleEngine: {

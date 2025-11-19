@@ -39,21 +39,17 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     // Convert styles to CSS (only what's in template)
     const cssStyles: Record<string, string | number> = {};
     if (styles) {
-      Object.entries(styles).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          // Convert camelCase to kebab-case for CSS
-          const cssKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
-          cssStyles[cssKey] =
-            typeof value === "number" ? `${value}px` : String(value);
+      Object.entries(styles).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) {
+          const cssKey = k.replace(/([A-Z])/g, "-$1").toLowerCase();
+          cssStyles[cssKey] = typeof v === "number" ? `${v}px` : String(v);
         }
       });
     }
 
     // Extract text content from title prop
     const getTextContent = (): string => {
-      if (typeof nodeProps.title === "string") {
-        return nodeProps.title;
-      }
+      if (typeof nodeProps.title === "string") return nodeProps.title;
       if (Array.isArray(nodeProps.title) && nodeProps.title[0]?.value) {
         return String(nodeProps.title[0].value);
       }
@@ -63,20 +59,39 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     // Render based on type - only template styles, no extras
     if (type === "Text") {
       const textContent = getTextContent();
-      const fontWeight =
+
+      const weight =
         nodeProps.fontWeight === "bold"
           ? "bold"
           : nodeProps.fontWeight === "medium"
           ? "500"
           : undefined;
 
-      // If textAlign is center, ensure the element can take full width
-      const textAlign = styles.textAlign;
-      const textStyles = {
+      const ai = (styles as any)?.alignItems as
+        | "center"
+        | "flex-start"
+        | "flex-end"
+        | undefined;
+
+      const mappedTextAlign =
+        (styles as any)?.textAlign ??
+        (ai === "center"
+          ? "center"
+          : ai === "flex-end"
+          ? "right"
+          : ai === "flex-start"
+          ? "left"
+          : undefined);
+
+      const textStyles: React.CSSProperties = {
         ...cssStyles,
-        ...(fontWeight ? { fontWeight } : {}),
-        // If textAlign is center and element is in a flex container, make it block-level
-        ...(textAlign === "center" ? { display: "block", width: "100%" } : {}),
+        ...(weight ? { fontWeight: weight } : {}),
+        ...(mappedTextAlign
+          ? {
+              textAlign: mappedTextAlign,
+              ...(cssStyles.width ? {} : { display: "block", width: "100%" }),
+            }
+          : {}),
       };
 
       return (
@@ -90,17 +105,44 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       const src = nodeProps.uri || nodeProps.src || nodeProps.source;
       if (!src) return null;
 
-      return <img key={key} src={String(src)} alt="" style={cssStyles} />;
+      return (
+        <img
+          key={key}
+          src={String(src)}
+          alt=""
+          style={{
+            ...cssStyles,
+            display: "block", // NEW: no inline baseline gap
+            maxWidth: "100%", // safe guard
+          }}
+        />
+      );
     }
 
     if (type === "Button") {
       const textContent = getTextContent();
-      const fontWeight =
+      const weight =
         nodeProps.fontWeight === "bold"
           ? "bold"
           : nodeProps.fontWeight === "medium"
           ? "500"
           : undefined;
+
+      const ai = (styles as any)?.alignItems as
+        | "center"
+        | "flex-start"
+        | "flex-end"
+        | undefined;
+
+      const mappedTextAlign =
+        (styles as any)?.textAlign ??
+        (ai === "center"
+          ? "center"
+          : ai === "flex-end"
+          ? "right"
+          : ai === "flex-start"
+          ? "left"
+          : undefined);
 
       return (
         <button
@@ -108,7 +150,8 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           disabled
           style={{
             ...cssStyles,
-            ...(fontWeight ? { fontWeight } : {}),
+            ...(weight ? { fontWeight: weight } : {}),
+            ...(mappedTextAlign ? { textAlign: mappedTextAlign } : {}),
             border: "none",
             cursor: "default",
           }}
@@ -118,20 +161,54 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       );
     }
 
-    if (type === "View") {
-      // Only add display: flex if flex properties are present
-      const hasFlexProps =
-        styles.flexDirection ||
-        styles.flex ||
-        styles.flexGrow ||
-        styles.flexShrink ||
-        styles.flexBasis ||
-        styles.justifyContent ||
-        styles.alignItems;
+    // inside renderNode()
 
-      const viewStyles = hasFlexProps
-        ? { display: "flex", ...cssStyles }
-        : cssStyles;
+    if (type === "Image") {
+      const src = nodeProps.uri || nodeProps.src || nodeProps.source;
+      if (!src) return null;
+
+      return (
+        <img
+          key={key}
+          src={String(src)}
+          alt=""
+          style={{
+            ...cssStyles,
+            display: "block", // NEW: no inline baseline gap
+            maxWidth: "100%", // safe guard
+          }}
+        />
+      );
+    }
+
+    if (type === "View") {
+      const hasFlexProps =
+        (styles as any).flexDirection ||
+        (styles as any).flex ||
+        (styles as any).flexGrow ||
+        (styles as any).flexShrink ||
+        (styles as any).flexBasis ||
+        (styles as any).justifyContent ||
+        (styles as any).alignItems;
+
+      // NEW: detect any radius
+      const hasRadius =
+        (styles as any).borderRadius != null ||
+        (styles as any).borderTopLeftRadius != null ||
+        (styles as any).borderTopRightRadius != null ||
+        (styles as any).borderBottomLeftRadius != null ||
+        (styles as any).borderBottomRightRadius != null;
+
+      const viewStyles = {
+        ...(hasFlexProps ? { display: "flex" } : {}),
+        ...cssStyles,
+        ...(hasRadius
+          ? {
+              overflow: "hidden", // << keeps children (the ✖️) inside
+              position: "relative", // stable stacking context
+            }
+          : {}),
+      } as React.CSSProperties;
 
       return (
         <div key={key} style={viewStyles}>
@@ -146,40 +223,94 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
     return null;
   };
+  // ----------------------------------------------------------
+
+  // Simple helper to render the correct "stage" around the template
+  const renderStage = () => {
+    const nudgeType = (template?.type || "").toString().toUpperCase();
+
+    // ...inside renderStage() -> POPUP branch
+    if (nudgeType === "POPUP") {
+      return (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            bgcolor: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+          }}
+        >
+          {/* NEW: make % widths resolve against the device width */}
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+            }}
+          >
+            {children.map((el, i) => renderNode(el, i))}
+          </Box>
+        </Box>
+      );
+    }
+
+    // NUDGE_UI (BottomSheet): full-screen dim + content anchored to bottom
+    if (nudgeType === "NUDGE_UI") {
+      return (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            bgcolor: "rgba(0,0,0,0.45)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            pointerEvents: "none",
+          }}
+        >
+          {/* Render the template as-is; it already defines a white panel etc. */}
+          <Box
+            sx={{ width: "100%", display: "flex", justifyContent: "center" }}
+          >
+            {children.map((element: ReactNativeJson, index: number) =>
+              renderNode(element, index)
+            )}
+          </Box>
+        </Box>
+      );
+    }
+
+    // TOOLTIP or unknown: just center in screen without dim
+    return (
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
+      >
+        {children.map((element: ReactNativeJson, index: number) =>
+          renderNode(element, index)
+        )}
+      </Box>
+    );
+  };
 
   return (
     <Box sx={previewPanelStyles.container}>
       <Typography sx={previewPanelStyles.title}>Preview</Typography>
+
       <DeviceFrame device="iphone" width={360}>
-        {/* Bottom sheet container - minimal styling */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-          }}
-        >
-          {/* Bottom sheet content - only template styles */}
-          <Box
-            sx={{
-              backgroundColor: "#fff",
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              width: "100%",
-            }}
-          >
-            {children && children.length > 0
-              ? children.map((element: ReactNativeJson, index: number) =>
-                  renderNode(element, index)
-                )
-              : null}
-          </Box>
+        <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+          {renderStage()}
         </Box>
       </DeviceFrame>
     </Box>
