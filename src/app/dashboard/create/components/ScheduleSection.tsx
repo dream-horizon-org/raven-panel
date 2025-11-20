@@ -101,6 +101,7 @@ export default function ScheduleSection({
                           type="date"
                           size="small"
                           sx={scheduleSectionStyles.dateField}
+                          value={dateField.value || ""}
                           InputProps={{
                             endAdornment: (
                               <CalendarTodayIcon fontSize="small" />
@@ -128,6 +129,7 @@ export default function ScheduleSection({
                           type="time"
                           size="small"
                           sx={scheduleSectionStyles.timeField}
+                          value={timeField.value || ""}
                           InputProps={{
                             endAdornment: <AccessTimeIcon fontSize="small" />,
                           }}
@@ -169,6 +171,7 @@ export default function ScheduleSection({
                   type="date"
                   size="small"
                   sx={scheduleSectionStyles.dateField}
+                  value={dateField.value || ""}
                   InputProps={{
                     endAdornment: <CalendarTodayIcon fontSize="small" />,
                   }}
@@ -187,6 +190,7 @@ export default function ScheduleSection({
                   type="time"
                   size="small"
                   sx={scheduleSectionStyles.timeField}
+                  value={timeField.value || ""}
                   InputProps={{
                     endAdornment: <AccessTimeIcon fontSize="small" />,
                   }}

@@ -6,8 +6,8 @@ import { useEventsList } from "@/hooks/useEventsList";
 import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
 import { useTheme } from "@mui/material/styles";
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
 import { generateRandomJourneyName } from "../utils/journeyUtils";
 import { CreateJourneyFormData } from "../types/journeyTypes";
@@ -25,10 +25,22 @@ import JourneyActions from "./JourneyActions";
 import EngagementSelector from "./EngagementSelector";
 import EngagementSidePanel from "./EngagementSidePanel";
 import { createJourney } from "@/api/services/createJourney.service";
+import { updateJourney } from "@/api/services/updateJourney.service";
+import { getJourneyById } from "@/api/services/getJourney.service";
 import { toast } from "sonner";
+import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
 
-export default function CreateJourneyPage() {
+interface CreateJourneyPageProps {
+  journeyId?: string;
+}
+
+export default function CreateJourneyPage({
+  journeyId: journeyIdProp,
+}: CreateJourneyPageProps = {}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const journeyIdFromQuery = searchParams?.get("id");
+  const journeyId = journeyIdProp || journeyIdFromQuery || undefined;
   const theme = useTheme();
   const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
   const {
@@ -109,24 +121,100 @@ export default function CreateJourneyPage() {
 
     return { systemPropertyNames: names, systemPropertyTypes: types };
   }, [systemPropertiesData]);
-  const methods = useForm<CreateJourneyFormData>({
-    defaultValues: {
-      ...getJourneyFormDefaults(),
-      ctaMetadata: {
-        ...getJourneyFormDefaults().ctaMetadata,
-        ctaTitle: generateRandomJourneyName(),
+  const methods = useForm<CreateJourneyFormData, object, CreateJourneyFormData>(
+    {
+      defaultValues: {
+        ...getJourneyFormDefaults(),
+        ctaMetadata: {
+          ...getJourneyFormDefaults().ctaMetadata,
+          ctaTitle: generateRandomJourneyName(),
+        },
+        schedule: {
+          ...getJourneyFormDefaults().schedule,
+          startType: "immediate" as "immediate" | "scheduled",
+        },
       },
-    },
-  });
+    }
+  );
 
   const {
     control,
     handleSubmit,
     formState: { errors },
     trigger,
+    reset,
+    setValue,
+    getValues,
   } = methods;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingJourney, setIsLoadingJourney] = useState(false);
+
+  useEffect(() => {
+    const fetchJourneyData = async () => {
+      if (!journeyId) return;
+
+      try {
+        setIsLoadingJourney(true);
+        const journeyResponse = await getJourneyById(Number(journeyId));
+        const formData = parseJourneyDataToFormData(journeyResponse);
+        if (
+          formData.ruleEngine.currentDropdownSelectedEvent &&
+          eventsData?.data?.eventList &&
+          eventsData.data.eventList.length > 0
+        ) {
+          const eventName =
+            formData.ruleEngine.currentDropdownSelectedEvent.label;
+          const matchingEvent = eventsData.data.eventList.find(
+            (event) => event.metadata.eventName === eventName
+          );
+
+          if (matchingEvent) {
+            const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
+            formData.ruleEngine.currentDropdownSelectedEvent = {
+              id: eventIndex + 1,
+              label: eventName,
+            };
+          }
+        }
+
+        reset(formData);
+        toast.success("Journey data loaded successfully");
+      } catch (error) {
+        console.error("Error fetching journey data:", error);
+        toast.error("Failed to load journey data. Please try again.");
+      } finally {
+        setIsLoadingJourney(false);
+      }
+    };
+
+    if (journeyId) {
+      fetchJourneyData();
+    }
+  }, [journeyId, reset, setValue]);
+
+  useEffect(() => {
+    if (
+      journeyId &&
+      eventsData?.data?.eventList &&
+      eventsData.data.eventList.length > 0
+    ) {
+      const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
+      if (currentEvent?.label && currentEvent.id === 0) {
+        const matchingEvent = eventsData.data.eventList.find(
+          (event) => event.metadata.eventName === currentEvent.label
+        );
+
+        if (matchingEvent) {
+          const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
+          setValue("ruleEngine.currentDropdownSelectedEvent", {
+            id: eventIndex + 1,
+            label: currentEvent.label,
+          });
+        }
+      }
+    }
+  }, [journeyId, eventsData, setValue, getValues]);
 
   const onFormSubmit = async (data: CreateJourneyFormData) => {
     console.log("data", data);
@@ -158,13 +246,27 @@ export default function CreateJourneyPage() {
 
     try {
       setIsSubmitting(true);
-      const response = await createJourney(data);
-      console.log("Journey created successfully:", response);
-      toast.success("Journey created successfully!");
-      router.push("/dashboard");
+      if (journeyId) {
+        const response = await updateJourney(Number(journeyId), data);
+        console.log("Journey updated successfully:", response);
+        toast.success("Journey updated successfully!");
+        router.push("/dashboard");
+      } else {
+        const response = await createJourney(data);
+        console.log("Journey created successfully:", response);
+        toast.success("Journey created successfully!");
+        router.push("/dashboard");
+      }
     } catch (error) {
-      console.error("Error creating journey:", error);
-      toast.error("Failed to create journey. Please try again.");
+      console.error(
+        `Error ${journeyId ? "updating" : "creating"} journey:`,
+        error
+      );
+      toast.error(
+        `Failed to ${
+          journeyId ? "update" : "create"
+        } journey. Please try again.`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -188,7 +290,6 @@ export default function CreateJourneyPage() {
   };
 
   const handleNext = () => {
-    // Simply move to content tab without validation
     setActiveTab("ui");
   };
 
@@ -251,6 +352,7 @@ export default function CreateJourneyPage() {
                 activeTab={activeTab}
                 onNext={handleNext}
                 isSubmitting={isSubmitting}
+                isEditMode={!!journeyId}
               />
             </form>
           </Box>

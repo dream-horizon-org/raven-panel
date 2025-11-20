@@ -746,7 +746,7 @@ const generateTemplate = (
       const template = getPopupWithSingleButtonTemplate();
       return {
         ...template,
-        props: {
+                    props: {
           ...template.props,
           testID: `testID-${timestamp}`,
           templateVariantId: variant,
@@ -1120,9 +1120,9 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                             sx={{
                               position: "absolute",
                               inset: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                               zIndex: 1,
                               pointerEvents: "none",
                             }}
@@ -1161,13 +1161,13 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                                   alignItems: "center",
                                   width: "100%",
                                   mb: 1.5,
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    fontSize: "0.875rem",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: "0.875rem",
                                     fontWeight: 600,
-                                    textAlign: "center",
+                              textAlign: "center",
                                     color: "text.primary",
                                     mb: 0.5,
                                     lineHeight: 1.2,
@@ -1188,34 +1188,34 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                                   {template.id === "popup-single-button"
                                     ? "Experience life unlimited!"
                                     : "Experience life unlimited"}
-                                </Typography>
-                              </Box>
+                          </Typography>
+                        </Box>
                               {/* Buttons */}
-                              <Box
-                                sx={{
-                                  display: "flex",
+                        <Box
+                          sx={{
+                            display: "flex",
                                   gap: 1,
-                                  justifyContent: "center",
+                            justifyContent: "center",
                                   width: "100%",
                                   alignItems: "center",
-                                }}
-                              >
+                          }}
+                        >
                                 {template.id === "popup-single-button" ? (
                                   <Box
-                                    sx={{
+                            sx={{
                                       px: 2,
                                       py: 0.625,
                                       borderRadius: 1,
-                                      fontSize: "0.75rem",
+                              fontSize: "0.75rem",
                                       bgcolor: "#000000",
                                       color: "white",
                                       fontWeight: 500,
-                                      textAlign: "center",
+                              textAlign: "center",
                                       minWidth: 100,
-                                    }}
-                                  >
+                            }}
+                          >
                                     Apply now
-                                  </Box>
+                        </Box>
                                 ) : (
                                   <>
                                     <Box

@@ -72,6 +72,7 @@ export default function JourneyFrequencySection({
                 type="number"
                 size="small"
                 sx={journeyFrequencySectionStyles.numberInput}
+                value={field.value ?? ""}
                 inputProps={{ min: 0 }}
               />
             )}
@@ -95,6 +96,7 @@ export default function JourneyFrequencySection({
                 type="number"
                 size="small"
                 sx={journeyFrequencySectionStyles.numberInput}
+                value={field.value ?? ""}
                 inputProps={{ min: 0 }}
               />
             )}
@@ -111,6 +113,7 @@ export default function JourneyFrequencySection({
                 type="number"
                 size="small"
                 sx={journeyFrequencySectionStyles.numberInput}
+                value={field.value ?? ""}
                 inputProps={{ min: 0 }}
               />
             )}
@@ -149,6 +152,7 @@ export default function JourneyFrequencySection({
                 type="number"
                 size="small"
                 sx={journeyFrequencySectionStyles.numberInput}
+                value={field.value ?? ""}
                 inputProps={{ min: 0 }}
               />
             )}

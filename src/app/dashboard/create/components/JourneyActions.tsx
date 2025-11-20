@@ -10,12 +10,14 @@ interface JourneyActionsProps {
   activeTab: "setup" | "ui";
   onNext: () => void;
   isSubmitting?: boolean;
+  isEditMode?: boolean;
 }
 
 export default function JourneyActions({
   activeTab,
   onNext,
   isSubmitting = false,
+  isEditMode = false,
 }: JourneyActionsProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -32,7 +34,11 @@ export default function JourneyActions({
       {activeTab === "setup" ? (
         <Button
           type="button"
-          onClick={onNext}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onNext();
+          }}
           variant="contained"
           sx={journeyActionsStyles.submitButton(theme)}
           size="large"
@@ -47,7 +53,13 @@ export default function JourneyActions({
           size="large"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Creating..." : JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
+          {isSubmitting
+            ? isEditMode
+              ? "Updating..."
+              : "Creating..."
+            : isEditMode
+            ? "Update Journey"
+            : JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
         </Button>
       )}
     </Box>

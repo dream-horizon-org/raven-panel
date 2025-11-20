@@ -29,6 +29,11 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import {
   tableContainerStyles,
   tableStyles,
@@ -66,10 +71,15 @@ import {
   tableLoadingOverlayStyles,
   journeyIconStyles,
 } from "./styles/journeysTableStyles";
-import { JOURNEY_TABLE_HEADERS, PAGE_SIZES } from "@/config/constants";
+import {
+  JOURNEY_TABLE_HEADERS,
+  PAGE_SIZES,
+  JOURNEY_MENU_ACTIONS,
+} from "@/config/constants";
 import { GetListOfCTAsResponse } from "@/api/services/types/journeys.interface";
 import { THEME_COLORS } from "@/config/colors";
 import { useState, useMemo, MouseEvent } from "react";
+import { useRouter } from "next/navigation";
 import { JOURNEY_ICONS } from "@/lib/mockData";
 
 const getJourneyIcon = (journeyId: number): string => {
@@ -278,6 +288,7 @@ export default function JourneysTable({
   handlePageSizeChange: (size: number) => void;
   pageSize: number;
 }) {
+  const router = useRouter();
   const theme = useTheme();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [menuAnchor, setMenuAnchor] = useState<{
@@ -339,7 +350,7 @@ export default function JourneysTable({
   };
 
   const handleEdit = (journeyId: number) => {
-    // TODO: Implement edit functionality
+    router.push(`/dashboard/edit/${journeyId}`);
   };
 
   const handleClone = (journeyId: number) => {
@@ -590,17 +601,55 @@ export default function JourneysTable({
         }}
         sx={actionMenuStyles}
       >
-        <MenuItem
-          onClick={() =>
-            menuAnchor && handleCopyJourneyId(menuAnchor.journeyId)
-          }
-          sx={actionMenuItemStyles}
-        >
-          <ListItemIcon sx={actionMenuIconStyles}>
-            <FileCopyOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Copy journey ID" />
-        </MenuItem>
+        {JOURNEY_MENU_ACTIONS.map((action) => {
+          const handleClick = () => {
+            if (!menuAnchor) return;
+            if (action.id === "copy") {
+              handleCopyJourneyId(menuAnchor.journeyId);
+            } else if (action.id === "edit") {
+              handleEdit(menuAnchor.journeyId);
+            }
+          };
+
+          const getIconComponent = () => {
+            if (!("icon" in action)) return null;
+            switch (action.icon) {
+              case "FileCopyOutlined":
+                return FileCopyOutlinedIcon;
+              case "EditOutlined":
+                return EditOutlinedIcon;
+              case "PlayCircleOutline":
+                return PlayCircleOutlineIcon;
+              case "Schedule":
+                return ScheduleIcon;
+              case "PauseCircleOutline":
+                return PauseCircleOutlineIcon;
+              case "StopCircle":
+                return StopCircleIcon;
+              case "CheckCircleOutline":
+                return CheckCircleOutlineIcon;
+              default:
+                return null;
+            }
+          };
+
+          const IconComponent = getIconComponent();
+
+          return (
+            <MenuItem
+              key={action.id}
+              onClick={action.hasAction ? handleClick : undefined}
+              sx={actionMenuItemStyles}
+            >
+              {IconComponent && (
+                <ListItemIcon sx={actionMenuIconStyles}>
+                  <IconComponent fontSize="small" />
+                </ListItemIcon>
+              )}
+              <ListItemText primary={action.label} />
+            </MenuItem>
+          );
+        })}
       </Menu>
     </>
   );

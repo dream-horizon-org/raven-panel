@@ -3,7 +3,6 @@ import {
   ReactNativeJson,
 } from "@/app/dashboard/create/types/journeyTypes";
 
-// API Request Types
 export interface CreateCtaInput {
   name: string;
   description: string;
