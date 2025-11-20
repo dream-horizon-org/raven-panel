@@ -32,12 +32,6 @@ export const JOURNEY_MENU_ACTIONS = [
     hasAction: true,
   },
   {
-    id: "edit",
-    label: "Edit",
-    icon: "EditOutlined",
-    hasAction: true,
-  },
-  {
     id: "live",
     label: "Live",
     icon: "PlayCircleOutline",

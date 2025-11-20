@@ -602,22 +602,11 @@ export default function JourneysTable({
         sx={actionMenuStyles}
       >
         {JOURNEY_MENU_ACTIONS.map((action) => {
-          const handleClick = () => {
-            if (!menuAnchor) return;
-            if (action.id === "copy") {
-              handleCopyJourneyId(menuAnchor.journeyId);
-            } else if (action.id === "edit") {
-              handleEdit(menuAnchor.journeyId);
-            }
-          };
-
           const getIconComponent = () => {
             if (!("icon" in action)) return null;
             switch (action.icon) {
               case "FileCopyOutlined":
                 return FileCopyOutlinedIcon;
-              case "EditOutlined":
-                return EditOutlinedIcon;
               case "PlayCircleOutline":
                 return PlayCircleOutlineIcon;
               case "Schedule":
@@ -638,7 +627,11 @@ export default function JourneysTable({
           return (
             <MenuItem
               key={action.id}
-              onClick={action.hasAction ? handleClick : undefined}
+              onClick={
+                action.hasAction
+                  ? () => handleCopyJourneyId(menuAnchor?.journeyId ?? 0)
+                  : undefined
+              }
               sx={actionMenuItemStyles}
             >
               {IconComponent && (
