@@ -14,9 +14,14 @@ import { JOURNEY_TEXT } from "../constants/journeyConstants";
 interface JourneyHeaderProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
+  isEditMode?: boolean;
 }
 
-export default function JourneyHeader({ control, errors }: JourneyHeaderProps) {
+export default function JourneyHeader({
+  control,
+  errors,
+  isEditMode = false,
+}: JourneyHeaderProps) {
   const router = useRouter();
 
   return (
@@ -42,6 +47,7 @@ export default function JourneyHeader({ control, errors }: JourneyHeaderProps) {
               placeholder={JOURNEY_TEXT.HEADER.PLACEHOLDER}
               variant="outlined"
               error={!!errors.ctaMetadata?.ctaTitle}
+              disabled={isEditMode}
               sx={journeyHeaderStyles.headerNameField}
             />
           )}

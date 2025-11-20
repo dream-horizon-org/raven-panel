@@ -1,12 +1,12 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import { useEventsList } from "@/hooks/useEventsList";
 import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
 import { useTheme } from "@mui/material/styles";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
 import { generateRandomJourneyName } from "../utils/journeyUtils";
@@ -32,10 +32,12 @@ import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
+  isCloneMode?: boolean;
 }
 
 export default function CreateJourneyPage({
   journeyId: journeyIdProp,
+  isCloneMode = false,
 }: CreateJourneyPageProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -149,40 +151,27 @@ export default function CreateJourneyPage({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);
+  const hasFetchedJourneyRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchJourneyData = async () => {
-      if (!journeyId) return;
+      if (!journeyId || hasFetchedJourneyRef.current === journeyId) return;
 
       try {
         setIsLoadingJourney(true);
+        hasFetchedJourneyRef.current = journeyId;
         const journeyResponse = await getJourneyById(Number(journeyId));
         const formData = parseJourneyDataToFormData(journeyResponse);
-        if (
-          formData.ruleEngine.currentDropdownSelectedEvent &&
-          eventsData?.data?.eventList &&
-          eventsData.data.eventList.length > 0
-        ) {
-          const eventName =
-            formData.ruleEngine.currentDropdownSelectedEvent.label;
-          const matchingEvent = eventsData.data.eventList.find(
-            (event) => event.metadata.eventName === eventName
-          );
-
-          if (matchingEvent) {
-            const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
-            formData.ruleEngine.currentDropdownSelectedEvent = {
-              id: eventIndex + 1,
-              label: eventName,
-            };
-          }
-        }
-
         reset(formData);
-        toast.success("Journey data loaded successfully");
+        toast.success(
+          isCloneMode
+            ? "Journey data loaded for cloning"
+            : "Journey data loaded successfully"
+        );
       } catch (error) {
         console.error("Error fetching journey data:", error);
         toast.error("Failed to load journey data. Please try again.");
+        hasFetchedJourneyRef.current = undefined;
       } finally {
         setIsLoadingJourney(false);
       }
@@ -191,16 +180,18 @@ export default function CreateJourneyPage({
     if (journeyId) {
       fetchJourneyData();
     }
-  }, [journeyId, reset, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journeyId, isCloneMode]);
 
   useEffect(() => {
     if (
       journeyId &&
+      !isLoadingJourney &&
       eventsData?.data?.eventList &&
       eventsData.data.eventList.length > 0
     ) {
       const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
-      if (currentEvent?.label && currentEvent.id === 0) {
+      if (currentEvent?.label) {
         const matchingEvent = eventsData.data.eventList.find(
           (event) => event.metadata.eventName === currentEvent.label
         );
@@ -214,7 +205,7 @@ export default function CreateJourneyPage({
         }
       }
     }
-  }, [journeyId, eventsData, setValue, getValues]);
+  }, [journeyId, isLoadingJourney, eventsData, setValue, getValues]);
 
   const onFormSubmit = async (data: CreateJourneyFormData) => {
     console.log("data", data);
@@ -246,7 +237,7 @@ export default function CreateJourneyPage({
 
     try {
       setIsSubmitting(true);
-      if (journeyId) {
+      if (journeyId && !isCloneMode) {
         const response = await updateJourney(Number(journeyId), data);
         console.log("Journey updated successfully:", response);
         toast.success("Journey updated successfully!");
@@ -254,17 +245,21 @@ export default function CreateJourneyPage({
       } else {
         const response = await createJourney(data);
         console.log("Journey created successfully:", response);
-        toast.success("Journey created successfully!");
+        toast.success(
+          isCloneMode
+            ? "Journey cloned successfully!"
+            : "Journey created successfully!"
+        );
         router.push("/dashboard");
       }
     } catch (error) {
       console.error(
-        `Error ${journeyId ? "updating" : "creating"} journey:`,
+        `Error ${journeyId && !isCloneMode ? "updating" : "creating"} journey:`,
         error
       );
       toast.error(
         `Failed to ${
-          journeyId ? "update" : "create"
+          journeyId && !isCloneMode ? "update" : "create"
         } journey. Please try again.`
       );
     } finally {
@@ -297,10 +292,29 @@ export default function CreateJourneyPage({
     (!eventsData && isFetchingEvents) ||
     (!systemPropertiesData && isFetchingSystemProperties);
 
+  if (journeyId && isLoadingJourney) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <FormProvider {...methods}>
       <Box sx={createJourneyPageStyles.pageContainer}>
-        <JourneyHeader control={control} errors={errors} />
+        <JourneyHeader
+          control={control}
+          errors={errors}
+          isEditMode={!!journeyId && !isCloneMode}
+        />
 
         <Box sx={createJourneyPageStyles.mainLayout}>
           <Box sx={createJourneyPageStyles.contentArea}>
@@ -352,7 +366,7 @@ export default function CreateJourneyPage({
                 activeTab={activeTab}
                 onNext={handleNext}
                 isSubmitting={isSubmitting}
-                isEditMode={!!journeyId}
+                isEditMode={!!journeyId && !isCloneMode}
               />
             </form>
           </Box>

@@ -354,7 +354,7 @@ export default function JourneysTable({
   };
 
   const handleClone = (journeyId: number) => {
-    // TODO: Implement clone functionality
+    router.push(`/dashboard/clone/${journeyId}`);
   };
 
   const handleCopyJourneyId = async (journeyId: number) => {
