@@ -33,7 +33,7 @@ export default function JourneyHeader({ control, errors }: JourneyHeaderProps) {
           {JOURNEY_ICONS[0]}
         </Typography>
         <Controller
-          name="name"
+          name="ctaMetadata.ctaTitle"
           control={control}
           rules={{ required: JOURNEY_TEXT.VALIDATION.NAME_REQUIRED }}
           render={({ field }: { field: FieldValues }) => (
@@ -41,7 +41,7 @@ export default function JourneyHeader({ control, errors }: JourneyHeaderProps) {
               {...field}
               placeholder={JOURNEY_TEXT.HEADER.PLACEHOLDER}
               variant="outlined"
-              error={!!errors.name}
+              error={!!errors.ctaMetadata?.ctaTitle}
               sx={journeyHeaderStyles.headerNameField}
             />
           )}

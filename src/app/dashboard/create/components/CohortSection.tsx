@@ -6,6 +6,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  InputLabel,
   Tooltip,
 } from "@mui/material";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -49,33 +50,44 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
           <Typography sx={cohortSectionStyles.selectLabel}>
             {JOURNEY_TEXT.SECTIONS.COHORT.LABEL}
           </Typography>
-          <Controller
-            name="cohort"
-            control={control}
-            render={({ field }: { field: FieldValues }) => (
+        <Controller
+          name="selectCohort.includedCohorts"
+          control={control}
+          render={({ field }: { field: FieldValues }) => {
+            const value =
+              Array.isArray(field.value) && field.value.length > 0
+                ? field.value[0]
+                : "";
+            return (
               <FormControl
-                error={!!errors.cohort}
+                error={!!errors.selectCohort?.includedCohorts}
                 sx={cohortSectionStyles.selectField}
-              >
-                <Select {...field} displayEmpty>
+              >                
+                <Select
+                  value={value}
+                  onChange={(e) => {
+                    field.onChange([e.target.value]);
+                  }}
+                >
                   {COHORT_OPTIONS.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                       {option.label}
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.cohort && (
+                {errors.selectCohort?.includedCohorts && (
                   <Typography
                     variant="caption"
                     color="error"
                     sx={{ mt: 0.5, ml: 1.5 }}
                   >
-                    {errors.cohort.message}
+                    {errors.selectCohort.includedCohorts.message}
                   </Typography>
                 )}
               </FormControl>
-            )}
-          />
+            );
+          }}
+        />
         </Box>
       </Box>
     </Box>

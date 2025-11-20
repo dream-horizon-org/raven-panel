@@ -1,4 +1,4 @@
-import { PropertyType } from "../types/journeyTypes";
+import { OperatorType, PropertyType } from "../types/journeyTypes";
 
 export type FilterOperator = "=" | ">" | "<" | ">=" | "<=";
 
@@ -11,6 +11,14 @@ export const OPERATORS: Array<{
   { value: "<", label: "<" },
   { value: ">=", label: ">=" },
   { value: "<=", label: "<=" },
+];
+
+export const OPERATOR_TYPES: Array<{
+  value: OperatorType;
+  label: string;
+}> = [
+  { value: "AND", label: "AND" },
+  { value: "OR", label: "OR" },
 ];
 
 export const EVENT_OPTIONS = [
@@ -99,27 +107,28 @@ export const JOURNEY_TEXT = {
 } as const;
 
 export const getJourneyFormDefaults = () => ({
-  name: "",
-  cohort: "",
-  event: "",
-  condition: {
-    operator: "AND" as const,
-    comparisons: [
-      {
-        propertyName: "",
-        propertyType: "string" as const,
-        comparisonType: "=" as const,
-        comparisonValue: "",
-      },
-    ],
+  ctaMetadata: {
+    ctaTitle: "",
+    description: "",
+    tags: [],
+    team: "",
+  },
+  selectCohort: {
+    includedCohorts: [],
+    exculdedCohorts: [],
+    rollout: "",
+    maximumUserCount: "",
+    pilotUserId: "",
   },
   schedule: {
-    startType: "immediate" as const,
-    startDate: "",
-    startTime: "",
-    endType: "scheduled" as const,
-    endDate: "",
-    endTime: "",
+    startType: "immediate",
+    startDate: null,
+    startTime: null,
+    startDateTime: null,
+    endDate: null,
+    endTime: null,
+    endDateTime: null,
+    priority: null,
   },
   journeyFrequency: {
     enableTimesInSession: false,
@@ -130,6 +139,22 @@ export const getJourneyFormDefaults = () => ({
     periodUnit: "days" as const,
     enableMaxTimesInLifetime: false,
     maxTimesInLifetime: 999,
+  },
+  ruleEngine: {
+    currentDropdownSelectedEvent: null,
+    eventInfo: [],
+  },
+  contextParams: [],
+  stateMachine: {
+    states: [],
+    events: [],
+  },
+  filterFunctionSeleted: {
+    filterSelected: "",
+  },
+  nudgeSelection: {
+    actions: [],
+    resetStates: [],
   },
 });
 

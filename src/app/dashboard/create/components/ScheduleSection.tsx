@@ -23,7 +23,6 @@ interface ScheduleSectionProps {
 
 export default function ScheduleSection({
   control,
-  errors,
 }: ScheduleSectionProps) {
   const theme = useTheme();
 

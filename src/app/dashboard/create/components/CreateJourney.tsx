@@ -1,27 +1,16 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { useForm, FormProvider } from "react-hook-form";
-import { useFieldArray } from "react-hook-form";
-import { useFiltersList } from "@/hooks/useFiltersList";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { useEventsList } from "@/hooks/useEventsList";
+import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
 import { useTheme } from "@mui/material/styles";
 import { useState, useMemo, useEffect } from "react";
-import { useWatch } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
 import { generateRandomJourneyName } from "../utils/journeyUtils";
-import {
-  CreateJourneyFormData,
-  ConditionData,
-  Comparison,
-  PropertyType,
-} from "../types/journeyTypes";
-import {
-  convertComparisonValue,
-  isNumericType,
-  normalizePropertyType,
-} from "../utils/propertyTypeUtils";
+import { CreateJourneyFormData } from "../types/journeyTypes";
 import {
   JOURNEY_TEXT,
   getJourneyFormDefaults,
@@ -33,8 +22,23 @@ import EventTriggerSection from "./EventTriggerSection";
 import ScheduleSection from "./ScheduleSection";
 import JourneyFrequencySection from "./JourneyFrequencySection";
 import JourneyActions from "./JourneyActions";
-
-export default function CreateJourneyPage() {
+import EngagementSelector from "./EngagementSelector";
+import EngagementSidePanel from "./EngagementSidePanel";
+import { createJourney } from "@/api/services/createJourney.service";
+//import { updateJourney } from "@/api/services/updateJourney.service";
+//import { getJourneyById } from "@/api/services/getJourney.service";
+import { toast } from "sonner";
+//import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
+interface CreateJourneyPageProps {
+  journeyId?: string;
+}
+export default function CreateJourneyPage({
+  journeyId: journeyIdProp,
+}: CreateJourneyPageProps = {}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const journeyIdFromQuery = searchParams?.get("id");
+  const journeyId = journeyIdProp || journeyIdFromQuery || undefined;
   const theme = useTheme();
   const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
   const {
@@ -47,79 +51,7 @@ export default function CreateJourneyPage() {
     isLoading: isLoadingSystemProperties,
     isFetching: isFetchingSystemProperties,
   } = useSystemProperties();
-  const methods = useForm<CreateJourneyFormData>({
-    defaultValues: {
-      ...getJourneyFormDefaults(),
-      name: generateRandomJourneyName(),
-    },
-  });
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    trigger,
-    setValue,
-    setError,
-    clearErrors,
-  } = methods;
-
-  const { fields, append, remove, replace } = useFieldArray({
-    control,
-    name: "condition.comparisons",
-  });
-
-  const conditionOperator = useWatch({
-    control,
-    name: "condition.operator",
-  });
-
-  // Watch journey frequency checkboxes to clear error when any is checked
-  const enableTimesInSession = useWatch({
-    control,
-    name: "journeyFrequency.enableTimesInSession",
-  });
-  const enableMaxTimesInPeriod = useWatch({
-    control,
-    name: "journeyFrequency.enableMaxTimesInPeriod",
-  });
-  const enableMaxTimesInLifetime = useWatch({
-    control,
-    name: "journeyFrequency.enableMaxTimesInLifetime",
-  });
-
-  // Clear error when any frequency checkbox is checked
-  useEffect(() => {
-    const hasFrequencyEnabled =
-      enableTimesInSession ||
-      enableMaxTimesInPeriod ||
-      enableMaxTimesInLifetime;
-    if (hasFrequencyEnabled && errors.journeyFrequency) {
-      clearErrors("journeyFrequency");
-    }
-  }, [
-    enableTimesInSession,
-    enableMaxTimesInPeriod,
-    enableMaxTimesInLifetime,
-    errors.journeyFrequency,
-    clearErrors,
-  ]);
-
-  useEffect(() => {
-    // Only initialize once on mount if field array is empty
-    if (fields.length === 0) {
-      const condition =
-        control._formValues.condition || getJourneyFormDefaults().condition;
-      if (condition.comparisons.length > 0) {
-        replace(condition.comparisons);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
-
   const availableProperties = filtersData?.data?.names || [];
-
-  // Extract system properties and their types
   const { systemPropertyNames, systemPropertyTypes } = useMemo(() => {
     if (!systemPropertiesData) {
       return {
@@ -127,7 +59,6 @@ export default function CreateJourneyPage() {
         systemPropertyTypes: new Map<string, string>(),
       };
     }
-
     const data = systemPropertiesData.data;
     if (!data) {
       return {
@@ -135,24 +66,19 @@ export default function CreateJourneyPage() {
         systemPropertyTypes: new Map<string, string>(),
       };
     }
-
     const names: string[] = [];
     const types = new Map<string, string>();
-
-    // Handle array of objects with propertyName and type
     if (Array.isArray(data)) {
       data.forEach((item) => {
         if (item?.propertyName) {
           names.push(item.propertyName);
           if (item.type) {
-            // Normalize type (e.g., "Long" -> "long")
             const normalizedType = item.type.toLowerCase();
             types.set(item.propertyName, normalizedType);
           }
         }
       });
     } else if (Array.isArray(data.names)) {
-      // Fallback: if it's just names array
       data.names.forEach((name: string) => {
         names.push(name);
       });
@@ -185,99 +111,170 @@ export default function CreateJourneyPage() {
         }
       );
     }
-
     return { systemPropertyNames: names, systemPropertyTypes: types };
   }, [systemPropertiesData]);
+  const methods = useForm<CreateJourneyFormData, object, CreateJourneyFormData>(
+    {
+      defaultValues: {
+        ...getJourneyFormDefaults(),
+        ctaMetadata: {
+          ...getJourneyFormDefaults().ctaMetadata,
+          ctaTitle: generateRandomJourneyName(),
+        },
+        schedule: {
+          ...getJourneyFormDefaults().schedule,
+          startType: "immediate" as "immediate" | "scheduled",
+        },
+      },
+    }
+  );
 
-  // Build propertyTypeMap to get correct types for transformation
-  const selectedEventName = useWatch({ control, name: "event" });
-  const propertyTypeMap = useMemo(() => {
-    const typeMap = new Map<string, string>();
+  // Watch journey frequency checkboxes to clear error when any is checked
+  const enableTimesInSession = useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableTimesInSession",
+  });
+  const enableMaxTimesInPeriod = useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableMaxTimesInPeriod",
+  });
+  const enableMaxTimesInLifetime = useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableMaxTimesInLifetime",
+  });  
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    trigger,
+    reset,
+    setValue,
+    getValues,
+  } = methods;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingJourney, setIsLoadingJourney] = useState(false);
 
-    // Add event properties with their types
-    if (selectedEventName && eventsData?.data?.eventList) {
-      const selectedEvent = eventsData.data.eventList.find(
-        (e) => e.metadata.eventName === selectedEventName
-      );
-      if (selectedEvent?.properties) {
-        selectedEvent.properties.forEach((prop) => {
-          typeMap.set(prop.propertyName, prop.type || "string");
-        });
+  useEffect(() => {
+    const fetchJourneyData = async () => {
+      if (!journeyId) return;
+      try {
+        setIsLoadingJourney(true);
+        const journeyResponse = await getJourneyById(Number(journeyId));
+        const formData = parseJourneyDataToFormData(journeyResponse);
+        if (
+          formData.ruleEngine.currentDropdownSelectedEvent &&
+          eventsData?.data?.eventList &&
+          eventsData.data.eventList.length > 0
+        ) {
+          const eventName =
+            formData.ruleEngine.currentDropdownSelectedEvent.label;
+          const matchingEvent = eventsData.data.eventList.find(
+            (event) => event.metadata.eventName === eventName
+          );
+          if (matchingEvent) {
+            const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
+            formData.ruleEngine.currentDropdownSelectedEvent = {
+              id: eventIndex + 1,
+              label: eventName,
+            };
+          }
+        }
+        reset(formData);
+        toast.success("Journey data loaded successfully");
+      } catch (error) {
+        console.error("Error fetching journey data:", error);
+        toast.error("Failed to load journey data. Please try again.");
+      } finally {
+        setIsLoadingJourney(false);
+      }
+    };
+    if (journeyId) {
+      fetchJourneyData();
+    }
+  }, [journeyId, reset, setValue]);
+
+  useEffect(() => {
+    if (
+      journeyId &&
+      eventsData?.data?.eventList &&
+      eventsData.data.eventList.length > 0
+    ) {
+      const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
+      if (currentEvent?.label && currentEvent.id === 0) {
+        const matchingEvent = eventsData.data.eventList.find(
+          (event) => event.metadata.eventName === currentEvent.label
+        );
+        if (matchingEvent) {
+          const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
+          setValue("ruleEngine.currentDropdownSelectedEvent", {
+            id: eventIndex + 1,
+            label: currentEvent.label,
+          });
+        }
       }
     }
-
-    // Add system properties with their types (from API response)
-    systemPropertyNames.forEach((propName) => {
-      if (!typeMap.has(propName)) {
-        // Use type from system properties if available, otherwise default to "string"
-        const systemType = systemPropertyTypes.get(propName);
-        typeMap.set(propName, systemType || "string");
-      }
-    });
-
-    return typeMap;
-  }, [eventsData, systemPropertyNames, systemPropertyTypes, selectedEventName]);
-
-  // Transform comparisons: normalize propertyType and convert comparisonValue
-  const transformComparisons = (comparisons: Comparison[]): Comparison[] => {
-    return comparisons.map((comparison) => {
-      // Always try to get propertyType from propertyTypeMap first (source of truth)
-      // Fallback to form value if not in map
-      let propertyTypeStr: string;
-      if (
-        comparison.propertyName &&
-        propertyTypeMap.has(comparison.propertyName)
-      ) {
-        propertyTypeStr = propertyTypeMap.get(comparison.propertyName)!;
+  }, [journeyId, eventsData, setValue, getValues]);
+  const onFormSubmit = async (data: CreateJourneyFormData) => {
+    console.log("data", data);
+    // Validate that templates are present
+    if (
+      !data.nudgeSelection?.actions ||
+      data.nudgeSelection.actions.length === 0
+    ) {
+      console.error("Error: No actions/templates configured");
+      toast.error(
+        "Please configure at least one engagement template before creating the journey."
+      );
+      return;
+    }
+    // Validate that each action has a template
+    const actionsWithoutTemplate = data.nudgeSelection.actions.filter(
+      (action) => !action.template
+    );
+    if (actionsWithoutTemplate.length > 0) {
+      console.error("Error: Some actions are missing templates");
+      toast.error(
+        "Please ensure all actions have templates configured before creating the journey."
+      );
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      if (journeyId) {
+        // Update existing journey
+        const response = await updateJourney(Number(journeyId), data);
+        console.log("Journey updated successfully:", response);
+        toast.success("Journey updated successfully!");
+        router.push("/dashboard");
       } else {
-        propertyTypeStr = String(comparison.propertyType);
+        // Create new journey
+        const response = await createJourney(data);
+        console.log("Journey created successfully:", response);
+        toast.success("Journey created successfully!");
+        router.push("/dashboard");
       }
-
-      const normalizedType = normalizePropertyType(propertyTypeStr);
-      const isNumeric = isNumericType(propertyTypeStr);
-      return {
-        propertyName: comparison.propertyName,
-        propertyType: normalizedType,
-        comparisonType: comparison.comparisonType,
-        comparisonValue: isNumeric
-          ? convertComparisonValue(comparison.comparisonValue, propertyTypeStr)
-          : comparison.comparisonValue,
-      };
-    });
+    } catch (error) {
+      console.error(
+        `Error ${journeyId ? "updating" : "creating"} journey:`,
+        error
+      );
+      toast.error(
+        `Failed to ${
+          journeyId ? "update" : "create"
+        } journey. Please try again.`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const syncCondition = (
-    comparisons: Comparison[],
-    operator: "AND" | "OR" = conditionOperator || "AND"
-  ) => {
-    const transformedComparisons = transformComparisons(comparisons);
-    setValue("condition", {
-      operator,
-      comparisons: transformedComparisons,
-    });
-  };
-
-  const onFormSubmit = (data: CreateJourneyFormData) => {
-    const transformedCondition: ConditionData = {
-      operator: data.condition.operator,
-      comparisons: transformComparisons(data.condition.comparisons),
-    };
-
-    const transformedData = {
-      ...data,
-      condition: JSON.stringify(transformedCondition),
-    };
-    console.log(transformedData);
-  };
-
   const [activeTab, setActiveTab] = useState<"setup" | "ui">("setup");
-
+  const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const handleTabChange = async (newTab: "setup" | "ui") => {
     if (activeTab === "setup" && newTab === "ui") {
-      const currentComparisons =
-        control._formValues.condition?.comparisons || [];
-      syncCondition(currentComparisons, conditionOperator || "AND");
-      const isValid = await trigger(["name", "event", "condition"]);
+      const isValid = await trigger([
+        "ctaMetadata.ctaTitle",
+        "ruleEngine.currentDropdownSelectedEvent",
+      ]);
       if (isValid) {
         setActiveTab(newTab);
       }
@@ -285,116 +282,62 @@ export default function CreateJourneyPage() {
       setActiveTab(newTab);
     }
   };
-
-  const handleNext = async () => {
-    const currentComparisons = control._formValues.condition?.comparisons || [];
-    syncCondition(currentComparisons, conditionOperator || "AND");
-    
-    // Validate journey frequency - at least one option must be enabled
-    const journeyFrequency = control._formValues.journeyFrequency || {};
-    const hasFrequencyEnabled =
-      journeyFrequency.enableTimesInSession ||
-      journeyFrequency.enableMaxTimesInPeriod ||
-      journeyFrequency.enableMaxTimesInLifetime;
-    
-    if (!hasFrequencyEnabled) {
-      setError("journeyFrequency", {
-        type: "manual",
-        message: "At least one journey frequency option must be selected",
-      });
-    } else {
-      clearErrors("journeyFrequency");
-    }
-    
-    const isValid = await trigger(["name", "event", "condition"]);
-    if (isValid && hasFrequencyEnabled) {
-      setActiveTab("ui");
-    }
+  const handleNext = () => {
+    // Simply move to content tab without validation
+    setActiveTab("ui");
   };
-
   const isLoading =
     (!eventsData && isFetchingEvents) ||
     (!systemPropertiesData && isFetchingSystemProperties);
-
   return (
     <FormProvider {...methods}>
       <Box sx={createJourneyPageStyles.pageContainer}>
         <JourneyHeader control={control} errors={errors} />
-
         <Box sx={createJourneyPageStyles.mainLayout}>
           <Box sx={createJourneyPageStyles.contentArea}>
             <JourneyTabs activeTab={activeTab} onTabChange={handleTabChange} />
-
             <form onSubmit={handleSubmit(onFormSubmit)}>
               {activeTab === "setup" && (
                 <Box sx={createJourneyPageStyles.formContent}>
                   <CohortSection control={control} errors={errors} />
-
                   <Box sx={createJourneyPageStyles.filtersSection}>
                     <EventTriggerSection
                       control={control}
                       errors={errors}
-                      fields={fields}
-                      onAddFilter={() => {
-                        const newComparison: Comparison = {
-                          propertyName: "",
-                          propertyType: "string",
-                          comparisonType: "=",
-                          comparisonValue: "",
-                        };
-                        append(newComparison);
-                        // syncCondition will be called automatically when form values change
-                        // No need to manually sync here as it will use the current form state
-                      }}
-                      onOperatorChange={(operator: "AND" | "OR") => {
-                        setValue("condition.operator", operator);
-                        const currentComparisons =
-                          control._formValues.condition?.comparisons || [];
-                        syncCondition(currentComparisons, operator);
-                      }}
-                      operator={conditionOperator || "AND"}
-                      onRemoveFilter={(index: number) => {
-                        remove(index);
-                        // syncCondition will be called automatically when form values change
-                        // No need to manually sync here
-                      }}
-                      availableProperties={availableProperties}
-                      isLoadingFilters={isLoadingFilters}
                       events={eventsData?.data?.eventList || []}
                       isLoadingEvents={isLoadingEvents}
+                      isLoading={isLoading}
+                      availableProperties={availableProperties}
+                      isLoadingFilters={isLoadingFilters}
                       systemProperties={systemPropertyNames}
                       systemPropertyTypes={systemPropertyTypes}
-                      isLoading={isLoading}
                     />
                   </Box>
-
                   <ScheduleSection control={control} errors={errors} />
-
                   <JourneyFrequencySection control={control} errors={errors} />
                 </Box>
               )}
-
               {activeTab === "ui" && (
                 <Box sx={createJourneyPageStyles.formContent}>
-                  <Box sx={createJourneyPageStyles.formCard(theme)}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={createJourneyPageStyles.sectionLabel}
-                    >
-                      {JOURNEY_TEXT.SECTIONS.UI_CONTENT.TITLE}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 2 }}
-                    >
-                      {JOURNEY_TEXT.SECTIONS.UI_CONTENT.DESCRIPTION}
-                    </Typography>
-                  </Box>
+                  <EngagementSelector
+                    control={control}
+                    errors={errors}
+                    onEngagementSelect={() => setSidePanelOpen(true)}
+                  />
                 </Box>
               )}
-
-              <JourneyActions activeTab={activeTab} onNext={handleNext} />
+              <EngagementSidePanel
+                open={sidePanelOpen}
+                onClose={() => setSidePanelOpen(false)}
+                control={control}
+                errors={errors}
+              />
+              <JourneyActions
+                activeTab={activeTab}
+                onNext={handleNext}
+                isSubmitting={isSubmitting}
+                //isEditMode={!!journeyId}
+              />
             </form>
           </Box>
         </Box>
