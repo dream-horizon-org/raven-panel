@@ -122,11 +122,14 @@ export const getJourneyFormDefaults = () => ({
     endTime: "",
   },
   journeyFrequency: {
-    timesInSession: 1,
-    maxTimesInPeriod: 1,
-    periodValue: 1,
+    enableTimesInSession: false,
+    timesInSession: 999,
+    enableMaxTimesInPeriod: false,
+    maxTimesInPeriod: 999,
+    periodValue: 999,
     periodUnit: "days" as const,
-    maxTimesInLifetime: 1,
+    enableMaxTimesInLifetime: false,
+    maxTimesInLifetime: 999,
   },
 });
 

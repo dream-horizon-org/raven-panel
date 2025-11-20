@@ -26,10 +26,13 @@ export interface CreateJourneyFormData {
     endTime: string;
   };
   journeyFrequency: {
+    enableTimesInSession?: boolean;
     timesInSession: number;
+    enableMaxTimesInPeriod?: boolean;
     maxTimesInPeriod: number;
     periodValue: number;
     periodUnit: "days" | "hours" | "weeks" | "months";
+    enableMaxTimesInLifetime?: boolean;
     maxTimesInLifetime: number;
   };
 }
