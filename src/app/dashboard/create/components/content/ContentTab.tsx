@@ -17,12 +17,6 @@ import { contentTabStyles } from "../../styles/contentTabStyles";
 import ContentElementEditor from "./ContentElementEditor";
 import { getComponentDefinition } from "../../utils/componentDefinitions";
 
-// Simple ID generator
-const generateId = () =>
-  `element-${Date.now()}-${Math.random()
-    .toString(36)
-    .substr(2, 9)}`;
-
 interface ContentTabProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;

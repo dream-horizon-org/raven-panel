@@ -10,6 +10,7 @@ const getBaseUrl = () => {
 
 export const API_BASE_URLS = {
   THUNDER: getBaseUrl(),
+  USER_COHORTS: "/user-cohorts",
 };
 
 export const API_ENDPOINTS = {
@@ -17,6 +18,7 @@ export const API_ENDPOINTS = {
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/ctas`,
   EVENTS_SCHEMA: "/concord/schema",
   SYSTEM_PROPERTIES: "/concord/getSystemProperties",
+  COHORTS_REALTIME: `${API_BASE_URLS.USER_COHORTS}/user-cohort/realtime`,
 };
 
 export const API_AXIOS_CONFIG = {

@@ -14,6 +14,10 @@ const nextConfig = {
         source: "/concord/:path*",
         destination: "http://concord.dream11.local/:path*",
       },
+      {
+        source: "/user-cohorts/:path*",
+        destination: "http://user-cohorts.dream11.local/:path*",
+      },
     ];
   },
 };

@@ -3,20 +3,21 @@
 import {
   Box,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Tooltip,
+  TextField,
+  Autocomplete,
+  Select,
 } from "@mui/material";
 import GroupsIcon from "@mui/icons-material/Groups";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTheme } from "@mui/material/styles";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
+import { useState, useMemo } from "react";
 import { cohortSectionStyles } from "../styles/cohortSectionStyles";
 import { CreateJourneyFormData } from "../types/journeyTypes";
-import { COHORT_OPTIONS, JOURNEY_TEXT } from "../constants/journeyConstants";
+import { JOURNEY_TEXT } from "../constants/journeyConstants";
+import { useCohortsList } from "@/hooks/useCohortsList";
 
 interface CohortSectionProps {
   control: Control<CreateJourneyFormData>;
@@ -25,6 +26,23 @@ interface CohortSectionProps {
 
 export default function CohortSection({ control, errors }: CohortSectionProps) {
   const theme = useTheme();
+  const { data: cohortsData, isLoading: isLoadingCohorts } = useCohortsList();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const cohortOptions =
+    cohortsData?.data?.map((cohortName) => ({
+      value: cohortName,
+      label: cohortName,
+    })) || [];
+
+  const filteredCohorts = useMemo(() => {
+    if (!searchTerm) {
+      return cohortOptions;
+    }
+    return cohortOptions.filter((cohort) =>
+      cohort.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [cohortOptions, searchTerm]);
 
   return (
     <Box sx={cohortSectionStyles.formCard(theme)}>
@@ -50,39 +68,51 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
           name="selectCohort.includedCohorts"
           control={control}
           render={({ field }: { field: FieldValues }) => {
-            const value =
+            const selectedValue =
               Array.isArray(field.value) && field.value.length > 0
                 ? field.value[0]
-                : "";
+                : null;
+            const selectedOption =
+              cohortOptions.find((opt) => opt.value === selectedValue) || null;
+
             return (
-              <FormControl
-                fullWidth
-                error={!!errors.selectCohort?.includedCohorts}
-              >
-                <InputLabel>{JOURNEY_TEXT.SECTIONS.COHORT.LABEL}</InputLabel>
-                <Select
-                  value={value}
-                  onChange={(e) => {
-                    field.onChange([e.target.value]);
+              <Box>
+                <Autocomplete
+                  options={filteredCohorts}
+                  getOptionLabel={(option) => option.label}
+                  value={selectedOption}
+                  loading={isLoadingCohorts}
+                  onInputChange={(_, newInputValue) => {
+                    setSearchTerm(newInputValue);
                   }}
-                  label={JOURNEY_TEXT.SECTIONS.COHORT.TITLE}
-                >
-                  {COHORT_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.selectCohort?.includedCohorts && (
-                  <Typography
-                    variant="caption"
-                    color="error"
-                    sx={{ mt: 0.5, ml: 1.5 }}
-                  >
-                    {errors.selectCohort.includedCohorts.message}
-                  </Typography>
-                )}
-              </FormControl>
+                  onChange={(_, newValue) => {
+                    field.onChange(newValue ? [newValue.value] : []);
+                  }}
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value.value
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={JOURNEY_TEXT.SECTIONS.COHORT.LABEL}
+                      error={!!errors.selectCohort?.includedCohorts}
+                      helperText={errors.selectCohort?.includedCohorts?.message}
+                    />
+                  )}
+                  ListboxProps={{
+                    style: {
+                      maxHeight: "300px",
+                    },
+                  }}
+                  noOptionsText={
+                    isLoadingCohorts
+                      ? "Loading cohorts..."
+                      : searchTerm
+                      ? "No cohorts found"
+                      : "No cohorts available"
+                  }
+                />
+              </Box>
             );
           }}
         />
