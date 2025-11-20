@@ -38,9 +38,10 @@ export default function JourneyFrequencySection({
   errors,
 }: JourneyFrequencySectionProps) {
   const theme = useTheme();
+  const hasError = !!errors.journeyFrequency;
 
   return (
-    <Box sx={journeyFrequencySectionStyles.formCard(theme)}>
+    <Box sx={journeyFrequencySectionStyles.formCard(theme, hasError)}>
       <Box sx={journeyFrequencySectionStyles.formSection}>
         <Box sx={journeyFrequencySectionStyles.fieldHeader}>
           <Box sx={journeyFrequencySectionStyles.fieldHeaderContent}>
@@ -57,6 +58,19 @@ export default function JourneyFrequencySection({
               />
             </Tooltip>
           </Box>
+          {hasError && (
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "error.main",
+                mt: 0.5,
+                ml: 4.25,
+              }}
+            >
+              {errors.journeyFrequency?.message as string ||
+                "At least one journey frequency option must be selected"}
+            </Typography>
+          )}
         </Box>
 
         {/* Max times in lifetime */}

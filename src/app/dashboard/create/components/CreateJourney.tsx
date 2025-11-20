@@ -60,6 +60,8 @@ export default function CreateJourneyPage() {
     formState: { errors },
     trigger,
     setValue,
+    setError,
+    clearErrors,
   } = methods;
 
   const { fields, append, remove, replace } = useFieldArray({
@@ -71,6 +73,37 @@ export default function CreateJourneyPage() {
     control,
     name: "condition.operator",
   });
+
+  // Watch journey frequency checkboxes to clear error when any is checked
+  const enableTimesInSession = useWatch({
+    control,
+    name: "journeyFrequency.enableTimesInSession",
+  });
+  const enableMaxTimesInPeriod = useWatch({
+    control,
+    name: "journeyFrequency.enableMaxTimesInPeriod",
+  });
+  const enableMaxTimesInLifetime = useWatch({
+    control,
+    name: "journeyFrequency.enableMaxTimesInLifetime",
+  });
+
+  // Clear error when any frequency checkbox is checked
+  useEffect(() => {
+    const hasFrequencyEnabled =
+      enableTimesInSession ||
+      enableMaxTimesInPeriod ||
+      enableMaxTimesInLifetime;
+    if (hasFrequencyEnabled && errors.journeyFrequency) {
+      clearErrors("journeyFrequency");
+    }
+  }, [
+    enableTimesInSession,
+    enableMaxTimesInPeriod,
+    enableMaxTimesInLifetime,
+    errors.journeyFrequency,
+    clearErrors,
+  ]);
 
   useEffect(() => {
     // Only initialize once on mount if field array is empty
@@ -256,8 +289,25 @@ export default function CreateJourneyPage() {
   const handleNext = async () => {
     const currentComparisons = control._formValues.condition?.comparisons || [];
     syncCondition(currentComparisons, conditionOperator || "AND");
+    
+    // Validate journey frequency - at least one option must be enabled
+    const journeyFrequency = control._formValues.journeyFrequency || {};
+    const hasFrequencyEnabled =
+      journeyFrequency.enableTimesInSession ||
+      journeyFrequency.enableMaxTimesInPeriod ||
+      journeyFrequency.enableMaxTimesInLifetime;
+    
+    if (!hasFrequencyEnabled) {
+      setError("journeyFrequency", {
+        type: "manual",
+        message: "At least one journey frequency option must be selected",
+      });
+    } else {
+      clearErrors("journeyFrequency");
+    }
+    
     const isValid = await trigger(["name", "event", "condition"]);
-    if (isValid) {
+    if (isValid && hasFrequencyEnabled) {
       setActiveTab("ui");
     }
   };
