@@ -29,12 +29,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
   // Simple recursive render - only use template data, no extra styles
   const renderNode = (
     node: ReactNativeJson,
-    key: string | number
+    key: string | number,
+    isBottomSheetRoot: boolean = false
   ): React.ReactNode => {
     if (!node) return null;
 
     const { type, props = {}, styles = {}, children: nodeChildren } = node;
     const nodeProps = props as Record<string, any>;
+    const nudgeType = (template?.type || "").toString().toUpperCase();
+    const isBottomSheet = nudgeType === "NUDGE_UI";
 
     // Convert styles to CSS (only what's in template)
     const cssStyles: Record<string, string | number> = {};
@@ -42,7 +45,20 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       Object.entries(styles).forEach(([k, v]) => {
         if (v !== undefined && v !== null) {
           const cssKey = k.replace(/([A-Z])/g, "-$1").toLowerCase();
-          cssStyles[cssKey] = typeof v === "number" ? `${v}px` : String(v);
+
+          if (
+            isBottomSheet &&
+            isBottomSheetRoot &&
+            k === "borderRadius" &&
+            typeof v === "number"
+          ) {
+            cssStyles["border-top-left-radius"] = `${v}px`;
+            cssStyles["border-top-right-radius"] = `${v}px`;
+            cssStyles["border-bottom-left-radius"] = "0px";
+            cssStyles["border-bottom-right-radius"] = "0px";
+          } else {
+            cssStyles[cssKey] = typeof v === "number" ? `${v}px` : String(v);
+          }
         }
       });
     }
@@ -213,8 +229,8 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       return (
         <div key={key} style={viewStyles}>
           {nodeChildren && Array.isArray(nodeChildren)
-            ? nodeChildren.map((child, idx) =>
-                renderNode(child, `${key}-${idx}`)
+            ? nodeChildren.map(
+                (child, idx) => renderNode(child, `${key}-${idx}`, false) // Children are not root
               )
             : null}
         </div>
@@ -253,7 +269,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
               pointerEvents: "none",
             }}
           >
-            {children.map((el, i) => renderNode(el, i))}
+            {children.map((el, i) => renderNode(el, i, false))}
           </Box>
         </Box>
       );
@@ -277,8 +293,9 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           <Box
             sx={{ width: "100%", display: "flex", justifyContent: "center" }}
           >
-            {children.map((element: ReactNativeJson, index: number) =>
-              renderNode(element, index)
+            {children.map(
+              (element: ReactNativeJson, index: number) =>
+                renderNode(element, index, index === 0) // First child is the root container
             )}
           </Box>
         </Box>
@@ -298,7 +315,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
         }}
       >
         {children.map((element: ReactNativeJson, index: number) =>
-          renderNode(element, index)
+          renderNode(element, index, false)
         )}
       </Box>
     );
