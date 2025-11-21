@@ -156,13 +156,19 @@ export const transformFormDataToApiFormat = (
 
       const apiActionType: NudgeType = action.type;
 
+      let variant = action.variant;
+      if (!variant && templateToStringify?.props?.templateVariantId) {
+        variant = templateToStringify.props.templateVariantId as any;
+      }
+      const apiVariant = variant || undefined;
+
       return {
         config: {
           triggerDelay: action.config?.triggerDelay || 1000,
         },
         actionId,
         type: apiActionType,
-        variant: action.variant || "Default",
+        variant: apiVariant,
         template: templateToStringify,
       };
     }) || [];

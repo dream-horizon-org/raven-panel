@@ -4,7 +4,30 @@
       "id": 1,
       "componentVariant": "REGULAR",
       "type": "View",
-      "display": "View",
+      "display": "Vertical Stack",
+      "description": "Group other components",
+      "maxAllowedChildren": 100,
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "alignItems"
+      ]
+    },
+    {
+      "id": 1,
+      "componentVariant": "REGULAR",
+      "type": "View",
+      "display": "Horizontal Stack",
       "description": "Group other components",
       "maxAllowedChildren": 100,
       "styles": [

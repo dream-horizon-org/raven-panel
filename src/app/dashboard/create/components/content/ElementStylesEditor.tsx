@@ -115,7 +115,11 @@ export default function ElementStylesEditor({
 
     if (styleName === "flexDirection") {
       return (
-        <FormControl key={styleName} fullWidth size="small">
+        <FormControl
+          key={styleName}
+          size="small"
+          sx={{ width: "auto", maxWidth: "300px" }}
+        >
           <InputLabel>{styleName}</InputLabel>
           <Select
             value={value || ""}
@@ -134,7 +138,11 @@ export default function ElementStylesEditor({
 
     if (styleName === "justifyContent") {
       return (
-        <FormControl key={styleName} fullWidth size="small">
+        <FormControl
+          key={styleName}
+          size="small"
+          sx={{ width: "auto", maxWidth: "300px" }}
+        >
           <InputLabel>{styleName}</InputLabel>
           <Select
             value={value || ""}
@@ -301,7 +309,7 @@ export default function ElementStylesEditor({
           >
             Text Alignment
           </Typography>
-          <ButtonGroup fullWidth size="small">
+          <ButtonGroup size="small">
             <Button
               variant={currentAlign === "left" ? "contained" : "outlined"}
               onClick={() => onStyleChange(styleName, "left")}
@@ -474,7 +482,6 @@ export default function ElementStylesEditor({
     return (
       <TextField
         key={styleName}
-        fullWidth
         size="small"
         type="number"
         label={styleName}
@@ -482,6 +489,7 @@ export default function ElementStylesEditor({
         onChange={(e) =>
           onStyleChange(styleName, e.target.value ? Number(e.target.value) : 0)
         }
+        sx={{ width: "auto", maxWidth: "300px" }}
       />
     );
   };

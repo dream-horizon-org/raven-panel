@@ -8,6 +8,7 @@ import {
   useWatch,
   Controller,
   FieldValues,
+  useFormContext,
 } from "react-hook-form";
 import {
   CreateJourneyFormData,
@@ -415,7 +416,7 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
 });
 /* --------------------------------------------------------------- */
 
-const generateTemplate = (
+export const generateTemplate = (
   type: NudgeType,
   variant: string
 ): ReactNativeJson => {
@@ -632,8 +633,8 @@ const generateTemplate = (
               actions: [],
               styles: {
                 width: "100%",
-                paddingLeft: 12,
-                paddingRight: 12,
+                paddingLeft: 8, // tighter sides
+                paddingRight: 8, // ^
                 paddingTop: 8,
                 paddingBottom: 8,
                 flexDirection: "row",
@@ -641,17 +642,14 @@ const generateTemplate = (
                 justifyContent: "space-between",
               },
               children: [
+                // move spacer to the LEFT (keeps title centered)
                 {
-                  type: "Image",
-                  props: {
-                    uri:
-                      "https://d13ir53smqqeyp.cloudfront.net/contain/site-banners/Close.svg",
-                    resizeMode: "contain",
-                    testID: `testID-${timestamp + 3}`,
-                  },
-                  actions: [{ name: "dismiss", type: "dismiss", params: {} }],
-                  styles: { height: 22, width: 22, marginLeft: 2 },
+                  type: "View",
+                  props: { testID: `testID-${timestamp + 5}` },
+                  actions: [],
+                  styles: { height: 22, width: 22 },
                 },
+
                 {
                   type: "Text",
                   props: {
@@ -668,11 +666,17 @@ const generateTemplate = (
                     fontSize: 18,
                   },
                 },
+                // close icon goes to the RIGHT (same testID)
                 {
-                  type: "View",
-                  props: { testID: `testID-${timestamp + 5}` },
-                  actions: [],
-                  styles: { height: 22, width: 22 },
+                  type: "Image",
+                  props: {
+                    uri:
+                      "https://d13ir53smqqeyp.cloudfront.net/contain/site-banners/Close.svg",
+                    resizeMode: "contain",
+                    testID: `testID-${timestamp + 3}`,
+                  },
+                  actions: [{ name: "dismiss", type: "dismiss", params: {} }],
+                  styles: { height: 22, width: 22 }, // removed extra margin
                 },
               ],
             },
@@ -746,7 +750,7 @@ const generateTemplate = (
       const template = getPopupWithSingleButtonTemplate();
       return {
         ...template,
-                    props: {
+        props: {
           ...template.props,
           testID: `testID-${timestamp}`,
           templateVariantId: variant,
@@ -765,47 +769,42 @@ const generateTemplate = (
   }
 
   if (type === NudgeType.TOOLTIP) {
-    if (variant === "tooltip-arrow") {
-      return {
-        ...baseTemplate,
-        children: [
-          {
-            type: "View",
-            props: { testID: `testID-${timestamp + 1}` },
-            actions: [],
-            styles: {
-              backgroundColor: "#333333",
-              borderRadius: 8,
-              paddingTop: 12,
-              paddingBottom: 12,
-              paddingLeft: 12,
-              paddingRight: 12,
-              flexDirection: "column",
-            },
-            children: [],
-          },
-        ],
-      } as ReactNativeJson;
-    }
+    console.log("tooltip", type);
     return {
-      ...baseTemplate,
-      children: [
-        {
-          type: "View",
-          props: { testID: `testID-${timestamp + 1}` },
-          actions: [],
-          styles: {
-            backgroundColor: "#333333",
-            borderRadius: 8,
-            paddingTop: 12,
-            paddingBottom: 12,
-            paddingLeft: 12,
-            paddingRight: 12,
-            flexDirection: "column",
-          },
-          children: [],
-        },
-      ],
+      type: "TOOLTIP",
+      props: {
+        testID: `testID-${timestamp}`,
+        title: "Lifetime free card for you!",
+        subTitle: "Experience life unlimited",
+        position: "top",
+        titleFontSize: 14,
+        subTitleFontSize: 10,
+        autoDismissMs: 0,
+        titleColor: "#FFFFFF",
+        subTitleColor: "#FFFFFF",
+        arrowSize: 16,
+        titleAlignment: "left",
+        subTitleAlignment: "left",
+        dismissOnOutsideTouch: true,
+        triggerDelay: 1000,
+        titleFontFamily: "Roboto",
+        subTitleFontFamily: "Roboto",
+        templateVariantId: variant,
+      },
+      actions: [],
+      styles: {
+        backgroundColor: "#0096C7",
+        borderRadius: 12,
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingTop: 12,
+        paddingBottom: 12,
+        marginTop: 8,
+        marginBottom: 8,
+        marginLeft: 8,
+        marginRight: 8,
+      },
+      children: [],
     } as ReactNativeJson;
   }
 
@@ -821,11 +820,6 @@ const TEMPLATE_OPTIONS: Record<
       id: "basic-tooltip",
       label: "Basic Tooltip",
       description: "Simple tooltip",
-    },
-    {
-      id: "tooltip-arrow",
-      label: "Tooltip with Arrow",
-      description: "Tooltip with pointing arrow",
     },
   ],
   [NudgeType.NUDGE_UI]: [
@@ -851,6 +845,7 @@ const TEMPLATE_OPTIONS: Record<
 };
 
 export default function TemplateTab({ control }: TemplateTabProps) {
+  const { setValue } = useFormContext<CreateJourneyFormData>();
   const actions = useWatch({ control, name: "nudgeSelection.actions" });
   const engagementType = actions?.[0]?.type as NudgeType | undefined;
 
@@ -901,6 +896,11 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                       template.id
                     );
                     field.onChange(templateJson);
+                    // Also set the variant field on the action
+                    setValue(
+                      "nudgeSelection.actions.0.variant",
+                      template.id as any
+                    );
                   };
 
                   return (
@@ -926,6 +926,233 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                       onClick={handleTemplateSelect}
                     >
                       {/* ---------- PREVIEW AREA ---------- */}
+                      {engagementType === NudgeType.TOOLTIP && (
+                        <Box
+                          sx={{
+                            width: "100%",
+                            height: 200,
+                            position: "relative",
+                            bgcolor: "#F5F5F5",
+                            overflow: "hidden",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 1,
+                            p: 2,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              position: "relative",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "100%",
+                              height: "100%",
+                            }}
+                          >
+                            {(() => {
+                              const currentTemplate = field.value as
+                                | ReactNativeJson
+                                | undefined;
+                              const tooltipProps = (currentTemplate?.props ||
+                                {}) as Record<string, any>;
+                              const tooltipStyles = (currentTemplate?.styles ||
+                                {}) as Record<string, any>;
+
+                              const title =
+                                tooltipProps.title ||
+                                "Lifetime free card for you!";
+                              const subTitle =
+                                tooltipProps.subTitle ||
+                                "Experience life unlimited";
+                              const backgroundColor =
+                                tooltipStyles.backgroundColor || "#0096C7";
+                              const position = tooltipProps.position || "top";
+                              const arrowSize = tooltipProps.arrowSize || 16;
+
+                              // Get position-based container styles
+                              const getContainerStyles = () => {
+                                switch (position) {
+                                  case "top":
+                                    return {
+                                      alignItems: "flex-start",
+                                      justifyContent: "center",
+                                      paddingTop: "10%",
+                                    };
+                                  case "bottom":
+                                    return {
+                                      alignItems: "flex-end",
+                                      justifyContent: "center",
+                                      paddingBottom: "10%",
+                                    };
+                                  case "left":
+                                    return {
+                                      alignItems: "center",
+                                      justifyContent: "flex-start",
+                                      paddingLeft: "5%",
+                                    };
+                                  case "right":
+                                    return {
+                                      alignItems: "center",
+                                      justifyContent: "flex-end",
+                                      paddingRight: "5%",
+                                    };
+                                  default:
+                                    return {
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    };
+                                }
+                              };
+
+                              return (
+                                <Box
+                                  sx={{
+                                    position: "relative",
+                                    display: "flex",
+                                    width: "100%",
+                                    height: "100%",
+                                    ...getContainerStyles(),
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      backgroundColor,
+                                      borderRadius: 2,
+                                      padding: "12px 16px",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 0.5,
+                                      position: "relative",
+                                      maxWidth: "80%",
+                                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                      overflow: "visible",
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        fontSize: tooltipProps.titleFontSize
+                                          ? `${tooltipProps.titleFontSize}px`
+                                          : "0.875rem",
+                                        fontWeight: "bold",
+                                        color:
+                                          tooltipProps.titleColor || "#FFFFFF",
+                                        lineHeight: 1.2,
+                                        textAlign:
+                                          tooltipProps.titleAlignment || "left",
+                                      }}
+                                    >
+                                      {typeof title === "string"
+                                        ? title
+                                        : title[0]?.value || ""}
+                                    </Typography>
+                                    <Typography
+                                      sx={{
+                                        fontSize: tooltipProps.subTitleFontSize
+                                          ? `${tooltipProps.subTitleFontSize}px`
+                                          : "0.75rem",
+                                        color:
+                                          tooltipProps.subTitleColor ||
+                                          "#FFFFFF",
+                                        lineHeight: 1.2,
+                                        textAlign:
+                                          tooltipProps.subTitleAlignment ||
+                                          "left",
+                                      }}
+                                    >
+                                      {typeof subTitle === "string"
+                                        ? subTitle
+                                        : subTitle[0]?.value || ""}
+                                    </Typography>
+                                    {/* Arrow indicator - show if arrowSize > 0 */}
+                                    {arrowSize > 0 &&
+                                      (() => {
+                                        const arrowSizePx = `${arrowSize}px`;
+                                        const baseArrowStyle: React.CSSProperties = {
+                                          position: "absolute",
+                                          width: 0,
+                                          height: 0,
+                                        };
+
+                                        switch (position) {
+                                          case "top":
+                                            return (
+                                              <Box
+                                                sx={{
+                                                  ...baseArrowStyle,
+                                                  bottom: `calc(-${arrowSizePx} + 1px)`,
+                                                  left: `${arrowSize}px`,
+                                                  borderLeft: `${arrowSizePx} solid transparent`,
+                                                  borderRight: `${arrowSizePx} solid transparent`,
+                                                  borderTop: `${arrowSizePx} solid ${backgroundColor}`,
+                                                }}
+                                              />
+                                            );
+                                          case "bottom":
+                                            return (
+                                              <Box
+                                                sx={{
+                                                  ...baseArrowStyle,
+                                                  top: `calc(-${arrowSizePx} + 1px)`,
+                                                  left: `${arrowSize}px`,
+                                                  borderLeft: `${arrowSizePx} solid transparent`,
+                                                  borderRight: `${arrowSizePx} solid transparent`,
+                                                  borderBottom: `${arrowSizePx} solid ${backgroundColor}`,
+                                                }}
+                                              />
+                                            );
+                                          case "left":
+                                            return (
+                                              <Box
+                                                sx={{
+                                                  ...baseArrowStyle,
+                                                  right: `-${arrowSizePx}`,
+                                                  top: "50%",
+                                                  transform: "translateY(-50%)",
+                                                  borderTop: `${arrowSizePx} solid transparent`,
+                                                  borderBottom: `${arrowSizePx} solid transparent`,
+                                                  borderLeft: `${arrowSizePx} solid ${backgroundColor}`,
+                                                }}
+                                              />
+                                            );
+                                          case "right":
+                                            return (
+                                              <Box
+                                                sx={{
+                                                  ...baseArrowStyle,
+                                                  left: `-${arrowSizePx}`,
+                                                  top: "50%",
+                                                  transform: "translateY(-50%)",
+                                                  borderTop: `${arrowSizePx} solid transparent`,
+                                                  borderBottom: `${arrowSizePx} solid transparent`,
+                                                  borderRight: `${arrowSizePx} solid ${backgroundColor}`,
+                                                }}
+                                              />
+                                            );
+                                          default:
+                                            return (
+                                              <Box
+                                                sx={{
+                                                  ...baseArrowStyle,
+                                                  bottom: `calc(-${arrowSizePx} + 1px)`,
+                                                  left: `${arrowSize}px`,
+                                                  borderLeft: `${arrowSizePx} solid transparent`,
+                                                  borderRight: `${arrowSizePx} solid transparent`,
+                                                  borderTop: `${arrowSizePx} solid ${backgroundColor}`,
+                                                }}
+                                              />
+                                            );
+                                        }
+                                      })()}
+                                  </Box>
+                                </Box>
+                              );
+                            })()}
+                          </Box>
+                        </Box>
+                      )}
+
                       {engagementType === NudgeType.NUDGE_UI && (
                         <Box
                           sx={{
@@ -1120,9 +1347,9 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                             sx={{
                               position: "absolute",
                               inset: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                               zIndex: 1,
                               pointerEvents: "none",
                             }}
@@ -1161,13 +1388,13 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                                   alignItems: "center",
                                   width: "100%",
                                   mb: 1.5,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontSize: "0.875rem",
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.875rem",
                                     fontWeight: 600,
-                              textAlign: "center",
+                                    textAlign: "center",
                                     color: "text.primary",
                                     mb: 0.5,
                                     lineHeight: 1.2,
@@ -1188,34 +1415,34 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                                   {template.id === "popup-single-button"
                                     ? "Experience life unlimited!"
                                     : "Experience life unlimited"}
-                          </Typography>
-                        </Box>
+                                </Typography>
+                              </Box>
                               {/* Buttons */}
-                        <Box
-                          sx={{
-                            display: "flex",
+                              <Box
+                                sx={{
+                                  display: "flex",
                                   gap: 1,
-                            justifyContent: "center",
+                                  justifyContent: "center",
                                   width: "100%",
                                   alignItems: "center",
-                          }}
-                        >
+                                }}
+                              >
                                 {template.id === "popup-single-button" ? (
                                   <Box
-                            sx={{
+                                    sx={{
                                       px: 2,
                                       py: 0.625,
                                       borderRadius: 1,
-                              fontSize: "0.75rem",
+                                      fontSize: "0.75rem",
                                       bgcolor: "#000000",
                                       color: "white",
                                       fontWeight: 500,
-                              textAlign: "center",
+                                      textAlign: "center",
                                       minWidth: 100,
-                            }}
-                          >
+                                    }}
+                                  >
                                     Apply now
-                        </Box>
+                                  </Box>
                                 ) : (
                                   <>
                                     <Box

@@ -6,6 +6,7 @@ import { useWatch } from "react-hook-form";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
+  NudgeType,
 } from "../../types/journeyTypes";
 import { previewPanelStyles } from "../../styles/previewPanelStyles";
 import { useMemo } from "react";
@@ -20,6 +21,13 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     control,
     name: "nudgeSelection.actions.0.template",
   }) as ReactNativeJson | undefined;
+
+  const actions = useWatch({
+    control,
+    name: "nudgeSelection.actions",
+  });
+
+  const engagementType = actions?.[0]?.type;
 
   // Extract children from template
   const children = useMemo(() => {
@@ -36,8 +44,21 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
     const { type, props = {}, styles = {}, children: nodeChildren } = node;
     const nodeProps = props as Record<string, any>;
-    const nudgeType = (template?.type || "").toString().toUpperCase();
-    const isBottomSheet = nudgeType === "NUDGE_UI";
+    // Use engagementType from action, fallback to template.type if not available
+    let nudgeTypeForNode: string | NudgeType | undefined = engagementType;
+    if (!nudgeTypeForNode && template?.type) {
+      const templateType = template.type.toString().toUpperCase();
+      if (templateType === "BOTTOMSHEET") {
+        nudgeTypeForNode = NudgeType.NUDGE_UI;
+      } else {
+        nudgeTypeForNode = templateType;
+      }
+    }
+    const nudgeTypeStr = nudgeTypeForNode?.toString().toUpperCase() || "";
+    const isBottomSheet =
+      nudgeTypeStr === "NUDGE_UI" ||
+      nudgeTypeForNode === NudgeType.NUDGE_UI ||
+      nudgeTypeStr === "BOTTOMSHEET";
 
     // Convert styles to CSS (only what's in template)
     const cssStyles: Record<string, string | number> = {};
@@ -243,10 +264,29 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
   // Simple helper to render the correct "stage" around the template
   const renderStage = () => {
-    const nudgeType = (template?.type || "").toString().toUpperCase();
+    // Use engagementType from action first, then fallback to template.type
+    // This ensures correct rendering even when template.type is "BottomSheet" instead of "NUDGE_UI"
+    let nudgeType: string | NudgeType | undefined = engagementType;
+
+    if (!nudgeType && template?.type) {
+      const templateType = template.type.toString().toUpperCase();
+      // Map template type strings to NudgeType enum values
+      if (templateType === "BOTTOMSHEET") {
+        nudgeType = NudgeType.NUDGE_UI;
+      } else if (templateType === "POPUP") {
+        nudgeType = NudgeType.POPUP;
+      } else if (templateType === "TOOLTIP") {
+        nudgeType = NudgeType.TOOLTIP;
+      } else {
+        nudgeType = templateType;
+      }
+    }
+
+    // Convert to string for comparison
+    const nudgeTypeStr = nudgeType?.toString().toUpperCase() || "";
 
     // ...inside renderStage() -> POPUP branch
-    if (nudgeType === "POPUP") {
+    if (nudgeTypeStr === "POPUP" || nudgeType === NudgeType.POPUP) {
       return (
         <Box
           sx={{
@@ -276,7 +316,11 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     }
 
     // NUDGE_UI (BottomSheet): full-screen dim + content anchored to bottom
-    if (nudgeType === "NUDGE_UI") {
+    if (
+      nudgeTypeStr === "NUDGE_UI" ||
+      nudgeType === NudgeType.NUDGE_UI ||
+      nudgeTypeStr === "BOTTOMSHEET"
+    ) {
       return (
         <Box
           sx={{
@@ -302,7 +346,229 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       );
     }
 
-    // TOOLTIP or unknown: just center in screen without dim
+    // TOOLTIP: render directly from props and styles without nested elements
+    if (nudgeTypeStr === "TOOLTIP" || nudgeType === NudgeType.TOOLTIP) {
+      if (!template) return null;
+
+      const tooltipProps = (template.props || {}) as Record<string, any>;
+      const tooltipStyles = template.styles || {};
+
+      // Convert styles to CSS
+      const cssStyles: Record<string, string | number> = {};
+      Object.entries(tooltipStyles).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) {
+          const cssKey = k.replace(/([A-Z])/g, "-$1").toLowerCase();
+          cssStyles[cssKey] = typeof v === "number" ? `${v}px` : String(v);
+        }
+      });
+
+      // Extract title and subtitle
+      const title =
+        typeof tooltipProps.title === "string"
+          ? tooltipProps.title
+          : Array.isArray(tooltipProps.title) && tooltipProps.title[0]?.value
+          ? String(tooltipProps.title[0].value)
+          : "";
+
+      const subTitle =
+        typeof tooltipProps.subTitle === "string"
+          ? tooltipProps.subTitle
+          : Array.isArray(tooltipProps.subTitle) &&
+            tooltipProps.subTitle[0]?.value
+          ? String(tooltipProps.subTitle[0].value)
+          : "";
+
+      // Apply text styles from props
+      const titleStyle: React.CSSProperties = {
+        fontSize: tooltipProps.titleFontSize
+          ? `${tooltipProps.titleFontSize}px`
+          : undefined,
+        color: tooltipProps.titleColor || undefined,
+        fontFamily: tooltipProps.titleFontFamily || undefined,
+        fontWeight: tooltipProps.titleFontWeight || undefined,
+        textAlign:
+          tooltipProps.titleAlignment === "left"
+            ? "left"
+            : tooltipProps.titleAlignment === "center"
+            ? "center"
+            : tooltipProps.titleAlignment === "right"
+            ? "right"
+            : undefined,
+      };
+
+      const subTitleStyle: React.CSSProperties = {
+        fontSize: tooltipProps.subTitleFontSize
+          ? `${tooltipProps.subTitleFontSize}px`
+          : undefined,
+        color: tooltipProps.subTitleColor || undefined,
+        fontFamily: tooltipProps.subTitleFontFamily || undefined,
+        fontWeight: tooltipProps.subTitleFontWeight || undefined,
+        textAlign:
+          tooltipProps.subTitleAlignment === "left"
+            ? "left"
+            : tooltipProps.subTitleAlignment === "center"
+            ? "center"
+            : tooltipProps.subTitleAlignment === "right"
+            ? "right"
+            : undefined,
+        marginTop: subTitle ? "4px" : undefined,
+      };
+
+      // Get arrow size and position
+      const arrowSize = tooltipProps.arrowSize || 16;
+      const position = tooltipProps.position || "top";
+      const backgroundColor = tooltipStyles.backgroundColor || "#0096C7";
+
+      // Calculate tooltip container position based on position prop
+      const getTooltipContainerStyles = () => {
+        switch (position) {
+          case "top":
+            return {
+              alignItems: "flex-start",
+              justifyContent: "center",
+              paddingTop: "20%",
+            };
+          case "bottom":
+            return {
+              alignItems: "flex-end",
+              justifyContent: "center",
+              paddingBottom: "20%",
+            };
+          case "left":
+            return {
+              alignItems: "center",
+              justifyContent: "flex-start",
+              paddingLeft: "10%",
+            };
+          case "right":
+            return {
+              alignItems: "center",
+              justifyContent: "flex-end",
+              paddingRight: "10%",
+            };
+          default:
+            return {
+              alignItems: "center",
+              justifyContent: "center",
+            };
+        }
+      };
+
+      // Calculate arrow position styles
+      const getArrowStyles = () => {
+        const arrowSizePx = `${arrowSize}px`;
+        const baseArrowStyle: React.CSSProperties = {
+          position: "absolute",
+          width: 0,
+          height: 0,
+        };
+
+        switch (position) {
+          case "top":
+            return {
+              ...baseArrowStyle,
+              bottom: `calc(-${arrowSizePx} + 1px)`,
+              left: `${arrowSize}px`,
+              borderLeft: `${arrowSizePx} solid transparent`,
+              borderRight: `${arrowSizePx} solid transparent`,
+              borderTop: `${arrowSizePx} solid ${backgroundColor}`,
+            };
+          case "bottom":
+            return {
+              ...baseArrowStyle,
+              top: `calc(-${arrowSizePx} + 1px)`,
+              left: `${arrowSize}px`,
+              borderLeft: `${arrowSizePx} solid transparent`,
+              borderRight: `${arrowSizePx} solid transparent`,
+              borderBottom: `${arrowSizePx} solid ${backgroundColor}`,
+            };
+          case "left":
+            return {
+              ...baseArrowStyle,
+              right: `-${arrowSizePx}`,
+              top: "50%",
+              transform: "translateY(-50%)",
+              borderTop: `${arrowSizePx} solid transparent`,
+              borderBottom: `${arrowSizePx} solid transparent`,
+              borderLeft: `${arrowSizePx} solid ${backgroundColor}`,
+            };
+          case "right":
+            return {
+              ...baseArrowStyle,
+              left: `-${arrowSizePx}`,
+              top: "50%",
+              transform: "translateY(-50%)",
+              borderTop: `${arrowSizePx} solid transparent`,
+              borderBottom: `${arrowSizePx} solid transparent`,
+              borderRight: `${arrowSizePx} solid ${backgroundColor}`,
+            };
+          default:
+            return {
+              ...baseArrowStyle,
+              bottom: `calc(-${arrowSizePx} + 1px)`,
+              left: `${arrowSize}px`,
+              borderLeft: `${arrowSizePx} solid transparent`,
+              borderRight: `${arrowSizePx} solid transparent`,
+              borderTop: `${arrowSizePx} solid ${backgroundColor}`,
+            };
+        }
+      };
+
+      return (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            ...getTooltipContainerStyles(),
+            pointerEvents: "none",
+          }}
+        >
+          <Box
+            sx={{
+              ...cssStyles,
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+              overflow: "visible",
+            }}
+          >
+            {title && (
+              <Typography
+                component="div"
+                sx={{
+                  ...titleStyle,
+                  lineHeight: 1.2,
+                }}
+              >
+                {title}
+              </Typography>
+            )}
+            {subTitle && (
+              <Typography
+                component="div"
+                sx={{
+                  ...subTitleStyle,
+                  lineHeight: 1.2,
+                }}
+              >
+                {subTitle}
+              </Typography>
+            )}
+            {/* Arrow indicator */}
+            {arrowSize > 0 && (
+              <Box
+                sx={{
+                  ...getArrowStyles(),
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+      );
+    }
+
+    // Unknown type: just center in screen without dim
     return (
       <Box
         sx={{

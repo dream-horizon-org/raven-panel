@@ -24,6 +24,7 @@ import {
   ReactNativeJson,
 } from "../types/journeyTypes";
 import { engagementSelectorStyles } from "../styles/engagementSelectorStyles";
+import { generateTemplate } from "./content/TemplateTab";
 
 interface EngagementSelectorProps {
   control: Control<CreateJourneyFormData>;
@@ -82,7 +83,48 @@ export default function EngagementSelector({
       // Always reset template when changing engagement type
       // This ensures old template data from previous type doesn't persist
       if (previousType !== newType) {
-        // Create fresh template for the new type - reset all template data
+        // Only generate default template for TOOLTIP
+        if (newType === NudgeType.TOOLTIP) {
+          const defaultVariant = "basic-tooltip";
+          const freshTemplate = generateTemplate(newType, defaultVariant);
+          setValue("nudgeSelection.actions.0.template", freshTemplate);
+          setValue("nudgeSelection.actions.0.variant", defaultVariant as any);
+          setValue("nudgeSelection.actions.0.isNudgeValid", true);
+        } else {
+          // For other types, create empty template
+          const freshTemplate: ReactNativeJson = {
+            type: newType,
+            props: { testID: `testID-${Date.now()}` },
+            actions: [],
+            styles: {},
+            children: [],
+          };
+          setValue("nudgeSelection.actions.0.template", freshTemplate);
+          setValue("nudgeSelection.actions.0.variant", undefined);
+          setValue("nudgeSelection.actions.0.isNudgeValid", false);
+        }
+      }
+
+      // Update the type
+      setValue("nudgeSelection.actions.0.type", newType);
+    } else {
+      // Only generate default template for TOOLTIP
+      if (newType === NudgeType.TOOLTIP) {
+        const defaultVariant = "basic-tooltip";
+        const freshTemplate = generateTemplate(newType, defaultVariant);
+        append({
+          config: {
+            triggerDelay: 0,
+          },
+          onState: "",
+          actionId: "",
+          type: newType,
+          template: freshTemplate,
+          variant: defaultVariant as any,
+          isNudgeValid: true,
+        });
+      } else {
+        // For other types, create empty template
         const freshTemplate: ReactNativeJson = {
           type: newType,
           props: { testID: `testID-${Date.now()}` },
@@ -90,36 +132,18 @@ export default function EngagementSelector({
           styles: {},
           children: [],
         };
-
-        // Reset template and variant when type changes
-        setValue("nudgeSelection.actions.0.template", freshTemplate);
-        setValue("nudgeSelection.actions.0.variant", undefined);
-        setValue("nudgeSelection.actions.0.isNudgeValid", false);
+        append({
+          config: {
+            triggerDelay: 0,
+          },
+          onState: "",
+          actionId: "",
+          type: newType,
+          template: freshTemplate,
+          variant: undefined,
+          isNudgeValid: false,
+        });
       }
-
-      // Update the type
-      setValue("nudgeSelection.actions.0.type", newType);
-    } else {
-      // Create new action with fresh template
-      const freshTemplate: ReactNativeJson = {
-        type: newType,
-        props: { testID: `testID-${Date.now()}` },
-        actions: [],
-        styles: {},
-        children: [],
-      };
-
-      append({
-        config: {
-          triggerDelay: 0,
-        },
-        onState: "",
-        actionId: "",
-        type: newType,
-        template: freshTemplate,
-        variant: undefined,
-        isNudgeValid: false,
-      });
     }
     onEngagementSelect(newType);
   };

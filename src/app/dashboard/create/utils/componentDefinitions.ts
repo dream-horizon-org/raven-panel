@@ -52,10 +52,20 @@ export const getComponentDefinition = (
   return componentDefinitions.components.find((comp) => comp.type === type);
 };
 
+export const getComponentDefinitionByDisplay = (
+  display: string
+): ComponentDefinition | undefined => {
+  return componentDefinitions.components.find(
+    (comp) => comp.display === display
+  );
+};
+
 export const getClickActionDefinition = (
   name: string
 ): ClickActionDefinition | undefined => {
-  return componentDefinitions.clickActions.find((action) => action.name === name);
+  return componentDefinitions.clickActions.find(
+    (action) => action.name === name
+  );
 };
 
 export const getAllClickActions = (): ClickActionDefinition[] => {
@@ -78,4 +88,3 @@ export const getAvailableActions = (type: string): string[] => {
 };
 
 export default componentDefinitions;
-

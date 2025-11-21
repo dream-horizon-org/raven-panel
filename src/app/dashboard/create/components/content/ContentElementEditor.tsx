@@ -32,7 +32,10 @@ import {
   DynamicTextValueType,
 } from "../../types/journeyTypes";
 import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
-import { getComponentDefinition } from "../../utils/componentDefinitions";
+import {
+  getComponentDefinition,
+  getComponentDefinitionByDisplay,
+} from "../../utils/componentDefinitions";
 import ElementPropsEditor from "./ElementPropsEditor";
 import ElementStylesEditor from "./ElementStylesEditor";
 import ElementActionsEditor from "./ElementActionsEditor";
@@ -55,7 +58,7 @@ export default function ContentElementEditor({
   isChild = false,
 }: ContentElementEditorProps) {
   const { setValue } = useFormContext<CreateJourneyFormData>();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [childMenuAnchor, setChildMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -65,6 +68,12 @@ export default function ContentElementEditor({
     control,
     name: "nudgeSelection.actions.0.template",
   }) as ReactNativeJson | undefined;
+
+  const actions = useWatchHook({
+    control,
+    name: "nudgeSelection.actions",
+  });
+  const engagementType = actions?.[0]?.type;
 
   // Get the element at the current path
   const { element, templateObj, elementPath } = useMemo(() => {
@@ -109,10 +118,21 @@ export default function ContentElementEditor({
   }, [element]);
 
   // Get component definition for this element type
+
   const componentDef = useMemo(() => {
     if (!element?.type) return undefined;
+
+    if (element.type === "View") {
+      const flexDirection = element.styles?.flexDirection;
+      if (flexDirection === "row") {
+        return getComponentDefinitionByDisplay("Horizontal Stack");
+      } else {
+        return getComponentDefinitionByDisplay("Vertical Stack");
+      }
+    }
+
     return getComponentDefinition(element.type);
-  }, [element?.type]);
+  }, [element?.type, element?.styles?.flexDirection]);
 
   // Update template with new element data
   const updateElement = (updates: Partial<ReactNativeJson>) => {
@@ -263,18 +283,10 @@ export default function ContentElementEditor({
 
     const displayName = componentDef?.display || element.type;
 
-    if (element.type === "View") {
-      const orientation =
-        element.props?.flexDirection ||
-        element.props?.orientation ||
-        "vertical";
-      return `${displayName} (${orientation})`;
-    } else if (element.type === "Text") {
+    if (element.type === "Text") {
       const textContent =
         element.props?.title || element.props?.textContent || "Empty";
       return `${displayName}: ${textContent}`;
-    } else if (element.type === "Image") {
-      return displayName;
     }
 
     return displayName;
@@ -299,41 +311,8 @@ export default function ContentElementEditor({
       <Box sx={contentElementEditorStyles.header}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
           <Typography sx={contentElementEditorStyles.elementLabel}>
-            {element.type}
+            {componentDef?.display || element.type}
           </Typography>
-          {element.type === "View" && (
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={
-                  element.styles?.flexDirection === "row"
-                    ? "horizontal"
-                    : "vertical"
-                }
-                onChange={(e) => {
-                  const flexDirection =
-                    e.target.value === "horizontal" ? "row" : "column";
-                  const currentStyles = element.styles || {};
-                  updateElement({
-                    styles: {
-                      ...currentStyles,
-                      flexDirection,
-                      flex: 1,
-                    },
-                  });
-                }}
-                sx={{
-                  height: 28,
-                  fontSize: "0.75rem",
-                  "& .MuiSelect-select": {
-                    py: 0.5,
-                  },
-                }}
-              >
-                <MenuItem value="vertical">Vertical</MenuItem>
-                <MenuItem value="horizontal">Horizontal</MenuItem>
-              </Select>
-            </FormControl>
-          )}
         </Box>
         <Box>
           <IconButton size="small" onClick={() => {}}>
@@ -374,6 +353,7 @@ export default function ContentElementEditor({
               element={element}
               componentType={element.type}
               onActionsChange={handleActionsChange}
+              engagementType={engagementType}
             />
           )}
 

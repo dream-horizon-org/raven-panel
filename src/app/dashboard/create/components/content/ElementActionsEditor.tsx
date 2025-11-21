@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { ReactNativeJson } from "../../types/journeyTypes";
+import { ReactNativeJson, NudgeType } from "../../types/journeyTypes";
 import {
   getAvailableActions,
   getAllClickActions,
@@ -30,6 +30,7 @@ interface ElementActionsEditorProps {
   element: ReactNativeJson;
   componentType: string;
   onActionsChange: (actions: ReactNativeJson["actions"]) => void;
+  engagementType?: NudgeType;
 }
 
 interface EventParam {
@@ -42,10 +43,14 @@ export default function ElementActionsEditor({
   element,
   componentType,
   onActionsChange,
+  engagementType,
 }: ElementActionsEditorProps) {
   const availableActionNames = getAvailableActions(componentType);
   const allClickActions = getAllClickActions();
   const elementActions = element.actions || [];
+
+  // Debug: Log engagementType to verify it's being passed
+  // console.log("ElementActionsEditor engagementType:", engagementType);
 
   // Get enabled actions
   const enabledActions = elementActions.filter(
@@ -552,6 +557,34 @@ export default function ElementActionsEditor({
           .map((actionDef) => {
             const enabled = isActionEnabled(actionDef.name);
 
+            // Get context-aware display label for dismiss action
+            const getDisplayLabel = () => {
+              if (actionDef.name === "dismiss" && engagementType) {
+                // Handle both enum and string values
+                const typeStr = String(engagementType).toUpperCase();
+                if (
+                  engagementType === NudgeType.NUDGE_UI ||
+                  typeStr === "NUDGE_UI" ||
+                  typeStr === "BOTTOMSHEET"
+                ) {
+                  return "Dismiss BottomSheet";
+                } else if (
+                  engagementType === NudgeType.POPUP ||
+                  typeStr === "POPUP"
+                ) {
+                  return "Dismiss Popup";
+                } else if (
+                  engagementType === NudgeType.TOOLTIP ||
+                  typeStr === "TOOLTIP"
+                ) {
+                  return "Dismiss Tooltip";
+                }
+              }
+              return actionDef.display;
+            };
+
+            const displayLabel = getDisplayLabel();
+
             if (actionDef.category === "toggle") {
               return (
                 <Box key={actionDef.id}>
@@ -564,7 +597,7 @@ export default function ElementActionsEditor({
                         }
                       />
                     }
-                    label={actionDef.display}
+                    label={displayLabel}
                   />
                   {enabled && renderActionParams(actionDef)}
                 </Box>
@@ -573,10 +606,10 @@ export default function ElementActionsEditor({
               return (
                 <Box key={actionDef.id}>
                   <FormControl fullWidth size="small">
-                    <InputLabel>{actionDef.display}</InputLabel>
+                    <InputLabel>{displayLabel}</InputLabel>
                     <Select
                       value={enabled ? actionDef.name : "none"}
-                      label={actionDef.display}
+                      label={displayLabel}
                       onChange={(e) => {
                         const selectedAction = e.target.value;
                         if (selectedAction === "none") {
@@ -587,9 +620,7 @@ export default function ElementActionsEditor({
                       }}
                     >
                       <MenuItem value="none">None</MenuItem>
-                      <MenuItem value={actionDef.name}>
-                        {actionDef.display}
-                      </MenuItem>
+                      <MenuItem value={actionDef.name}>{displayLabel}</MenuItem>
                     </Select>
                   </FormControl>
                   {enabled && renderActionParams(actionDef)}

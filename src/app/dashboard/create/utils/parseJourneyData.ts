@@ -108,6 +108,44 @@ export const parseJourneyDataToFormData = (
       }
     }
 
+    // Extract variant from action.variant or template.props.templateVariantId
+    let variant = action.variant;
+    if (!variant && template?.props?.templateVariantId) {
+      variant = template.props.templateVariantId;
+    }
+
+    if (!variant || variant === "Default") {
+      if (nudgeType === NudgeType.NUDGE_UI && template?.children) {
+        const hasMultipleButtons = template.children.some((child: any) => {
+          const buttons =
+            child.children?.filter((c: any) => c.type === "Button") || [];
+          return buttons.length > 1;
+        });
+        variant = hasMultipleButtons ? "bottomsheet-cta" : "basic-bottomsheet";
+      } else if (nudgeType === NudgeType.POPUP && template?.children) {
+        const hasSingleButton = template.children.some((child: any) => {
+          const buttons =
+            child.children?.filter((c: any) => c.type === "Button") || [];
+          return buttons.length === 1;
+        });
+        variant = hasSingleButton ? "popup-single-button" : "basic-popup";
+      } else if (nudgeType === NudgeType.TOOLTIP) {
+        variant = "basic-tooltip";
+      } else {
+        variant = "Default";
+      }
+    }
+
+    if (template && variant) {
+      template = {
+        ...template,
+        props: {
+          ...template.props,
+          templateVariantId: variant,
+        },
+      };
+    }
+
     const onState =
       Object.entries(stateToAction).find(
         ([_, actionId]) => actionId === action.actionId
@@ -120,7 +158,7 @@ export const parseJourneyDataToFormData = (
       onState,
       actionId: action.actionId || "",
       type: nudgeType,
-      variant: action.variant || "Default",
+      variant,
       template: template || {
         type: nudgeType,
         props: { testID: `testID-${Date.now()}` },

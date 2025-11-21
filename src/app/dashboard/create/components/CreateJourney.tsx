@@ -1,6 +1,16 @@
 "use client";
 
-import { Box, Typography, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import { useEventsList } from "@/hooks/useEventsList";
 import { useFiltersList } from "@/hooks/useFiltersList";
@@ -151,6 +161,7 @@ export default function CreateJourneyPage({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);
+  const [showMultipleEventDialog, setShowMultipleEventDialog] = useState(false);
   const hasFetchedJourneyRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -161,6 +172,18 @@ export default function CreateJourneyPage({
         setIsLoadingJourney(true);
         hasFetchedJourneyRef.current = journeyId;
         const journeyResponse = await getJourneyById(Number(journeyId));
+
+        // Check if journey has multiple events in stateTransition
+        const stateTransition = journeyResponse?.data?.rule?.stateTransition;
+        if (stateTransition && typeof stateTransition === "object") {
+          const eventCount = Object.keys(stateTransition).length;
+          if (eventCount > 1) {
+            setShowMultipleEventDialog(true);
+            setIsLoadingJourney(false);
+            return;
+          }
+        }
+
         const formData = parseJourneyDataToFormData(journeyResponse);
         reset(formData);
         toast.success(
@@ -292,6 +315,20 @@ export default function CreateJourneyPage({
     (!eventsData && isFetchingEvents) ||
     (!systemPropertiesData && isFetchingSystemProperties);
 
+  const handleCloseMultipleEventDialog = () => {
+    setShowMultipleEventDialog(false);
+    router.push("/dashboard");
+  };
+
+  const handleGoToRTNPanel = () => {
+    window.open(
+      "https://msd.dream11.com/e1847819ec7438d48900dac635b5cb40/d11-configurability/d11-configurabilityPage",
+      "_blank"
+    );
+    setShowMultipleEventDialog(false);
+    router.push("/dashboard");
+  };
+
   if (journeyId && isLoadingJourney) {
     return (
       <Box
@@ -309,6 +346,43 @@ export default function CreateJourneyPage({
 
   return (
     <FormProvider {...methods}>
+      <Dialog
+        open={showMultipleEventDialog}
+        onClose={handleCloseMultipleEventDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Multiple Event Journey Not Supported</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Multiple event journeys are not supported through this panel right
+            now. Please use the{" "}
+            <a
+              href="https://msd.dream11.com/e1847819ec7438d48900dac635b5cb40/d11-configurability/d11-configurabilityPage"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: theme.palette.primary.main,
+                textDecoration: "underline",
+              }}
+            >
+              RTN MSD
+            </a>{" "}
+            panel for this.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMultipleEventDialog}>Close</Button>
+          <Button
+            onClick={handleGoToRTNPanel}
+            variant="contained"
+            color="primary"
+          >
+            Go to RTN Panel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Box sx={createJourneyPageStyles.pageContainer}>
         <JourneyHeader
           control={control}

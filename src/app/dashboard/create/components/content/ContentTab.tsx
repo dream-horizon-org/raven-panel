@@ -12,10 +12,17 @@ import {
 import {
   CreateJourneyFormData,
   ReactNativeJson,
+  NudgeType,
+  DynamicTextValueType,
 } from "../../types/journeyTypes";
 import { contentTabStyles } from "../../styles/contentTabStyles";
 import ContentElementEditor from "./ContentElementEditor";
-import { getComponentDefinition } from "../../utils/componentDefinitions";
+import {
+  getComponentDefinition,
+  getComponentDefinitionByDisplay,
+} from "../../utils/componentDefinitions";
+import ElementPropsEditor from "./ElementPropsEditor";
+import ElementStylesEditor from "./ElementStylesEditor";
 
 interface ContentTabProps {
   control: Control<CreateJourneyFormData>;
@@ -23,7 +30,8 @@ interface ContentTabProps {
 }
 
 const ELEMENT_TYPES = [
-  { value: "View", label: "View" },
+  { value: "Vertical Stack", label: "Vertical Stack" },
+  { value: "Horizontal Stack", label: "Horizontal Stack" },
   { value: "Text", label: "Text" },
   { value: "Image", label: "Image" },
 ];
@@ -37,6 +45,13 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
     control,
     name: "nudgeSelection.actions.0.template",
   }) as ReactNativeJson | undefined;
+
+  const actions = useWatch({
+    control,
+    name: "nudgeSelection.actions",
+  });
+  const engagementType = actions?.[0]?.type;
+  const isTooltip = engagementType === NudgeType.TOOLTIP;
 
   // Extract children array from template
   const children = useMemo(() => {
@@ -66,14 +81,30 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
     setValue("nudgeSelection.actions.0.template", updatedTemplate);
   };
 
-  const handleAddElement = (type: "View" | "Text" | "Image" | "Button") => {
+  const handleAddElement = (
+    type: "Vertical Stack" | "Horizontal Stack" | "Text" | "Image" | "Button"
+  ) => {
     const currentChildren = [...children];
     const timestamp = Date.now();
-    const componentDef = getComponentDefinition(type);
+
+    const componentDef =
+      type === "Vertical Stack" || type === "Horizontal Stack"
+        ? getComponentDefinitionByDisplay(type)
+        : getComponentDefinition(type);
+
+    const elementType =
+      type === "Vertical Stack" || type === "Horizontal Stack" ? "View" : type;
+
+    const flexDirection =
+      type === "Vertical Stack"
+        ? "column"
+        : type === "Horizontal Stack"
+        ? "row"
+        : undefined;
 
     // Create base element with testID
     const baseElement: ReactNativeJson = {
-      type,
+      type: elementType,
       props: {
         testID: `testID-${timestamp}`,
       },
@@ -105,18 +136,22 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
 
     // Initialize styles if component has styles
     if (componentDef?.styles && componentDef.styles.length > 0) {
-      const initialStyles: Record<string, number> = {};
+      const initialStyles: Record<string, number | string> = {};
       // Initialize spacing styles to 0
       componentDef.styles.forEach((styleName) => {
         if (styleName.startsWith("margin") || styleName.startsWith("padding")) {
           initialStyles[styleName] = 0;
         }
       });
+
+      if (flexDirection) {
+        initialStyles.flexDirection = flexDirection;
+      }
       baseElement.styles = initialStyles;
     }
 
     // Add children array for View elements
-    if (type === "View") {
+    if (elementType === "View") {
       baseElement.children = [];
     }
 
@@ -131,6 +166,86 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
     updateTemplate(currentChildren);
   };
 
+  // Update template props directly (for tooltip)
+  const updateTemplateProps = (
+    propKey: string,
+    value: string | number | boolean | DynamicTextValueType | null | undefined
+  ) => {
+    if (!template) return;
+    const updatedTemplate: ReactNativeJson = {
+      ...template,
+      props: {
+        ...template.props,
+        [propKey]: value,
+      },
+    };
+    setValue("nudgeSelection.actions.0.template", updatedTemplate);
+  };
+
+  // Update template styles directly (for tooltip)
+  const updateTemplateStyles = (
+    styleKey: string,
+    value: string | number | undefined
+  ) => {
+    if (!template) return;
+    const updatedTemplate: ReactNativeJson = {
+      ...template,
+      styles: {
+        ...template.styles,
+        [styleKey]: value,
+      },
+    };
+    setValue("nudgeSelection.actions.0.template", updatedTemplate);
+  };
+
+  // For tooltip: show props and styles editors
+  if (isTooltip && template) {
+    const componentDef = getComponentDefinition("TOOLTIP");
+
+    // Filter out targetScreen and targetId from props (they're in Location tab)
+    const filteredComponentDef = componentDef
+      ? {
+          ...componentDef,
+          props: componentDef.props?.filter(
+            (prop) => prop.name !== "targetScreen" && prop.name !== "targetId"
+          ),
+        }
+      : undefined;
+
+    return (
+      <Box sx={contentTabStyles.container}>
+        <Box sx={contentTabStyles.header}>
+          <Box>
+            <Typography sx={contentTabStyles.title}>
+              Tooltip Properties
+            </Typography>
+            <Typography sx={contentTabStyles.subtitle}>
+              Configure the props and styles for your tooltip
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
+          {filteredComponentDef && (
+            <>
+              <ElementPropsEditor
+                element={template}
+                componentDef={filteredComponentDef}
+                onPropChange={updateTemplateProps}
+              />
+              <ElementStylesEditor
+                element={template}
+                componentDef={filteredComponentDef}
+                onStyleChange={updateTemplateStyles}
+              />
+            </>
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
+  // For other types: show children elements
   return (
     <Box sx={contentTabStyles.container}>
       <Box sx={contentTabStyles.header}>
@@ -154,7 +269,12 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
               key={type.value}
               onClick={() =>
                 handleAddElement(
-                  type.value as "View" | "Text" | "Image" | "Button"
+                  type.value as
+                    | "Vertical Stack"
+                    | "Horizontal Stack"
+                    | "Text"
+                    | "Image"
+                    | "Button"
                 )
               }
             >

@@ -10,7 +10,18 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
+  ListItemIcon,
+  ListItemText,
+  ButtonGroup,
+  Button,
 } from "@mui/material";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
+import FormatAlignCenterIcon from "@mui/icons-material/FormatAlignCenter";
+import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
 import {
   ReactNativeJson,
   DynamicTextValueType,
@@ -66,7 +77,6 @@ export default function ElementPropsEditor({
         return (
           <TextField
             key={prop.name}
-            fullWidth
             size="small"
             label={prop.name}
             value={displayValue}
@@ -82,6 +92,7 @@ export default function ElementPropsEditor({
             }}
             required={prop.isRequired}
             placeholder={prop.default ? String(prop.default) : ""}
+            sx={{ width: "auto", maxWidth: "300px" }}
           />
         );
       } else {
@@ -89,7 +100,6 @@ export default function ElementPropsEditor({
         return (
           <TextField
             key={prop.name}
-            fullWidth
             size="small"
             label={prop.name}
             value=""
@@ -104,6 +114,7 @@ export default function ElementPropsEditor({
             }}
             required={prop.isRequired}
             placeholder={prop.default ? String(prop.default) : ""}
+            sx={{ width: "auto", maxWidth: "300px" }}
           />
         );
       }
@@ -116,13 +127,13 @@ export default function ElementPropsEditor({
         return (
           <TextField
             key={prop.name}
-            fullWidth
             size="small"
             label={prop.name}
             value={value}
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}
             placeholder={prop.default ? String(prop.default) : ""}
+            sx={{ width: "auto", maxWidth: "300px" }}
           />
         );
 
@@ -130,7 +141,6 @@ export default function ElementPropsEditor({
         return (
           <TextField
             key={prop.name}
-            fullWidth
             size="small"
             type="number"
             label={prop.name}
@@ -139,6 +149,7 @@ export default function ElementPropsEditor({
               onPropChange(prop.name, Number(e.target.value) || 0)
             }
             required={prop.isRequired}
+            sx={{ width: "auto", maxWidth: "300px" }}
           />
         );
 
@@ -157,8 +168,133 @@ export default function ElementPropsEditor({
         );
 
       case "enum":
+        // Special handling for position prop with button group
+        const isPositionProp = prop.name === "position";
+
+        // Special handling for alignment props with button groups
+        const isAlignmentProp =
+          prop.name === "titleAlignment" ||
+          prop.name === "subTitleAlignment" ||
+          (prop.acceptedValues?.includes("left") &&
+            prop.acceptedValues?.includes("center") &&
+            prop.acceptedValues?.includes("right"));
+
+        const getPositionIcon = (position: string) => {
+          switch (position.toLowerCase()) {
+            case "top":
+              return <ArrowUpwardIcon fontSize="small" />;
+            case "bottom":
+              return <ArrowDownwardIcon fontSize="small" />;
+            case "left":
+              return <ArrowBackIcon fontSize="small" />;
+            case "right":
+              return <ArrowForwardIcon fontSize="small" />;
+            default:
+              return null;
+          }
+        };
+
+        if (isPositionProp) {
+          const currentPosition = (value as string) || prop.default || "top";
+          return (
+            <Box key={prop.name}>
+              <Typography
+                sx={{
+                  fontSize: "0.75rem",
+                  color: "text.secondary",
+                  mb: 1,
+                }}
+                gutterBottom
+              >
+                {prop.name}
+              </Typography>
+              <ButtonGroup size="small">
+                {prop.acceptedValues?.map((val: string) => {
+                  const isSelected = currentPosition === val;
+                  return (
+                    <Button
+                      key={val}
+                      variant={isSelected ? "contained" : "outlined"}
+                      onClick={() => onPropChange(prop.name, val)}
+                      sx={{
+                        "&:hover": {
+                          backgroundColor: isSelected
+                            ? undefined
+                            : "action.hover",
+                        },
+                      }}
+                    >
+                      {getPositionIcon(val)}
+                    </Button>
+                  );
+                })}
+              </ButtonGroup>
+            </Box>
+          );
+        }
+
+        if (isAlignmentProp) {
+          const currentAlign = (value as string) || prop.default || "left";
+          return (
+            <Box key={prop.name}>
+              <Typography
+                sx={{
+                  fontSize: "0.75rem",
+                  color: "text.secondary",
+                  mb: 1,
+                }}
+                gutterBottom
+              >
+                {prop.name}
+              </Typography>
+              <ButtonGroup size="small">
+                <Button
+                  variant={currentAlign === "left" ? "contained" : "outlined"}
+                  onClick={() => onPropChange(prop.name, "left")}
+                  sx={{
+                    "&:hover": {
+                      backgroundColor:
+                        currentAlign === "left" ? undefined : "action.hover",
+                    },
+                  }}
+                >
+                  <FormatAlignLeftIcon fontSize="small" />
+                </Button>
+                <Button
+                  variant={currentAlign === "center" ? "contained" : "outlined"}
+                  onClick={() => onPropChange(prop.name, "center")}
+                  sx={{
+                    "&:hover": {
+                      backgroundColor:
+                        currentAlign === "center" ? undefined : "action.hover",
+                    },
+                  }}
+                >
+                  <FormatAlignCenterIcon fontSize="small" />
+                </Button>
+                <Button
+                  variant={currentAlign === "right" ? "contained" : "outlined"}
+                  onClick={() => onPropChange(prop.name, "right")}
+                  sx={{
+                    "&:hover": {
+                      backgroundColor:
+                        currentAlign === "right" ? undefined : "action.hover",
+                    },
+                  }}
+                >
+                  <FormatAlignRightIcon fontSize="small" />
+                </Button>
+              </ButtonGroup>
+            </Box>
+          );
+        }
+
         return (
-          <FormControl key={prop.name} fullWidth size="small">
+          <FormControl
+            key={prop.name}
+            size="small"
+            sx={{ width: "auto", maxWidth: "300px" }}
+          >
             <InputLabel>{prop.name}</InputLabel>
             <Select
               value={value || prop.default || ""}
@@ -178,7 +314,6 @@ export default function ElementPropsEditor({
         return (
           <TextField
             key={prop.name}
-            fullWidth
             size="small"
             type="url"
             label={prop.name}
@@ -186,6 +321,7 @@ export default function ElementPropsEditor({
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}
             placeholder="https://..."
+            sx={{ width: "auto", maxWidth: "300px" }}
           />
         );
 
@@ -196,12 +332,12 @@ export default function ElementPropsEditor({
             sx={{ display: "flex", gap: 1, alignItems: "center" }}
           >
             <TextField
-              fullWidth
               size="small"
               label={prop.name}
               value={value || ""}
               onChange={(e) => onPropChange(prop.name, e.target.value)}
               placeholder="#000000"
+              sx={{ width: "auto", maxWidth: "300px" }}
             />
             <input
               type="color"
@@ -216,12 +352,12 @@ export default function ElementPropsEditor({
         return (
           <TextField
             key={prop.name}
-            fullWidth
             size="small"
             label={prop.name}
             value={value}
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}
+            sx={{ width: "auto", maxWidth: "300px" }}
           />
         );
     }

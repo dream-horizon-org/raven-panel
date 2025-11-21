@@ -11,10 +11,11 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { Control, FieldErrors, useWatch } from "react-hook-form";
-import { CreateJourneyFormData } from "../types/journeyTypes";
-import { useState } from "react";
+import { CreateJourneyFormData, NudgeType } from "../types/journeyTypes";
+import { useState, useEffect } from "react";
 import TemplateTab from "./content/TemplateTab";
 import ContentTab from "./content/ContentTab";
+import LocationTab from "./content/LocationTab";
 import PreviewPanel from "./content/PreviewPanel";
 import { engagementSidePanelStyles } from "../styles/engagementSidePanelStyles";
 
@@ -31,15 +32,16 @@ export default function EngagementSidePanel({
   control,
   errors,
 }: EngagementSidePanelProps) {
-  const [activeSubTab, setActiveSubTab] = useState<"template" | "content">(
-    "template"
-  );
+  const [activeSubTab, setActiveSubTab] = useState<
+    "template" | "content" | "location"
+  >("template");
 
   const actions = useWatch({
     control,
     name: "nudgeSelection.actions",
   });
   const engagementType = actions?.[0]?.type;
+  const isTooltip = engagementType === NudgeType.TOOLTIP;
 
   return (
     <Drawer
@@ -74,6 +76,7 @@ export default function EngagementSidePanel({
             >
               <Tab value="template" label="Template" />
               <Tab value="content" label="Content" />
+              {isTooltip && <Tab value="location" label="Location" />}
             </Tabs>
 
             <Box sx={engagementSidePanelStyles.tabContent}>
@@ -82,6 +85,9 @@ export default function EngagementSidePanel({
               )}
               {activeSubTab === "content" && (
                 <ContentTab control={control} errors={errors} />
+              )}
+              {activeSubTab === "location" && isTooltip && (
+                <LocationTab control={control} errors={errors} />
               )}
             </Box>
           </Box>
