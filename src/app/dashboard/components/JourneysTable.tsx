@@ -80,7 +80,11 @@ import { GetListOfCTAsResponse } from "@/api/services/types/journeys.interface";
 import { THEME_COLORS } from "@/config/colors";
 import { useState, useMemo, MouseEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { JOURNEY_ICONS } from "@/lib/mockData";
+import { updateJourneyStatus } from "@/api/services/journeyStatus.service";
+import { JourneyStatus } from "@/api/services/types/updateJourneyStatus.interface";
 
 const getJourneyIcon = (journeyId: number): string => {
   const index = journeyId % JOURNEY_ICONS.length;
@@ -289,6 +293,7 @@ export default function JourneysTable({
   pageSize: number;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const theme = useTheme();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [menuAnchor, setMenuAnchor] = useState<{
@@ -360,10 +365,33 @@ export default function JourneysTable({
   const handleCopyJourneyId = async (journeyId: number) => {
     try {
       await navigator.clipboard.writeText(journeyId.toString());
-      // TODO: Show success toast/notification
+      toast.success("Journey ID copied to clipboard");
     } catch (err) {
       console.error("Failed to copy journey ID:", err);
-      // TODO: Show error toast/notification
+      toast.error("Failed to copy journey ID");
+    }
+    handleMenuClose();
+  };
+
+  const handleStatusChange = async (
+    journeyId: number,
+    status: JourneyStatus
+  ) => {
+    try {
+      await updateJourneyStatus(journeyId, status);
+      const statusLabels: Record<JourneyStatus, string> = {
+        live: "Live",
+        schedule: "Scheduled",
+        pause: "Paused",
+        terminate: "Terminated",
+        conclude: "Concluded",
+      };
+      toast.success(`Journey ${statusLabels[status]} successfully`);
+      // Invalidate and refetch journeys list
+      queryClient.invalidateQueries({ queryKey: ["journeys"] });
+    } catch (error) {
+      console.error(`Error updating journey status to ${status}:`, error);
+      toast.error(`Failed to update journey status. Please try again.`);
     }
     handleMenuClose();
   };
@@ -624,14 +652,32 @@ export default function JourneysTable({
 
           const IconComponent = getIconComponent();
 
+          const handleMenuItemClick = () => {
+            const journeyId = menuAnchor?.journeyId ?? 0;
+            if (action.hasAction) {
+              if (action.id === "copy") {
+                handleCopyJourneyId(journeyId);
+              }
+            } else {
+              // Handle status changes
+              const statusMap: Record<string, JourneyStatus> = {
+                live: "live",
+                schedule: "schedule",
+                pause: "pause",
+                terminate: "terminate",
+                conclude: "conclude",
+              };
+              const status = statusMap[action.id];
+              if (status) {
+                handleStatusChange(journeyId, status);
+              }
+            }
+          };
+
           return (
             <MenuItem
               key={action.id}
-              onClick={
-                action.hasAction
-                  ? () => handleCopyJourneyId(menuAnchor?.journeyId ?? 0)
-                  : undefined
-              }
+              onClick={handleMenuItemClick}
               sx={actionMenuItemStyles}
             >
               {IconComponent && (
