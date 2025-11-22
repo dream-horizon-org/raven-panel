@@ -26,12 +26,14 @@ import {
   ReactNativeJson,
   DynamicTextValueType,
   DynamicTextStaticType,
+  CreateJourneyFormData,
 } from "../../types/journeyTypes";
 import {
   getComponentDefinition,
   ComponentDefinition,
 } from "../../utils/componentDefinitions";
 import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
+import { useFormContext, Path } from "react-hook-form";
 
 interface ElementPropsEditorProps {
   element: ReactNativeJson;
@@ -40,13 +42,66 @@ interface ElementPropsEditorProps {
     propName: string,
     value: string | number | boolean | DynamicTextValueType | null | undefined
   ) => void;
+  basePath?: string; // e.g., "nudgeSelection.actions.0.template" or "nudgeSelection.actions.0.template.children.0"
 }
 
 export default function ElementPropsEditor({
   element,
   componentDef,
   onPropChange,
+  basePath = "nudgeSelection.actions.0.template",
 }: ElementPropsEditorProps) {
+  const {
+    formState: { errors },
+  } = useFormContext<CreateJourneyFormData>();
+
+  // Helper to get field error - handles nested paths with array indices
+  const getFieldError = (propName: string) => {
+    if (!basePath) return undefined;
+    const fieldPath = `${basePath}.props.${propName}`;
+
+    // Navigate through the errors object using the path
+    const pathParts = fieldPath.split(".");
+    let current: any = errors;
+
+    for (let i = 0; i < pathParts.length; i++) {
+      const part = pathParts[i];
+
+      if (!current || typeof current !== "object") {
+        return undefined;
+      }
+
+      // Check if this part is a numeric string (array index)
+      const numericIndex = parseInt(part, 10);
+      const isNumericKey =
+        !isNaN(numericIndex) && part === String(numericIndex);
+
+      if (isNumericKey) {
+        // React Hook Form stores array indices as object keys (e.g., { 0: {...}, 1: {...} })
+        // Check if the key exists in the object
+        if (part in current) {
+          current = current[part];
+        } else {
+          return undefined;
+        }
+      } else {
+        // Regular object property
+        if (part in current) {
+          current = current[part];
+        } else {
+          return undefined;
+        }
+      }
+    }
+
+    // Return the error object if it exists and has a message
+    if (current && typeof current === "object" && "message" in current) {
+      return current;
+    }
+
+    return undefined;
+  };
+
   if (!componentDef?.props || componentDef.props.length === 0) {
     return null;
   }
@@ -55,6 +110,9 @@ export default function ElementPropsEditor({
     prop: NonNullable<ComponentDefinition["props"]>[number]
   ) => {
     const currentValue = element.props?.[prop.name];
+    const fieldError = getFieldError(prop.name);
+    const hasError = !!fieldError;
+    const errorMessage = fieldError?.message;
 
     // Handle template props (DynamicTextValueType)
     if (prop.isTemplate) {
@@ -115,6 +173,11 @@ export default function ElementPropsEditor({
             required={prop.isRequired}
             placeholder={prop.default ? String(prop.default) : ""}
             sx={{ width: "auto", maxWidth: "300px" }}
+            error={hasError}
+            helperText={errorMessage}
+            FormHelperTextProps={{
+              sx: { color: hasError ? "error.main" : "inherit" },
+            }}
           />
         );
       }
@@ -134,6 +197,11 @@ export default function ElementPropsEditor({
             required={prop.isRequired}
             placeholder={prop.default ? String(prop.default) : ""}
             sx={{ width: "auto", maxWidth: "300px" }}
+            error={hasError}
+            helperText={errorMessage}
+            FormHelperTextProps={{
+              sx: { color: hasError ? "error.main" : "inherit" },
+            }}
           />
         );
 
@@ -150,6 +218,11 @@ export default function ElementPropsEditor({
             }
             required={prop.isRequired}
             sx={{ width: "auto", maxWidth: "300px" }}
+            error={hasError}
+            helperText={errorMessage}
+            FormHelperTextProps={{
+              sx: { color: hasError ? "error.main" : "inherit" },
+            }}
           />
         );
 
@@ -322,6 +395,11 @@ export default function ElementPropsEditor({
             required={prop.isRequired}
             placeholder="https://..."
             sx={{ width: "auto", maxWidth: "300px" }}
+            error={hasError}
+            helperText={errorMessage}
+            FormHelperTextProps={{
+              sx: { color: hasError ? "error.main" : "inherit" },
+            }}
           />
         );
 
@@ -338,12 +416,23 @@ export default function ElementPropsEditor({
               onChange={(e) => onPropChange(prop.name, e.target.value)}
               placeholder="#000000"
               sx={{ width: "auto", maxWidth: "300px" }}
+              error={hasError}
+              helperText={errorMessage}
+              FormHelperTextProps={{
+                sx: { color: hasError ? "error.main" : "inherit" },
+              }}
             />
             <input
               type="color"
               value={value || "#000000"}
               onChange={(e) => onPropChange(prop.name, e.target.value)}
-              style={{ width: 40, height: 40, cursor: "pointer" }}
+              style={{
+                width: 40,
+                height: 40,
+                cursor: "pointer",
+                border: hasError ? "2px solid #d32f2f" : "1px solid #ccc",
+                borderRadius: "4px",
+              }}
             />
           </Box>
         );
@@ -358,6 +447,11 @@ export default function ElementPropsEditor({
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}
             sx={{ width: "auto", maxWidth: "300px" }}
+            error={hasError}
+            helperText={errorMessage}
+            FormHelperTextProps={{
+              sx: { color: hasError ? "error.main" : "inherit" },
+            }}
           />
         );
     }

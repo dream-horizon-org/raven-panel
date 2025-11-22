@@ -49,10 +49,6 @@ export default function ElementActionsEditor({
   const allClickActions = getAllClickActions();
   const elementActions = element.actions || [];
 
-  // Debug: Log engagementType to verify it's being passed
-  // console.log("ElementActionsEditor engagementType:", engagementType);
-
-  // Get enabled actions
   const enabledActions = elementActions.filter(
     (action) =>
       typeof action === "object" &&

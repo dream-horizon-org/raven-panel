@@ -39,6 +39,8 @@ import { updateJourney } from "@/api/services/updateJourney.service";
 import { getJourneyById } from "@/api/services/getJourney.service";
 import { toast } from "sonner";
 import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
+import { useWatch } from "react-hook-form";
+import { validateTemplate } from "../utils/validation";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -155,6 +157,8 @@ export default function CreateJourneyPage({
     formState: { errors },
     trigger,
     reset,
+    setError,
+    clearErrors,
     setValue,
     getValues,
   } = methods;
@@ -258,16 +262,41 @@ export default function CreateJourneyPage({
       return;
     }
 
+    // Validate template structure, props, and styles
+    let hasTemplateErrors = false;
+    for (let i = 0; i < data.nudgeSelection.actions.length; i++) {
+      const action = data.nudgeSelection.actions[i];
+      if (action.template) {
+        const basePath = `nudgeSelection.actions.${i}.template` as any;
+        const isValid = validateTemplate(
+          action.template,
+          basePath,
+          setError,
+          clearErrors
+        );
+        if (!isValid) {
+          hasTemplateErrors = true;
+        }
+      }
+    }
+
+    // If template validation failed, stop submission
+    if (hasTemplateErrors) {
+      console.error("Error: Template validation failed");
+      toast.error(
+        "Please fix all template errors before creating the journey."
+      );
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       if (journeyId && !isCloneMode) {
         const response = await updateJourney(Number(journeyId), data);
-        console.log("Journey updated successfully:", response);
         toast.success("Journey updated successfully!");
         router.push("/dashboard");
       } else {
         const response = await createJourney(data);
-        console.log("Journey created successfully:", response);
         toast.success(
           isCloneMode
             ? "Journey cloned successfully!"
@@ -292,6 +321,47 @@ export default function CreateJourneyPage({
 
   const [activeTab, setActiveTab] = useState<"setup" | "ui">("setup");
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
+
+  // Watch template to check validation
+  const template = useWatch({
+    control,
+    name: "nudgeSelection.actions.0.template",
+  });
+
+  // State to force re-validation check when template is saved
+  const [validationKey, setValidationKey] = useState(0);
+
+  // Helper to check if any errors exist in template path
+  const hasTemplateErrors = useMemo(() => {
+    const templateErrorsPath = errors.nudgeSelection?.actions?.[0]?.template;
+    if (!templateErrorsPath) return false;
+
+    // Recursively check if any error exists
+    const checkForErrors = (obj: any): boolean => {
+      if (!obj || typeof obj !== "object") return false;
+      if ("message" in obj) return true;
+
+      for (const key in obj) {
+        if (checkForErrors(obj[key])) return true;
+      }
+      return false;
+    };
+
+    return checkForErrors(templateErrorsPath);
+  }, [errors, template, validationKey]);
+
+  // Template is valid if it exists and has no errors
+  const isTemplateValid = !!template && !hasTemplateErrors;
+
+  // Callback to trigger re-validation when template is saved
+  const handleTemplateSaved = () => {
+    // Force re-check by updating validation key
+    setValidationKey((prev) => prev + 1);
+    // Also trigger form validation to ensure errors object is updated
+    setTimeout(() => {
+      trigger("nudgeSelection.actions.0.template" as any);
+    }, 0);
+  };
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
     if (activeTab === "setup" && newTab === "ui") {
@@ -434,6 +504,7 @@ export default function CreateJourneyPage({
                 onClose={() => setSidePanelOpen(false)}
                 control={control}
                 errors={errors}
+                onTemplateSaved={handleTemplateSaved}
               />
 
               <JourneyActions
@@ -441,6 +512,7 @@ export default function CreateJourneyPage({
                 onNext={handleNext}
                 isSubmitting={isSubmitting}
                 isEditMode={!!journeyId && !isCloneMode}
+                isTemplateValid={isTemplateValid}
               />
             </form>
           </Box>

@@ -11,6 +11,7 @@ interface JourneyActionsProps {
   onNext: () => void;
   isSubmitting?: boolean;
   isEditMode?: boolean;
+  isTemplateValid?: boolean;
 }
 
 export default function JourneyActions({
@@ -18,6 +19,7 @@ export default function JourneyActions({
   onNext,
   isSubmitting = false,
   isEditMode = false,
+  isTemplateValid = false,
 }: JourneyActionsProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -51,7 +53,7 @@ export default function JourneyActions({
           variant="contained"
           sx={journeyActionsStyles.submitButton(theme)}
           size="large"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isTemplateValid}
         >
           {isSubmitting
             ? isEditMode

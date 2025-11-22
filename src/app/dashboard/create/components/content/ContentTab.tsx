@@ -188,12 +188,19 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
     value: string | number | undefined
   ) => {
     if (!template) return;
+    const currentStyles = template.styles || {};
+    const updatedStyles: Record<string, string | number> = { ...currentStyles };
+
+    // If value is undefined, remove the property instead of setting it to undefined
+    if (value === undefined || value === null || value === "") {
+      delete updatedStyles[styleKey];
+    } else {
+      updatedStyles[styleKey] = value;
+    }
+
     const updatedTemplate: ReactNativeJson = {
       ...template,
-      styles: {
-        ...template.styles,
-        [styleKey]: value,
-      },
+      styles: updatedStyles,
     };
     setValue("nudgeSelection.actions.0.template", updatedTemplate);
   };
@@ -232,11 +239,13 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
                 element={template}
                 componentDef={filteredComponentDef}
                 onPropChange={updateTemplateProps}
+                basePath="nudgeSelection.actions.0.template"
               />
               <ElementStylesEditor
                 element={template}
                 componentDef={filteredComponentDef}
                 onStyleChange={updateTemplateStyles}
+                basePath="nudgeSelection.actions.0.template"
               />
             </>
           )}

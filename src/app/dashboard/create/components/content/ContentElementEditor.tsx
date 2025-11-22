@@ -190,8 +190,17 @@ export default function ContentElementEditor({
   ) => {
     if (!element) return;
     const currentStyles = element.styles || {};
+    const updatedStyles: Record<string, string | number> = { ...currentStyles };
+
+    // If value is undefined, remove the property instead of setting it to undefined
+    if (value === undefined || value === null || value === "") {
+      delete updatedStyles[styleKey];
+    } else {
+      updatedStyles[styleKey] = value;
+    }
+
     updateElement({
-      styles: { ...currentStyles, [styleKey]: value },
+      styles: updatedStyles,
     });
   };
 
@@ -338,6 +347,13 @@ export default function ContentElementEditor({
             element={element}
             componentDef={componentDef}
             onPropChange={updateProp}
+            basePath={
+              elementPath.length === 0
+                ? "nudgeSelection.actions.0.template"
+                : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                    ".children."
+                  )}`
+            }
           />
 
           {/* Render Styles Editor */}
@@ -345,6 +361,13 @@ export default function ContentElementEditor({
             element={element}
             componentDef={componentDef}
             onStyleChange={updateStyle}
+            basePath={
+              elementPath.length === 0
+                ? "nudgeSelection.actions.0.template"
+                : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                    ".children."
+                  )}`
+            }
           />
 
           {/* Render Actions Editor */}

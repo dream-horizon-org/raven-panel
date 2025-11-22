@@ -60,7 +60,7 @@ export default function LocationTab({ control, errors }: LocationTabProps) {
         <Controller
           name="nudgeSelection.actions.0.template.props.targetScreen"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <TextField
               {...field}
               label="Target Screen"
@@ -72,6 +72,11 @@ export default function LocationTab({ control, errors }: LocationTabProps) {
               }}
               fullWidth
               size="small"
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+              FormHelperTextProps={{
+                sx: { color: fieldState.error ? "error.main" : "inherit" },
+              }}
             />
           )}
         />
@@ -79,7 +84,7 @@ export default function LocationTab({ control, errors }: LocationTabProps) {
         <Controller
           name="nudgeSelection.actions.0.template.props.targetId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <TextField
               {...field}
               label="Target ID"
@@ -91,6 +96,11 @@ export default function LocationTab({ control, errors }: LocationTabProps) {
               }}
               fullWidth
               size="small"
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+              FormHelperTextProps={{
+                sx: { color: fieldState.error ? "error.main" : "inherit" },
+              }}
             />
           )}
         />

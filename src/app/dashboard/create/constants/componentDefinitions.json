@@ -394,11 +394,13 @@
         },
         {
           "name": "targetScreen",
-          "type": "string"
+          "type": "string",
+          "isRequired": true
         },
         {
           "name": "targetId",
-          "type": "string"
+          "type": "string",
+          "isRequired": true
         },
         {
           "name": "titleColor",
