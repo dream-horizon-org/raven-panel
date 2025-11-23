@@ -5,10 +5,10 @@ const getBaseUrl = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
 
   if (env === "production") {
-    return "https://thunder-master.dream11.local/thunder";
+    return process.env.NEXT_PUBLIC_PRODUCTION_URL;
   }
   if (env === "uat") {
-    return "https://thunder-uat.dream11.local/thunder";
+    return process.env.NEXT_PUBLIC_UAT_URL;
   }
   return "/thunder";
 };
