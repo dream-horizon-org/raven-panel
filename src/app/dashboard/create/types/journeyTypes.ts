@@ -305,11 +305,14 @@ export type ContentElement = {
 };
 
 export type JourneyFrequency = {
-  timesInSession?: number;
-  maxTimesInPeriod?: number;
-  periodValue?: number;
-  periodUnit?: string;
-  maxTimesInLifetime?: number;
+    enableTimesInSession?: boolean;
+    timesInSession: number;
+    enableMaxTimesInPeriod?: boolean;
+    maxTimesInPeriod: number;
+    periodValue: number;
+    periodUnit: string;
+    enableMaxTimesInLifetime?: boolean;
+    maxTimesInLifetime: number;
 };
 
 export type CampaignFormType = {

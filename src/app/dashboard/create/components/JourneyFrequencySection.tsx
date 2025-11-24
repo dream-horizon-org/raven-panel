@@ -5,10 +5,11 @@ import {
   Typography,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Tooltip,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
@@ -37,9 +38,10 @@ export default function JourneyFrequencySection({
   errors,
 }: JourneyFrequencySectionProps) {
   const theme = useTheme();
+  const hasError = !!errors.journeyFrequency;
 
   return (
-    <Box sx={journeyFrequencySectionStyles.formCard(theme)}>
+    <Box sx={journeyFrequencySectionStyles.formCard(theme, hasError)}>
       <Box sx={journeyFrequencySectionStyles.formSection}>
         <Box sx={journeyFrequencySectionStyles.fieldHeader}>
           <Box sx={journeyFrequencySectionStyles.fieldHeaderContent}>
@@ -56,113 +58,199 @@ export default function JourneyFrequencySection({
               />
             </Tooltip>
           </Box>
-        </Box>
-
-        {/* Times in session */}
-        <Box sx={journeyFrequencySectionStyles.frequencyRow}>
-          <Typography sx={journeyFrequencySectionStyles.labelText}>
-            {JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.TIMES_IN_SESSION}
-          </Typography>
-          <Controller
-            name="journeyFrequency.timesInSession"
-            control={control}
-            render={({ field }: { field: FieldValues }) => (
-              <TextField
-                {...field}
-                type="number"
-                size="small"
-                sx={journeyFrequencySectionStyles.numberInput}
-                value={field.value ?? ""}
-                inputProps={{ min: 0 }}
-              />
-            )}
-          />
-          <Typography sx={journeyFrequencySectionStyles.labelText}>
-            {JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.TIMES_IN_SESSION_SUFFIX}
-          </Typography>
-        </Box>
-
-        {/* Max times in period */}
-        <Box sx={journeyFrequencySectionStyles.frequencyRow}>
-          <Typography sx={journeyFrequencySectionStyles.labelText}>
-            {JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.MAX_TIMES_IN_PERIOD}
-          </Typography>
-          <Controller
-            name="journeyFrequency.maxTimesInPeriod"
-            control={control}
-            render={({ field }: { field: FieldValues }) => (
-              <TextField
-                {...field}
-                type="number"
-                size="small"
-                sx={journeyFrequencySectionStyles.numberInput}
-                value={field.value ?? ""}
-                inputProps={{ min: 0 }}
-              />
-            )}
-          />
-          <Typography sx={journeyFrequencySectionStyles.labelText}>
-            {JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.MAX_TIMES_IN_PERIOD_MIDDLE}
-          </Typography>
-          <Controller
-            name="journeyFrequency.periodValue"
-            control={control}
-            render={({ field }: { field: FieldValues }) => (
-              <TextField
-                {...field}
-                type="number"
-                size="small"
-                sx={journeyFrequencySectionStyles.numberInput}
-                value={field.value ?? ""}
-                inputProps={{ min: 0 }}
-              />
-            )}
-          />
-          <Controller
-            name="journeyFrequency.periodUnit"
-            control={control}
-            render={({ field }: { field: FieldValues }) => (
-              <FormControl
-                size="small"
-                sx={journeyFrequencySectionStyles.periodUnitSelect}
-              >
-                <Select {...field} value={field.value || "days"}>
-                  {PERIOD_UNITS.map((unit) => (
-                    <MenuItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          />
+          {hasError && (
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "error.main",
+                mt: 0.5,
+                ml: 4.25,
+              }}
+            >
+              {(errors.journeyFrequency?.message as string) ||
+                "At least one journey frequency option must be selected"}
+            </Typography>
+          )}
         </Box>
 
         {/* Max times in lifetime */}
         <Box sx={journeyFrequencySectionStyles.frequencyRow}>
-          <Typography sx={journeyFrequencySectionStyles.labelText}>
-            {JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.MAX_TIMES_IN_LIFETIME}
-          </Typography>
           <Controller
-            name="journeyFrequency.maxTimesInLifetime"
+            name="journeyFrequency.enableMaxTimesInLifetime"
             control={control}
-            render={({ field }: { field: FieldValues }) => (
-              <TextField
-                {...field}
-                type="number"
-                size="small"
-                sx={journeyFrequencySectionStyles.numberInput}
-                value={field.value ?? ""}
-                inputProps={{ min: 0 }}
-              />
+            defaultValue={false}
+            render={({ field: enableField }: { field: FieldValues }) => (
+              <>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      {...enableField}
+                      checked={enableField.value || false}
+                      size="small"
+                    />
+                  }
+                  label={
+                    <Typography sx={journeyFrequencySectionStyles.labelText}>
+                      {
+                        JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY
+                          .MAX_TIMES_IN_LIFETIME
+                      }
+                    </Typography>
+                  }
+                />
+                <Controller
+                  name="journeyFrequency.maxTimesInLifetime"
+                  control={control}
+                  render={({ field: inputField }: { field: FieldValues }) => (
+                    <TextField
+                      {...inputField}
+                      type="number"
+                      size="small"
+                      disabled={!enableField.value}
+                      sx={journeyFrequencySectionStyles.numberInput}
+                      inputProps={{ min: 0 }}
+                    />
+                  )}
+                />
+                <Typography sx={journeyFrequencySectionStyles.labelText}>
+                  {
+                    JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY
+                      .MAX_TIMES_IN_LIFETIME_SUFFIX
+                  }
+                </Typography>
+              </>
             )}
           />
-          <Typography sx={journeyFrequencySectionStyles.labelText}>
-            {
-              JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY
-                .MAX_TIMES_IN_LIFETIME_SUFFIX
-            }
-          </Typography>
+        </Box>
+
+        {/* Times in session */}
+        <Box sx={journeyFrequencySectionStyles.frequencyRow}>
+          <Controller
+            name="journeyFrequency.enableTimesInSession"
+            control={control}
+            defaultValue={false}
+            render={({ field: enableField }: { field: FieldValues }) => (
+              <>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      {...enableField}
+                      checked={enableField.value || false}
+                      size="small"
+                    />
+                  }
+                  label={
+                    <Typography sx={journeyFrequencySectionStyles.labelText}>
+                      {JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.TIMES_IN_SESSION}
+                    </Typography>
+                  }
+                />
+                <Controller
+                  name="journeyFrequency.timesInSession"
+                  control={control}
+                  render={({ field: inputField }: { field: FieldValues }) => (
+                    <TextField
+                      {...inputField}
+                      type="number"
+                      size="small"
+                      disabled={!enableField.value}
+                      sx={journeyFrequencySectionStyles.numberInput}
+                      inputProps={{ min: 0 }}
+                    />
+                  )}
+                />
+                <Typography sx={journeyFrequencySectionStyles.labelText}>
+                  {
+                    JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY
+                      .TIMES_IN_SESSION_SUFFIX
+                  }
+                </Typography>
+              </>
+            )}
+          />
+        </Box>
+
+        {/* Max times in period */}
+        <Box sx={journeyFrequencySectionStyles.frequencyRow}>
+          <Controller
+            name="journeyFrequency.enableMaxTimesInPeriod"
+            control={control}
+            defaultValue={false}
+            render={({ field: enableField }: { field: FieldValues }) => (
+              <>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      {...enableField}
+                      checked={enableField.value || false}
+                      size="small"
+                    />
+                  }
+                  label={
+                    <Typography sx={journeyFrequencySectionStyles.labelText}>
+                      {
+                        JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY
+                          .MAX_TIMES_IN_PERIOD
+                      }
+                    </Typography>
+                  }
+                />
+                <Controller
+                  name="journeyFrequency.maxTimesInPeriod"
+                  control={control}
+                  render={({ field: inputField }: { field: FieldValues }) => (
+                    <TextField
+                      {...inputField}
+                      type="number"
+                      size="small"
+                      disabled={!enableField.value}
+                      sx={journeyFrequencySectionStyles.numberInput}
+                      inputProps={{ min: 0 }}
+                    />
+                  )}
+                />
+                <Typography sx={journeyFrequencySectionStyles.labelText}>
+                  {
+                    JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY
+                      .MAX_TIMES_IN_PERIOD_MIDDLE
+                  }
+                </Typography>
+                <Controller
+                  name="journeyFrequency.periodValue"
+                  control={control}
+                  render={({ field: periodField }: { field: FieldValues }) => (
+                    <TextField
+                      {...periodField}
+                      type="number"
+                      size="small"
+                      disabled={!enableField.value}
+                      sx={journeyFrequencySectionStyles.numberInput}
+                      inputProps={{ min: 0 }}
+                    />
+                  )}
+                />
+                <Controller
+                  name="journeyFrequency.periodUnit"
+                  control={control}
+                  render={({ field: unitField }: { field: FieldValues }) => (
+                    <FormControl
+                      size="small"
+                      sx={journeyFrequencySectionStyles.periodUnitSelect}
+                      disabled={!enableField.value}
+                    >
+                      <Select {...unitField} value={unitField.value || "days"}>
+                        {PERIOD_UNITS.map((unit) => (
+                          <MenuItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                />
+              </>
+            )}
+          />
         </Box>
       </Box>
     </Box>

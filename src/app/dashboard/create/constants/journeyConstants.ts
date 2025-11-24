@@ -42,14 +42,14 @@ export const JOURNEY_TEXT = {
   },
   SECTIONS: {
     COHORT: {
-      TITLE: "Cohort",
-      TOOLTIP: "Cohort information",
+      TITLE: "Segments",
+      TOOLTIP: "Segment information",
       DESCRIPTION: "Select whether you want to target all users or segments",
       LABEL: "User Set",
     },
     EVENT_TRIGGER: {
-      TITLE: "Event Trigger",
-      TOOLTIP: "Event Trigger information",
+      TITLE: "Trigger",
+      TOOLTIP: "Event triggered journeys will start when a specific event occurs",
       DESCRIPTION: "Select the event that will trigger this journey",
       LABEL: "Event",
     },
@@ -74,11 +74,11 @@ export const JOURNEY_TEXT = {
     JOURNEY_FREQUENCY: {
       TITLE: "Journey Frequency",
       TOOLTIP: "Journey Frequency information",
-      TIMES_IN_SESSION: "Show Journey",
+      TIMES_IN_SESSION: "Allow user to enter journey up to",
       TIMES_IN_SESSION_SUFFIX: "time(s) in a session",
-      MAX_TIMES_IN_PERIOD: "Show Journey a maximum of",
+      MAX_TIMES_IN_PERIOD: "Allow user to enter journey up to",
       MAX_TIMES_IN_PERIOD_MIDDLE: "time(s) in",
-      MAX_TIMES_IN_LIFETIME: "Show Journey a maximum of",
+      MAX_TIMES_IN_LIFETIME: "Allow user to enter journey up to",
       MAX_TIMES_IN_LIFETIME_SUFFIX: "time(s) in lifetime",
     },
     UI_CONTENT: {
@@ -87,7 +87,7 @@ export const JOURNEY_TEXT = {
     },
   },
   FILTERS: {
-    BUTTON: "Filter property",
+    BUTTON: "Add Filter",
     PROPERTY: "Property",
     OPERATOR: "Operator",
     VALUE: "Value",
@@ -129,6 +129,16 @@ export const getJourneyFormDefaults = () => ({
     endTime: null,
     endDateTime: null,
     priority: null,
+  },
+  journeyFrequency: {
+    enableTimesInSession: false,
+    timesInSession: 999,
+    enableMaxTimesInPeriod: false,
+    maxTimesInPeriod: 999,
+    periodValue: 999,
+    periodUnit: "days" as const,
+    enableMaxTimesInLifetime: false,
+    maxTimesInLifetime: 999,
   },
   ruleEngine: {
     currentDropdownSelectedEvent: null,

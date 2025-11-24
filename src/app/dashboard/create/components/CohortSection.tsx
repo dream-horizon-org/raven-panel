@@ -64,58 +64,67 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
             {JOURNEY_TEXT.SECTIONS.COHORT.DESCRIPTION}
           </Typography>
         </Box>
-        <Controller
-          name="selectCohort.includedCohorts"
-          control={control}
-          render={({ field }: { field: FieldValues }) => {
-            const selectedValue =
-              Array.isArray(field.value) && field.value.length > 0
-                ? field.value[0]
-                : null;
-            const selectedOption =
-              cohortOptions.find((opt) => opt.value === selectedValue) || null;
+        <Box sx={cohortSectionStyles.selectContainer}>
+          <Typography sx={cohortSectionStyles.selectLabel}>
+            {JOURNEY_TEXT.SECTIONS.COHORT.LABEL}
+          </Typography>
+          <Controller
+            name="selectCohort.includedCohorts"
+            control={control}
+            render={({ field }: { field: FieldValues }) => {
+              const selectedValue =
+                Array.isArray(field.value) && field.value.length > 0
+                  ? field.value[0]
+                  : null;
+              const selectedOption =
+                cohortOptions.find((opt) => opt.value === selectedValue) ||
+                null;
 
-            return (
-              <Box>
-                <Autocomplete
-                  options={filteredCohorts}
-                  getOptionLabel={(option) => option.label}
-                  value={selectedOption}
-                  loading={isLoadingCohorts}
-                  onInputChange={(_, newInputValue) => {
-                    setSearchTerm(newInputValue);
-                  }}
-                  onChange={(_, newValue) => {
-                    field.onChange(newValue ? [newValue.value] : []);
-                  }}
-                  isOptionEqualToValue={(option, value) =>
-                    option.value === value.value
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={JOURNEY_TEXT.SECTIONS.COHORT.LABEL}
-                      error={!!errors.selectCohort?.includedCohorts}
-                      helperText={errors.selectCohort?.includedCohorts?.message}
-                    />
-                  )}
-                  ListboxProps={{
-                    style: {
-                      maxHeight: "300px",
-                    },
-                  }}
-                  noOptionsText={
-                    isLoadingCohorts
-                      ? "Loading cohorts..."
-                      : searchTerm
-                      ? "No cohorts found"
-                      : "No cohorts available"
-                  }
-                />
-              </Box>
-            );
-          }}
-        />
+              return (
+                <Box>
+                  <Autocomplete
+                    options={filteredCohorts}
+                    getOptionLabel={(option) => option.label}
+                    value={selectedOption}
+                    loading={isLoadingCohorts}
+                    onInputChange={(_, newInputValue) => {
+                      setSearchTerm(newInputValue);
+                    }}
+                    onChange={(_, newValue) => {
+                      field.onChange(newValue ? [newValue.value] : []);
+                    }}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        // label={JOURNEY_TEXT.SECTIONS.COHORT.LABEL}
+                        error={!!errors.selectCohort?.includedCohorts}
+                        helperText={
+                          errors.selectCohort?.includedCohorts?.message
+                        }
+                        sx={cohortSectionStyles.selectField}
+                      />
+                    )}
+                    ListboxProps={{
+                      style: {
+                        maxHeight: "300px",
+                      },
+                    }}
+                    noOptionsText={
+                      isLoadingCohorts
+                        ? "Loading cohorts..."
+                        : searchTerm
+                        ? "No cohorts found"
+                        : "No cohorts available"
+                    }
+                  />
+                </Box>
+              );
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );

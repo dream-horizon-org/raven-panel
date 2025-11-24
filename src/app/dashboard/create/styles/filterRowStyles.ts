@@ -3,21 +3,20 @@ import { THEME_COLORS } from "@/config/colors";
 
 export const filterRowStyles = {
   filterCard: (theme: Theme): SxProps<Theme> => ({
-    bgcolor:
-      theme.palette.mode === "light"
-        ? THEME_COLORS.BACKGROUND.light.default
-        : THEME_COLORS.BACKGROUND.dark.paper,
+    bgcolor: "transparent",
     borderRadius: "8px",
     border: 1,
     borderColor: theme.palette.divider,
+    borderStyle: "dashed",
     p: 2.5,
     transition: "all 0.2s ease",
     "&:hover": {
       borderColor: "primary.main",
-      boxShadow:
+      borderStyle: "solid",
+      bgcolor:
         theme.palette.mode === "light"
-          ? THEME_COLORS.SHADOWS.light.md
-          : THEME_COLORS.SHADOWS.dark.md,
+          ? "rgba(165, 26, 253, 0.02)"
+          : "rgba(165, 26, 253, 0.05)",
     },
   }),
   filterFields: {
@@ -26,10 +25,28 @@ export const filterRowStyles = {
     alignItems: "flex-start",
   },
   filterField: {
-    flex: 1,
+    minWidth: "250px",
+    width: "fit-content",
     "& .MuiOutlinedInput-root": {
       borderRadius: "8px",
       bgcolor: "background.paper",
+      height: "36px",
+      display: "flex",
+      alignItems: "center",
+    },
+    "& .MuiInputBase-input": {
+      padding: "8px 14px",
+      fontSize: "0.875rem",
+      minWidth: "150px",
+      "&::placeholder": {
+        opacity: 1,
+        color: "text.secondary",
+      },
+    },
+    "& .MuiSelect-select": {
+      padding: "8px 14px",
+      fontSize: "0.875rem",
+      minWidth: "150px",
     },
   },
   deleteButton: {

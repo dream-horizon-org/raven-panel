@@ -6,6 +6,7 @@ import {
   Autocomplete,
   TextField,
   Tooltip,
+  Chip,
   Button,
   FormControl,
   InputLabel,
@@ -361,11 +362,13 @@ export default function EventTriggerSection({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={JOURNEY_TEXT.SECTIONS.EVENT_TRIGGER.LABEL}
+
+                      placeholder={JOURNEY_TEXT.SECTIONS.EVENT_TRIGGER.LABEL}
                       error={!!errors.ruleEngine?.currentDropdownSelectedEvent}
                       helperText={
                         errors.ruleEngine?.currentDropdownSelectedEvent?.message
                       }
+
                       fullWidth
                     />
                   )}
@@ -400,7 +403,6 @@ export default function EventTriggerSection({
             }}
             sx={eventTriggerSectionStyles.addFilterButton}
             variant="outlined"
-            size="small"
           >
             {JOURNEY_TEXT.FILTERS.BUTTON}
           </Button>
@@ -434,6 +436,14 @@ export default function EventTriggerSection({
 
       <Box sx={eventTriggerSectionStyles.filtersList}>
         {fields.map((fieldItem, index) => (
+          <Box key={fieldItem.id} sx={eventTriggerSectionStyles.filterRowContainer}>
+            {index > 0 && (
+              <Chip
+                label="AND"
+                size="small"
+                sx={eventTriggerSectionStyles.andChip(theme)}
+              />
+            )}
           <FilterRow
             key={fieldItem.id}
             control={control}
@@ -445,6 +455,7 @@ export default function EventTriggerSection({
             propertyTypeMap={propertyTypeMap}
             filterPath={filterPath}
           />
+          </Box>
         ))}
       </Box>
     </Box>

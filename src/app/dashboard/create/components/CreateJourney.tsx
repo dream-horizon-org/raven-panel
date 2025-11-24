@@ -67,9 +67,7 @@ export default function CreateJourneyPage({
     isLoading: isLoadingSystemProperties,
     isFetching: isFetchingSystemProperties,
   } = useSystemProperties();
-
   const availableProperties = filtersData?.data?.names || [];
-
   const { systemPropertyNames, systemPropertyTypes } = useMemo(() => {
     if (!systemPropertiesData) {
       return {
@@ -77,7 +75,6 @@ export default function CreateJourneyPage({
         systemPropertyTypes: new Map<string, string>(),
       };
     }
-
     const data = systemPropertiesData.data;
     if (!data) {
       return {
@@ -85,10 +82,8 @@ export default function CreateJourneyPage({
         systemPropertyTypes: new Map<string, string>(),
       };
     }
-
     const names: string[] = [];
     const types = new Map<string, string>();
-
     if (Array.isArray(data)) {
       data.forEach((item) => {
         if (item?.propertyName) {
@@ -132,7 +127,6 @@ export default function CreateJourneyPage({
         }
       );
     }
-
     return { systemPropertyNames: names, systemPropertyTypes: types };
   }, [systemPropertiesData]);
   const methods = useForm<CreateJourneyFormData, object, CreateJourneyFormData>(
@@ -151,6 +145,19 @@ export default function CreateJourneyPage({
     }
   );
 
+  // Watch journey frequency checkboxes to clear error when any is checked
+  const enableTimesInSession = useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableTimesInSession",
+  });
+  const enableMaxTimesInPeriod = useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableMaxTimesInPeriod",
+  });
+  const enableMaxTimesInLifetime = useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableMaxTimesInLifetime",
+  });
   const {
     control,
     handleSubmit,
@@ -162,7 +169,6 @@ export default function CreateJourneyPage({
     setValue,
     getValues,
   } = methods;
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);
   const [showMultipleEventDialog, setShowMultipleEventDialog] = useState(false);
@@ -234,9 +240,68 @@ export default function CreateJourneyPage({
     }
   }, [journeyId, isLoadingJourney, eventsData, setValue, getValues]);
 
+  useEffect(() => {
+    const fetchJourneyData = async () => {
+      if (!journeyId) return;
+      try {
+        setIsLoadingJourney(true);
+        const journeyResponse = await getJourneyById(Number(journeyId));
+        const formData = parseJourneyDataToFormData(journeyResponse);
+        if (
+          formData.ruleEngine.currentDropdownSelectedEvent &&
+          eventsData?.data?.eventList &&
+          eventsData.data.eventList.length > 0
+        ) {
+          const eventName =
+            formData.ruleEngine.currentDropdownSelectedEvent.label;
+          const matchingEvent = eventsData.data.eventList.find(
+            (event) => event.metadata.eventName === eventName
+          );
+          if (matchingEvent) {
+            const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
+            formData.ruleEngine.currentDropdownSelectedEvent = {
+              id: eventIndex + 1,
+              label: eventName,
+            };
+          }
+        }
+        reset(formData);
+        toast.success("Journey data loaded successfully");
+      } catch (error) {
+        console.error("Error fetching journey data:", error);
+        toast.error("Failed to load journey data. Please try again.");
+      } finally {
+        setIsLoadingJourney(false);
+      }
+    };
+    if (journeyId) {
+      fetchJourneyData();
+    }
+  }, [journeyId, reset, setValue]);
+
+  useEffect(() => {
+    if (
+      journeyId &&
+      eventsData?.data?.eventList &&
+      eventsData.data.eventList.length > 0
+    ) {
+      const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
+      if (currentEvent?.label && currentEvent.id === 0) {
+        const matchingEvent = eventsData.data.eventList.find(
+          (event) => event.metadata.eventName === currentEvent.label
+        );
+        if (matchingEvent) {
+          const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
+          setValue("ruleEngine.currentDropdownSelectedEvent", {
+            id: eventIndex + 1,
+            label: currentEvent.label,
+          });
+        }
+      }
+    }
+  }, [journeyId, eventsData, setValue, getValues]);
   const onFormSubmit = async (data: CreateJourneyFormData) => {
     console.log("data", data);
-
     // Validate that templates are present
     if (
       !data.nudgeSelection?.actions ||
@@ -248,12 +313,10 @@ export default function CreateJourneyPage({
       );
       return;
     }
-
     // Validate that each action has a template
     const actionsWithoutTemplate = data.nudgeSelection.actions.filter(
       (action) => !action.template
     );
-
     if (actionsWithoutTemplate.length > 0) {
       console.error("Error: Some actions are missing templates");
       toast.error(
@@ -318,7 +381,6 @@ export default function CreateJourneyPage({
       setIsSubmitting(false);
     }
   };
-
   const [activeTab, setActiveTab] = useState<"setup" | "ui">("setup");
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
@@ -376,11 +438,9 @@ export default function CreateJourneyPage({
       setActiveTab(newTab);
     }
   };
-
   const handleNext = () => {
     setActiveTab("ui");
   };
-
   const isLoading =
     (!eventsData && isFetchingEvents) ||
     (!systemPropertiesData && isFetchingSystemProperties);
@@ -463,12 +523,10 @@ export default function CreateJourneyPage({
         <Box sx={createJourneyPageStyles.mainLayout}>
           <Box sx={createJourneyPageStyles.contentArea}>
             <JourneyTabs activeTab={activeTab} onTabChange={handleTabChange} />
-
             <form onSubmit={handleSubmit(onFormSubmit)}>
               {activeTab === "setup" && (
                 <Box sx={createJourneyPageStyles.formContent}>
                   <CohortSection control={control} errors={errors} />
-
                   <Box sx={createJourneyPageStyles.filtersSection}>
                     <EventTriggerSection
                       control={control}
@@ -482,13 +540,10 @@ export default function CreateJourneyPage({
                       systemPropertyTypes={systemPropertyTypes}
                     />
                   </Box>
-
                   <ScheduleSection control={control} errors={errors} />
-
                   <JourneyFrequencySection control={control} errors={errors} />
                 </Box>
               )}
-
               {activeTab === "ui" && (
                 <Box sx={createJourneyPageStyles.formContent}>
                   <EngagementSelector
@@ -498,7 +553,6 @@ export default function CreateJourneyPage({
                   />
                 </Box>
               )}
-
               <EngagementSidePanel
                 open={sidePanelOpen}
                 onClose={() => setSidePanelOpen(false)}
@@ -506,7 +560,6 @@ export default function CreateJourneyPage({
                 errors={errors}
                 onTemplateSaved={handleTemplateSaved}
               />
-
               <JourneyActions
                 activeTab={activeTab}
                 onNext={handleNext}

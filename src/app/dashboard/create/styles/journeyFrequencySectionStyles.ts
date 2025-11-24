@@ -2,16 +2,22 @@ import { SxProps, Theme } from "@mui/material";
 import { THEME_COLORS } from "@/config/colors";
 
 export const journeyFrequencySectionStyles = {
-  formCard: (theme: Theme): SxProps<Theme> => ({
+  formCard: (theme: Theme, hasError?: boolean): SxProps<Theme> => ({
     bgcolor: "background.paper",
     borderRadius: "12px",
     border: 1,
-    borderColor: theme.palette.divider,
+    borderColor: hasError ? theme.palette.error.main : theme.palette.divider,
     p: 3,
     boxShadow:
       theme.palette.mode === "light"
         ? THEME_COLORS.SHADOWS.light.sm
         : THEME_COLORS.SHADOWS.dark.sm,
+    ...(hasError && {
+      bgcolor:
+        theme.palette.mode === "light"
+          ? "rgba(211, 47, 47, 0.04)"
+          : "rgba(211, 47, 47, 0.08)",
+    }),
   }),
   formSection: {
     display: "flex",

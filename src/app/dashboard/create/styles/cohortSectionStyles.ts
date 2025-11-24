@@ -1,6 +1,5 @@
 import { SxProps, Theme } from "@mui/material";
 import { THEME_COLORS } from "@/config/colors";
-
 export const cohortSectionStyles = {
   formCard: (theme: Theme): SxProps<Theme> => ({
     bgcolor: "background.paper",
@@ -20,17 +19,48 @@ export const cohortSectionStyles = {
     },
   },
   fieldHeader: {
-    mb: 1.5,
+    mb: 2,
   },
   fieldHeaderContent: {
     display: "flex",
     alignItems: "center",
     gap: 1,
-    mb: 0.5,
+    mb: 0.75,
   },
   fieldHeaderIcon: {
     fontSize: "1.25rem",
-    color: "text.primary",
+    fieldSubtext: {
+      fontSize: "0.75rem",
+      color: "text.secondary",
+      ml: 0,
+    },
+    selectContainer: {
+      display: "flex",
+      alignItems: "center",
+      gap: 1.5,
+    },
+    selectLabel: {
+      fontSize: "0.875rem",
+      color: "text.primary",
+      whiteSpace: "nowrap",
+    },
+    selectField: {
+      width: "200px",
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "8px",
+        height: "36px",
+      },
+      "& .MuiSelect-select": {
+        padding: "8px 14px",
+        fontSize: "0.875rem",
+      },
+    },
+    separator: (theme: Theme): SxProps<Theme> => ({
+      borderTop: "1px dashed",
+      borderColor: theme.palette.divider,
+      mt: 2.5,
+      width: "100%",
+    }),
   },
   fieldLabel: (theme: Theme): SxProps<Theme> => ({
     fontSize: "0.875rem",
@@ -53,5 +83,26 @@ export const cohortSectionStyles = {
     fontSize: "0.75rem",
     color: "text.secondary",
     ml: 4.25,
+  },
+  selectContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1.5,
+  },
+  selectLabel: {
+    fontSize: "0.875rem",
+    color: "text.primary",
+    whiteSpace: "nowrap",
+  },
+  selectField: {
+    width: "200px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "8px",
+      height: "36px",
+    },
+    "& .MuiSelect-select": {
+      padding: "8px 14px",
+      fontSize: "0.875rem",
+    },
   },
 };
