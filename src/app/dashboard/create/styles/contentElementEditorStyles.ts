@@ -60,6 +60,12 @@ export const contentElementEditorStyles = {
     color: "text.secondary",
     mb: 1,
   },
+  contentLabel: {
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: "text.secondary",
+    mb: 1,
+  },
   spacingInputs: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",

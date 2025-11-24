@@ -230,7 +230,7 @@ export default function ElementStylesEditor({
             sx={contentElementEditorStyles.spacingSubLabel}
             gutterBottom
           >
-            {styleName}
+            {"Item Alignment"}
           </Typography>
           <Box
             sx={{
@@ -367,7 +367,7 @@ export default function ElementStylesEditor({
       return (
         <Box key={styleName}>
           <Typography
-            sx={contentElementEditorStyles.spacingSubLabel}
+            sx={contentElementEditorStyles.contentLabel}
             gutterBottom
           >
             Text Alignment
@@ -480,7 +480,7 @@ export default function ElementStylesEditor({
       return (
         <Box key={styleName}>
           <Typography
-            sx={contentElementEditorStyles.spacingSubLabel}
+            sx={contentElementEditorStyles.contentLabel}
             gutterBottom
           >
             Background Color
@@ -626,7 +626,7 @@ export default function ElementStylesEditor({
 
       {spacingStyles.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography sx={contentElementEditorStyles.spacingSubLabel}>
+          <Typography sx={contentElementEditorStyles.contentLabel}>
             Spacing (in dp)
           </Typography>
           <Box sx={contentElementEditorStyles.spacingGrid}>
@@ -714,7 +714,7 @@ export default function ElementStylesEditor({
 
       {flexStyles.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography sx={contentElementEditorStyles.spacingSubLabel}>
+          <Typography sx={contentElementEditorStyles.contentLabel}>
             Layout
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -726,12 +726,12 @@ export default function ElementStylesEditor({
       {dimensionStyles.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <Typography
-            sx={contentElementEditorStyles.spacingSubLabel}
+            sx={contentElementEditorStyles.contentLabel}
             gutterBottom
           >
             Dimensions
           </Typography>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mt: 2 }}>
             {dimensionStyles.map((styleName) => renderStyleInput(styleName))}
           </Box>
         </Box>
