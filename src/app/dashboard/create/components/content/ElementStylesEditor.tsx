@@ -92,7 +92,7 @@ export default function ElementStylesEditor({
 
     // Navigate through the errors object using the path
     const pathParts = fieldPath.split(".");
-    let current: any = errors;
+    let current: unknown = errors;
 
     for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i];
@@ -109,15 +109,17 @@ export default function ElementStylesEditor({
       if (isNumericKey) {
         // React Hook Form stores array indices as object keys (e.g., { 0: {...}, 1: {...} })
         // Check if the key exists in the object
-        if (part in current) {
-          current = current[part];
+        const currentObj = current as Record<string, unknown>;
+        if (part in currentObj) {
+          current = currentObj[part];
         } else {
           return undefined;
         }
       } else {
         // Regular object property
-        if (part in current) {
-          current = current[part];
+        const currentObj = current as Record<string, unknown>;
+        if (part in currentObj) {
+          current = currentObj[part];
         } else {
           return undefined;
         }
@@ -468,7 +470,7 @@ export default function ElementStylesEditor({
           inputProps={{ min: 0 }}
           sx={{ flex: 1 }}
           error={hasError}
-          helperText={errorMessage}
+          helperText={errorMessage as string}
           FormHelperTextProps={{
             sx: { color: hasError ? "error.main" : "inherit" },
           }}
@@ -493,7 +495,7 @@ export default function ElementStylesEditor({
               placeholder="#FFFFFF"
               sx={{ width: 150 }}
               error={hasError}
-              helperText={errorMessage}
+              helperText={errorMessage as string}
               FormHelperTextProps={{
                 sx: { color: hasError ? "error.main" : "inherit" },
               }}
@@ -554,7 +556,7 @@ export default function ElementStylesEditor({
           label={styleName.charAt(0).toUpperCase() + styleName.slice(1)}
           value={displayValue}
           error={hasError}
-          helperText={errorMessage}
+          helperText={errorMessage as string}
           FormHelperTextProps={{
             sx: { color: hasError ? "error.main" : "inherit" },
           }}
@@ -610,7 +612,7 @@ export default function ElementStylesEditor({
         }
         sx={{ width: "auto", maxWidth: "300px" }}
         error={hasError}
-        helperText={errorMessage}
+        helperText={errorMessage as string}
         FormHelperTextProps={{
           sx: { color: hasError ? "error.main" : "inherit" },
         }}
@@ -658,7 +660,7 @@ export default function ElementStylesEditor({
                       }
                       sx={contentElementEditorStyles.spacingInput}
                       error={marginHasError}
-                      helperText={marginErrorMessage}
+                      helperText={marginErrorMessage as string}
                       FormHelperTextProps={{
                         sx: {
                           color: marginHasError ? "error.main" : "inherit",
@@ -697,7 +699,7 @@ export default function ElementStylesEditor({
                       }
                       sx={contentElementEditorStyles.spacingInput}
                       error={paddingHasError}
-                      helperText={paddingErrorMessage}
+                      helperText={paddingErrorMessage as string}
                       FormHelperTextProps={{
                         sx: {
                           color: paddingHasError ? "error.main" : "inherit",
