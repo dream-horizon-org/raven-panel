@@ -83,7 +83,7 @@ export default function DeviceFrame({
               width: "100%",
               height: "100%",
               padding: 0,
-              backgroundColor: "rgb(246,247,249)",
+              backgroundColor: "grey.300",
               position: "relative",
               overflow: "hidden",
               display: "flex",

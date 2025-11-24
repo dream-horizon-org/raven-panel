@@ -522,6 +522,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             display: "flex",
             ...getTooltipContainerStyles(),
             pointerEvents: "none",
+            bgcolor: "rgba(0,0,0,0.45)",
           }}
         >
           <Box
