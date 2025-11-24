@@ -9,7 +9,7 @@ export const contentTabStyles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "flex-end",
     mb: 2,
   },
   title: {

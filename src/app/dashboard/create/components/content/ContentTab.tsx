@@ -257,19 +257,14 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
   // For other types: show children elements
   return (
     <Box sx={contentTabStyles.container}>
-      <Box sx={contentTabStyles.header}>
-        <Box>
-          <Typography sx={contentTabStyles.title}>Content Elements</Typography>
-          <Typography sx={contentTabStyles.subtitle}>
-            Configure the UI elements for your engagement
-          </Typography>
-        </Box>
+      {!template || children.length === 0 ? (
+        <Box sx={contentTabStyles.container}>
+        <Box sx={contentTabStyles.header}>
         <Button
           variant="outlined"
           startIcon={<AddIcon />}
           onClick={(e) => setAnchorEl(e.currentTarget)}
-          sx={contentTabStyles.addButton}
-        >
+          sx={contentTabStyles.addButton}>
           Add Element
         </Button>
         <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
@@ -292,8 +287,6 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
           ))}
         </Menu>
       </Box>
-
-      {!template || children.length === 0 ? (
         <Box sx={contentTabStyles.emptyState}>
           <Typography sx={contentTabStyles.emptyStateText}>
             {!template
@@ -306,7 +299,9 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
               : "Use the 'Add Element' dropdown to start building your engagement UI"}
           </Typography>
         </Box>
+        </Box>
       ) : (
+        <Box sx={contentTabStyles.container}>
         <Box sx={contentTabStyles.elementsList}>
           {children.map((child: ReactNativeJson, index: number) => (
             <ContentElementEditor
@@ -317,6 +312,7 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
               onRemove={() => handleRemoveElement(index)}
             />
           ))}
+        </Box>
         </Box>
       )}
     </Box>
