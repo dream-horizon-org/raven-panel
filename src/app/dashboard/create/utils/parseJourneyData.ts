@@ -37,11 +37,14 @@ export const parseJourneyDataToFormData = (
 
   const frequency = rule.frequency || {};
   const journeyFrequency = {
-    timesInSession: frequency.session?.limit || undefined,
-    maxTimesInPeriod: frequency.window?.limit || undefined,
-    periodValue: frequency.window?.value || undefined,
+    enableTimesInSession: !!frequency.session?.limit,
+    timesInSession: frequency.session?.limit || 999,
+    enableMaxTimesInPeriod: !!frequency.window?.limit,
+    maxTimesInPeriod: frequency.window?.limit || 999,
+    periodValue: frequency.window?.value || 999,
     periodUnit: frequency.window?.unit || "days",
-    maxTimesInLifetime: frequency.lifespan?.limit || undefined,
+    enableMaxTimesInLifetime: !!frequency.lifespan?.limit,
+    maxTimesInLifetime: frequency.lifespan?.limit || 999,
   };
 
   const stateTransition = rule.stateTransition || {};
