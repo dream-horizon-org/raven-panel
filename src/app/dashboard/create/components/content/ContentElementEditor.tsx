@@ -5,20 +5,16 @@ import {
   Typography,
   IconButton,
   Collapse,
-  TextField,
-  FormControl,
-  Select,
   MenuItem,
-  Switch,
-  FormControlLabel,
   Button,
   Menu,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import AddIcon from "@mui/icons-material/Add";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { useElementLocator } from "../../contexts/ElementLocatorContext";
 import { useState, useMemo } from "react";
 import {
   Control,
@@ -58,6 +54,7 @@ export default function ContentElementEditor({
   isChild = false,
 }: ContentElementEditorProps) {
   const { setValue } = useFormContext<CreateJourneyFormData>();
+  const { setSelectedTestID } = useElementLocator();
   const [expanded, setExpanded] = useState(false);
   const [childMenuAnchor, setChildMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -305,6 +302,16 @@ export default function ContentElementEditor({
     return null;
   }
 
+  const elementTestID = (element.props as Record<string, unknown>)?.testID as string | undefined;
+
+  const handleLocatorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (elementTestID) {
+      // Just set the element to highlight (will auto-dismiss after 3 seconds)
+      setSelectedTestID(elementTestID);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -319,23 +326,31 @@ export default function ContentElementEditor({
     >
       <Box sx={contentElementEditorStyles.header}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => setExpanded(!expanded)}
+            sx={{ p: 0.5, ml: -1 }}
+          >
+            {expanded ? (
+              <ExpandMoreIcon fontSize="small" />
+            ) : (
+              <ChevronRightIcon fontSize="small" />
+            )}
+          </IconButton>
           <Typography sx={contentElementEditorStyles.elementLabel}>
             {componentDef?.display || element.type}
           </Typography>
         </Box>
         <Box>
-          <IconButton size="small" onClick={() => {}}>
-            <ContentCopyIcon fontSize="small" />
+          <IconButton
+            size="small"
+            onClick={handleLocatorClick}
+            title="Locate element in preview"
+          >
+            <LocationOnIcon fontSize="small" />
           </IconButton>
           <IconButton size="small" onClick={onRemove} color="error">
             <DeleteIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => setExpanded(!expanded)}>
-            {expanded ? (
-              <ExpandLessIcon fontSize="small" />
-            ) : (
-              <ExpandMoreIcon fontSize="small" />
-            )}
           </IconButton>
         </Box>
       </Box>

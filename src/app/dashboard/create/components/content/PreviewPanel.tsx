@@ -9,14 +9,16 @@ import {
   NudgeType,
 } from "../../types/journeyTypes";
 import { previewPanelStyles } from "../../styles/previewPanelStyles";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import DeviceFrame from "./DeviceFrame";
+import { useElementLocator } from "../../contexts/ElementLocatorContext";
 
 interface PreviewPanelProps {
   control: Control<CreateJourneyFormData>;
 }
 
 export default function PreviewPanel({ control }: PreviewPanelProps) {
+  const { selectedTestID, setSelectedTestID } = useElementLocator();
   const template = useWatch({
     control,
     name: "nudgeSelection.actions.0.template",
@@ -28,6 +30,17 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
   });
 
   const engagementType = actions?.[0]?.type;
+
+  // Auto-dismiss highlight after 3 seconds
+  useEffect(() => {
+    if (selectedTestID) {
+      const timer = setTimeout(() => {
+        setSelectedTestID(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTestID, setSelectedTestID]);
 
   // Extract children from template
   const children = useMemo(() => {
@@ -44,6 +57,9 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
     const { type, props = {}, styles = {}, children: nodeChildren } = node;
     const nodeProps = props as Record<string, any>;
+    const nodeTestID = nodeProps.testID as string | undefined;
+    const isHighlighted = nodeTestID && selectedTestID === nodeTestID;
+    
     // Use engagementType from action, fallback to template.type if not available
     let nudgeTypeForNode: string | NudgeType | undefined = engagementType;
     if (!nudgeTypeForNode && template?.type) {
@@ -129,6 +145,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
               ...(cssStyles.width ? {} : { display: "block", width: "100%" }),
             }
           : {}),
+        ...(isHighlighted
+          ? {
+              outline: "1px dashed #F44336",
+              outlineOffset: "1px",
+            }
+          : {
+              // Explicitly remove outline when not highlighted to prevent style persistence
+              outline: "none",
+            }),
       };
 
       return (
@@ -151,6 +176,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             ...cssStyles,
             display: "block", // NEW: no inline baseline gap
             maxWidth: "100%", // safe guard
+            ...(isHighlighted
+              ? {
+                  outline: "1px dashed #F44336",
+                  outlineOffset: "1px",
+                }
+              : {
+                  // Explicitly remove outline when not highlighted to prevent style persistence
+                  outline: "none",
+                }),
           }}
         />
       );
@@ -191,6 +225,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             ...(mappedTextAlign ? { textAlign: mappedTextAlign } : {}),
             border: "none",
             cursor: "default",
+            ...(isHighlighted
+              ? {
+                  outline: "1px dashed #F44336",
+                  outlineOffset: "1px",
+                }
+              : {
+                  // Explicitly remove outline when not highlighted to prevent style persistence
+                  outline: "none",
+                }),
           }}
         >
           {textContent}
@@ -213,6 +256,11 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             ...cssStyles,
             display: "block", // NEW: no inline baseline gap
             maxWidth: "100%", // safe guard
+            ...(isHighlighted && {
+              outline: "3px solid #4F46E5",
+              outlineOffset: "2px",
+              boxShadow: "0 0 0 2px rgba(79, 70, 229, 0.2)",
+            }),
           }}
         />
       );
@@ -245,6 +293,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
               position: "relative", // stable stacking context
             }
           : {}),
+        ...(isHighlighted
+          ? {
+              outline: "1px dashed #F44336",
+              outlineOffset: "1px",
+            }
+          : {
+              // Explicitly remove outline when not highlighted to prevent style persistence
+              outline: "none",
+            }),
       } as React.CSSProperties;
 
       return (
@@ -352,6 +409,8 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
       const tooltipProps = (template.props || {}) as Record<string, any>;
       const tooltipStyles = template.styles || {};
+      const tooltipTestID = tooltipProps.testID as string | undefined;
+      const isTooltipHighlighted = tooltipTestID && selectedTestID === tooltipTestID;
 
       // Convert styles to CSS
       const cssStyles: Record<string, string | number> = {};
@@ -522,6 +581,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             display: "flex",
             ...getTooltipContainerStyles(),
             pointerEvents: "none",
+            bgcolor: "rgba(0,0,0,0.45)",
           }}
         >
           <Box
@@ -531,6 +591,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
               flexDirection: "column",
               position: "relative",
               overflow: "visible",
+              ...(isTooltipHighlighted
+                ? {
+                    outline: "1px dashed #F44336",
+                    outlineOffset: "1px",
+                  }
+                : {
+                    // Explicitly remove outline when not highlighted to prevent style persistence
+                    outline: "none",
+                  }),
             }}
           >
             {title && (

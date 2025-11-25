@@ -19,13 +19,14 @@ import {
   Path,
 } from "react-hook-form";
 import { CreateJourneyFormData, NudgeType } from "../types/journeyTypes";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import TemplateTab from "./content/TemplateTab";
 import ContentTab from "./content/ContentTab";
 import LocationTab from "./content/LocationTab";
 import PreviewPanel from "./content/PreviewPanel";
 import { engagementSidePanelStyles } from "../styles/engagementSidePanelStyles";
 import { validateTemplate } from "../utils/validation";
+import { ElementLocatorProvider } from "../contexts/ElementLocatorContext";
 
 interface EngagementSidePanelProps {
   open: boolean;
@@ -59,18 +60,18 @@ export default function EngagementSidePanel({
   // Helper to get nested error from errors object
   const getNestedError = (path: string) => {
     const pathParts = path.split(".");
-    let current: any = errors;
+    let current: Record<string, unknown> | unknown = errors;
     for (const part of pathParts) {
-      if (current && typeof current === "object") {
+      if (current && typeof current === "object" && !Array.isArray(current)) {
         const index = parseInt(part, 10);
         if (!isNaN(index) && part === String(index)) {
           if (part in current) {
-            current = current[part];
+            current = (current as Record<string, unknown>)[part];
           } else {
             return undefined;
           }
         } else if (part in current) {
-          current = current[part];
+          current = (current as Record<string, unknown>)[part];
         } else {
           return undefined;
         }
@@ -107,12 +108,12 @@ export default function EngagementSidePanel({
       // Check template props (excluding targetScreen and targetId)
       const templatePropsPath = "nudgeSelection.actions.0.template.props";
       const propsErrors = getNestedError(templatePropsPath);
-      if (propsErrors && typeof propsErrors === "object") {
+      if (propsErrors && typeof propsErrors === "object" && !Array.isArray(propsErrors)) {
         for (const key in propsErrors) {
           if (
             key !== "targetScreen" &&
             key !== "targetId" &&
-            propsErrors[key]
+            (propsErrors as Record<string, unknown>)[key]
           ) {
             return true;
           }
@@ -186,12 +187,13 @@ export default function EngagementSidePanel({
           </IconButton>
         </Box>
 
-        <Box sx={engagementSidePanelStyles.content}>
-          <Box sx={engagementSidePanelStyles.previewSection}>
-            <PreviewPanel control={control} />
-          </Box>
+        <ElementLocatorProvider>
+          <Box sx={engagementSidePanelStyles.content}>
+            <Box sx={engagementSidePanelStyles.previewSection}>
+              <PreviewPanel control={control} />
+            </Box>
 
-          <Box sx={engagementSidePanelStyles.configSection}>
+            <Box sx={engagementSidePanelStyles.configSection}>
             <Tabs
               value={activeSubTab}
               onChange={(_, newValue) => setActiveSubTab(newValue)}
@@ -253,17 +255,18 @@ export default function EngagementSidePanel({
                 <LocationTab control={control} errors={errors} />
               )}
             </Box>
+            </Box>
           </Box>
-        </Box>
 
-        <Box sx={engagementSidePanelStyles.footer}>
-          <Button variant="outlined" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleSave}>
-            Save
-          </Button>
-        </Box>
+          <Box sx={engagementSidePanelStyles.footer}>
+            <Button variant="outlined" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleSave}>
+              Save
+            </Button>
+          </Box>
+        </ElementLocatorProvider>
       </Box>
     </Drawer>
   );

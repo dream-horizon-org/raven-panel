@@ -14,6 +14,7 @@ export interface ComponentDefinition {
     isRequired?: boolean;
     default?: string | number | boolean | null;
     acceptedValues?: string[];
+    display?: string;
   }>;
   styles?: string[];
   actions?: Array<{
