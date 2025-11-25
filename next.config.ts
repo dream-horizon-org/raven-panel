@@ -1,6 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
+    // Only use rewrites for local development
+    // In production, use direct API URLs via NEXT_PUBLIC_PRODUCTION_URL
+    const isProduction = process.env.NODE_ENV === "production";
+    const isUAT = process.env.NEXT_PUBLIC_ENV === "uat";
+
+    if (isProduction || isUAT) {
+      // In production/UAT, don't use rewrites - use direct API URLs
+      return [];
+    }
+
+    // Development rewrites to local/internal services
     return [
       {
         source: "/thunder/:path*",
