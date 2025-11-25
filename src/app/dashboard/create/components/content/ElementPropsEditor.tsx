@@ -136,7 +136,7 @@ export default function ElementPropsEditor({
           <TextField
             key={prop.name}
             size="small"
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
             value={displayValue}
             onChange={(e) => {
               // Update the DynamicTextValueType array with new value
@@ -159,7 +159,7 @@ export default function ElementPropsEditor({
           <TextField
             key={prop.name}
             size="small"
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
             value=""
             onChange={(e) => {
               const updatedArray: DynamicTextValueType = [
@@ -191,7 +191,7 @@ export default function ElementPropsEditor({
           <TextField
             key={prop.name}
             size="small"
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
             value={value}
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}
@@ -211,7 +211,7 @@ export default function ElementPropsEditor({
             key={prop.name}
             size="small"
             type="number"
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
             value={value}
             onChange={(e) =>
               onPropChange(prop.name, Number(e.target.value) || 0)
@@ -236,7 +236,7 @@ export default function ElementPropsEditor({
                 onChange={(e) => onPropChange(prop.name, e.target.checked)}
               />
             }
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
           />
         );
 
@@ -279,7 +279,7 @@ export default function ElementPropsEditor({
                 }}
                 gutterBottom
               >
-                {prop.name}
+                {prop.display ? prop.display : prop.name}
               </Typography>
               <ButtonGroup size="small">
                 {prop.acceptedValues?.map((val: string) => {
@@ -368,10 +368,10 @@ export default function ElementPropsEditor({
             size="small"
             sx={{ width: "auto", maxWidth: "300px" }}
           >
-            <InputLabel>{prop.name}</InputLabel>
+            <InputLabel>{prop.display ? prop.display : prop.name}</InputLabel>
             <Select
               value={value || prop.default || ""}
-              label={prop.name}
+              label={prop.display ? prop.display : prop.name}
               onChange={(e) => onPropChange(prop.name, e.target.value)}
             >
               {prop.acceptedValues?.map((val: string) => (
@@ -389,7 +389,7 @@ export default function ElementPropsEditor({
             key={prop.name}
             size="small"
             type="url"
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
             value={value}
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}
@@ -411,7 +411,7 @@ export default function ElementPropsEditor({
           >
             <TextField
               size="small"
-              label={prop.name}
+              label={prop.display ? prop.display : prop.name}
               value={value || ""}
               onChange={(e) => onPropChange(prop.name, e.target.value)}
               placeholder="#000000"
@@ -442,7 +442,7 @@ export default function ElementPropsEditor({
           <TextField
             key={prop.name}
             size="small"
-            label={prop.name}
+            label={prop.display ? prop.display : prop.name}
             value={value}
             onChange={(e) => onPropChange(prop.name, e.target.value)}
             required={prop.isRequired}

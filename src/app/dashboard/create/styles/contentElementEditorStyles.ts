@@ -11,7 +11,8 @@ export const contentElementEditorStyles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    p: 2,
+    px: 2,
+    py: 1,
     bgcolor: "background.default",
     borderBottom: 1,
     borderColor: "divider",
@@ -57,6 +58,12 @@ export const contentElementEditorStyles = {
   spacingSubLabel: {
     fontSize: "0.75rem",
     fontWeight: 500,
+    color: "text.secondary",
+    mb: 1,
+  },
+  contentLabel: {
+    fontSize: "0.75rem",
+    fontWeight: 700,
     color: "text.secondary",
     mb: 1,
   },

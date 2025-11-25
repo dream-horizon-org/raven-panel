@@ -3,17 +3,20 @@
 import {
   Box,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
+  Card,
+  CardContent,
+  Chip,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import BottomSheetIcon from "@mui/icons-material/ViewAgenda";
+import PopupIcon from "@mui/icons-material/OpenInNew";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PictureInPictureIcon from "@mui/icons-material/PictureInPicture";
+import HighlightIcon from "@mui/icons-material/Highlight";
 import {
   Control,
   FieldErrors,
-  Controller,
-  FieldValues,
   useFieldArray,
   useWatch,
   useFormContext,
@@ -21,6 +24,7 @@ import {
 import {
   CreateJourneyFormData,
   NudgeType,
+  NudgeSelectionTooltipMenu,
   ReactNativeJson,
 } from "../types/journeyTypes";
 import { engagementSelectorStyles } from "../styles/engagementSelectorStyles";
@@ -32,20 +36,47 @@ interface EngagementSelectorProps {
   onEngagementSelect: (type: NudgeType) => void;
 }
 
-const ENGAGEMENT_TYPES: { value: NudgeType; label: string }[] = [
-  { value: NudgeType.TOOLTIP, label: "Tooltip" },
-  { value: NudgeType.NUDGE_UI, label: "BottomSheet" },
-  { value: NudgeType.POPUP, label: "Popup" },
+const ENGAGEMENT_TYPES: {
+  value: NudgeType | string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  comingSoon?: boolean;
+}[] = [
+  {
+    value: NudgeType.TOOLTIP,
+    label: "Tooltip",
+    description: "Small contextual hints near UI elements",
+    icon: <InfoOutlinedIcon />,
+  },
+  {
+    value: NudgeType.NUDGE_UI,
+    label: "BottomSheet",
+    description: "Slide-up panel from bottom",
+    icon: <BottomSheetIcon />,
+  },
+  {
+    value: NudgeType.POPUP,
+    label: "Popup",
+    description: "Modal dialog in center of screen",
+    icon: <PopupIcon />,
+  },
+  {
+    value: "PICTURE_IN_PICTURE",
+    label: "Picture-in-Picture",
+    description: "Overlay video or content in corner",
+    icon: <PictureInPictureIcon />,
+    comingSoon: true,
+  },
+  {
+    value: "ELEMENT_SPOTLIGHT",
+    label: "Element Spotlight",
+    description: "Highlight and focus on specific elements",
+    icon: <HighlightIcon />,
+    comingSoon: true,
+  },
 ];
 
-const getEngagementLabel = (type: NudgeType): string => {
-  const typeMap: Record<NudgeType, string> = {
-    [NudgeType.TOOLTIP]: "Tooltip",
-    [NudgeType.NUDGE_UI]: "BottomSheet",
-    [NudgeType.POPUP]: "Popup",
-  };
-  return typeMap[type] || type;
-};
 
 export default function EngagementSelector({
   control,
@@ -53,7 +84,7 @@ export default function EngagementSelector({
   onEngagementSelect,
 }: EngagementSelectorProps) {
   const { setValue } = useFormContext<CreateJourneyFormData>();
-  const { fields, append, replace } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control,
     name: "nudgeSelection.actions",
   });
@@ -88,7 +119,10 @@ export default function EngagementSelector({
           const defaultVariant = "basic-tooltip";
           const freshTemplate = generateTemplate(newType, defaultVariant);
           setValue("nudgeSelection.actions.0.template", freshTemplate);
-          setValue("nudgeSelection.actions.0.variant", defaultVariant as any);
+          setValue(
+            "nudgeSelection.actions.0.variant",
+            defaultVariant as unknown as NudgeSelectionTooltipMenu
+          );
           setValue("nudgeSelection.actions.0.isNudgeValid", true);
         } else {
           // For other types, create empty template
@@ -120,7 +154,7 @@ export default function EngagementSelector({
           actionId: "",
           type: newType,
           template: freshTemplate,
-          variant: defaultVariant as any,
+          variant: defaultVariant as unknown as NudgeSelectionTooltipMenu,
           isNudgeValid: true,
         });
       } else {
@@ -148,104 +182,213 @@ export default function EngagementSelector({
     onEngagementSelect(newType);
   };
 
-  const handleSelectedEngagementClick = () => {
-    if (selectedType) {
-      onEngagementSelect(selectedType);
+  const handleCardClick = (type: NudgeType | string) => {
+    // Don't handle clicks for coming soon types
+    if (type === "PICTURE_IN_PICTURE" || type === "ELEMENT_SPOTLIGHT") {
+      return;
+    }
+    
+    const nudgeType = type as NudgeType;
+    if (selectedType === nudgeType && hasTemplateData) {
+      // If already selected and has data, open editor
+      onEngagementSelect(nudgeType);
+    } else {
+      // Select new engagement type
+      handleTypeChange(nudgeType);
     }
   };
 
-  // If engagement is selected and has template data, show as button with dropdown option
-  if (selectedType && hasTemplateData) {
-    return (
-      <Box sx={engagementSelectorStyles.container}>
-        <Typography sx={engagementSelectorStyles.title}>
-          Selected Engagement
-        </Typography>
-        <Typography sx={engagementSelectorStyles.subtitle}>
-          Click to view or edit the configured engagement
-        </Typography>
-        <Box sx={{ mt: 3, maxWidth: 400, display: "flex", gap: 2 }}>
-          <Button
-            variant="outlined"
-            fullWidth
-            sx={{ textTransform: "none" }}
-            onClick={handleSelectedEngagementClick}
-          >
-            Selected Engagement: {getEngagementLabel(selectedType)}
-          </Button>
-          <Controller
-            name="nudgeSelection.actions.0.type"
-            control={control}
-            render={({ field }: { field: FieldValues }) => (
-              <FormControl sx={{ minWidth: 150 }}>
-                <InputLabel>Change Type</InputLabel>
-                <Select
-                  value={field.value || ""}
-                  label="Change Type"
-                  onChange={(e) => {
-                    const newType = e.target.value as NudgeType;
-                    handleTypeChange(newType);
-                  }}
-                >
-                  {ENGAGEMENT_TYPES.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      {type.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          />
-        </Box>
-      </Box>
-    );
-  }
-
-  // Show dropdown if no engagement selected or no template data
   return (
     <Box sx={engagementSelectorStyles.container}>
       <Typography sx={engagementSelectorStyles.title}>
-        Select Engagement Type
+          Select Engagement
       </Typography>
-      <Typography sx={engagementSelectorStyles.subtitle}>
-        Choose the type of engagement you want to configure
-      </Typography>
-      <Controller
-        name={
-          currentAction
-            ? `nudgeSelection.actions.0.type`
-            : "nudgeSelection.actions"
-        }
-        control={control}
-        render={({ field }: { field: FieldValues }) => (
-          <FormControl fullWidth sx={{ mt: 3, maxWidth: 400 }}>
-            <InputLabel>Engagement Type</InputLabel>
-            <Select
-              value={currentAction ? field.value : ""}
-              label="Engagement Type"
-              onChange={(e) => {
-                const selectedType = e.target.value as NudgeType;
-                handleTypeChange(selectedType);
+      <Box
+        sx={{
+          mt: 4,
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(4, 1fr)",
+          },
+          gap: 5,
+        }}
+      >
+        {ENGAGEMENT_TYPES.map((engagementType) => {
+          const isSelected = selectedType === engagementType.value;
+          const isSelectedWithData = isSelected && hasTemplateData;
+          const isComingSoon = engagementType.comingSoon;
+
+          return (
+            <Card
+              key={engagementType.value}
+              onClick={() => {
+                if (!isComingSoon) {
+                  handleCardClick(engagementType.value as NudgeType);
+                }
+              }}
+              sx={{
+                cursor: isComingSoon ? "default" : "pointer",
+                position: "relative",
+                border: 1.5,
+                borderColor: isSelected ? "primary.main" : "divider",
+                borderRadius: 2,
+                bgcolor: isSelected
+                  ? "action.selected"
+                  : "background.paper",
+                transition: "all 0.2s ease-in-out",
+                overflow: "visible",
+                "&:hover": {
+                  transform: isComingSoon ? "none" : "translateY(-2px)",
+                  boxShadow: isComingSoon ? 2 : 3,
+                  borderColor: isSelected ? "primary.main" : "primary.light",
+                },
+                ...(isSelected && {
+                  boxShadow: 2,
+                }),
               }}
             >
-              {ENGAGEMENT_TYPES.map((type) => (
-                <MenuItem key={type.value} value={type.value}>
-                  {type.label}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.nudgeSelection?.actions?.[0]?.type && (
-              <Typography
-                variant="caption"
-                color="error"
-                sx={{ mt: 0.5, ml: 1.5 }}
+              {isSelected && !isComingSoon && (
+                <Chip
+                  icon={<CheckCircleIcon sx={{ fontSize: "0.875rem !important" }} />}
+                  label="Selected"
+                  color="primary"
+                  size="small"
+                  sx={{
+                    position: "absolute",
+                    top: -8,
+                    right: 12,
+                    fontWeight: 600,
+                    fontSize: "0.688rem",
+                    height: "20px",
+                    "& .MuiChip-label": {
+                      px: 1,
+                    },
+                  }}
+                />
+              )}
+              {isComingSoon && (
+                <Chip
+                  label="Coming Soon"
+                  size="small"
+                  sx={{
+                    position: "absolute",
+                    top: -8,
+                    right: 12,
+                    fontWeight: 700,
+                    fontSize: "0.688rem",
+                    height: "22px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
+                    animation: "pulse 2s ease-in-out infinite",
+                    "@keyframes pulse": {
+                      "0%, 100%": {
+                        boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
+                        transform: "scale(1)",
+                      },
+                      "50%": {
+                        boxShadow: "0 4px 20px rgba(102, 126, 234, 0.6)",
+                        transform: "scale(1.05)",
+                      },
+                    },
+                    "& .MuiChip-label": {
+                      px: 1.5,
+                      fontWeight: 700,
+                      letterSpacing: "0.5px",
+                    },
+                  }}
+                />
+              )}
+              <CardContent
+                sx={{
+                  p: 2,
+                  "&:last-child": { pb: 2 },
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  gap: 2,
+                }}
               >
-                {errors.nudgeSelection.actions[0].type.message}
-              </Typography>
-            )}
-          </FormControl>
-        )}
-      />
+                <Box
+                  sx={{
+                    color: isSelected ? "primary.main" : "text.secondary",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    bgcolor: isSelected ? "primary.light" : "action.hover",
+                    transition: "all 0.2s ease-in-out",
+                    "& svg": {
+                      fontSize: "1.5rem",
+                    },
+                  }}
+                >
+                  {engagementType.icon}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: 600,
+                      color: isSelected ? "primary.main" : "text.primary",
+                      fontSize: "0.938rem",
+                      mb: 0.5,
+                    }}
+                  >
+                    {engagementType.label}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.75rem",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {engagementType.description}
+                  </Typography>
+                </Box>
+                {isSelectedWithData && !isComingSoon && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 500,
+                      fontSize: "0.75rem",
+                      py: 0.5,
+                      px: 1.5,
+                      minWidth: "auto",
+                      alignSelf: "center",
+                      ml: "auto",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEngagementSelect(engagementType.value as NudgeType);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Box>
+
+      {errors.nudgeSelection?.actions?.[0]?.type && (
+        <Typography
+          variant="caption"
+          color="error"
+          sx={{ mt: 3, display: "block" }}
+        >
+          {errors.nudgeSelection.actions[0].type.message}
+        </Typography>
+      )}
     </Box>
   );
 }
