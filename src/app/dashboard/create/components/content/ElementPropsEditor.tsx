@@ -276,7 +276,6 @@ export default function ElementPropsEditor({
                   fontSize: "0.75rem",
                   color: "text.secondary",
                   mb: 1,
-                  backgroundColor: "red",
                 }}
                 gutterBottom
               >

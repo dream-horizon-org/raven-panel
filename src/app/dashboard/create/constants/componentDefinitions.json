@@ -407,7 +407,7 @@
         {
           "name": "autoDismissMs",
           "type": "number",
-          "display": "Auto Dismiss Ms"
+          "display": "Auto Dismiss (ms)"
         },
         {
           "name": "targetScreen",
