@@ -23,6 +23,9 @@ import {
 } from "../../utils/componentDefinitions";
 import ElementPropsEditor from "./ElementPropsEditor";
 import ElementStylesEditor from "./ElementStylesEditor";
+import { useElementLocator } from "../../contexts/ElementLocatorContext";
+import { IconButton, Tooltip } from "@mui/material";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 interface ContentTabProps {
   control: Control<CreateJourneyFormData>;
@@ -38,6 +41,7 @@ const ELEMENT_TYPES = [
 
 export default function ContentTab({ control, errors }: ContentTabProps) {
   const { setValue } = useFormContext<CreateJourneyFormData>();
+  const { setSelectedTestID } = useElementLocator();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -219,13 +223,34 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
         }
       : undefined;
 
+    const tooltipTestID = (template.props as Record<string, unknown>)?.testID as string | undefined;
+
+    const handleTooltipLocatorClick = () => {
+      if (tooltipTestID) {
+        // Just set the element to highlight (will auto-dismiss after 3 seconds)
+        setSelectedTestID(tooltipTestID);
+      }
+    };
+
     return (
       <Box sx={contentTabStyles.container}>
         <Box sx={contentTabStyles.header}>
           <Box>
-            <Typography sx={contentTabStyles.title}>
-              Tooltip Properties
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography sx={contentTabStyles.title}>
+                Tooltip Properties
+              </Typography>
+              {tooltipTestID && (
+                <Tooltip title="Locate tooltip in preview">
+                  <IconButton
+                    size="small"
+                    onClick={handleTooltipLocatorClick}
+                  >
+                    <LocationOnIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
             <Typography sx={contentTabStyles.subtitle}>
               Configure the props and styles for your tooltip
             </Typography>
