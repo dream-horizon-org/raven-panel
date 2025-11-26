@@ -13,7 +13,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTheme } from "@mui/material/styles";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cohortSectionStyles } from "../styles/cohortSectionStyles";
 import { CreateJourneyFormData } from "../types/journeyTypes";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
@@ -29,11 +29,57 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
   const { data: cohortsData, isLoading: isLoadingCohorts } = useCohortsList();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const cohortOptions =
-    cohortsData?.data?.map((cohortName) => ({
+  // Debug: Log the response structure to understand the API format
+  useEffect(() => {
+    if (cohortsData) {
+      console.log("Cohorts API Response:", cohortsData);
+      console.log("Cohorts Data Type:", typeof cohortsData);
+      console.log("Cohorts Data.data:", cohortsData.data);
+      console.log("Is Array:", Array.isArray(cohortsData.data));
+    }
+  }, [cohortsData]);
+
+  // Safely extract cohorts array from response
+  // Handle different possible response structures
+  const cohortOptions = useMemo(() => {
+    if (!cohortsData) return [];
+
+    let cohortsArray: string[] = [];
+
+    // If data is directly an array
+    if (Array.isArray(cohortsData.data)) {
+      cohortsArray = cohortsData.data;
+    }
+    // If data is an object with an array property
+    else if (cohortsData.data && typeof cohortsData.data === "object") {
+      // Check for common array property names
+      if (Array.isArray((cohortsData.data as any).items)) {
+        cohortsArray = (cohortsData.data as any).items;
+      } else if (Array.isArray((cohortsData.data as any).cohorts)) {
+        cohortsArray = (cohortsData.data as any).cohorts;
+      } else if (Array.isArray((cohortsData.data as any).data)) {
+        cohortsArray = (cohortsData.data as any).data;
+      }
+    }
+    // If cohortsData itself is an array
+    else if (Array.isArray(cohortsData)) {
+      cohortsArray = cohortsData;
+    }
+    // If response has a different structure, try to find array values
+    else if (typeof cohortsData === "object") {
+      const values = Object.values(cohortsData);
+      const arrayValue = values.find((v) => Array.isArray(v));
+      if (arrayValue) {
+        cohortsArray = arrayValue as string[];
+      }
+    }
+
+    // Map to options format
+    return cohortsArray.map((cohortName) => ({
       value: cohortName,
       label: cohortName,
-    })) || [];
+    }));
+  }, [cohortsData]);
 
   const filteredCohorts = useMemo(() => {
     if (!searchTerm) {
