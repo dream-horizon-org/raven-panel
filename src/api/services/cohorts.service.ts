@@ -6,12 +6,7 @@ export const getCohortsList = async (
   userId: string = "94056928"
 ): Promise<CohortsResponse> => {
   const response = await axiosInstance.get<CohortsResponse>(
-    API_ENDPOINTS.COHORTS_REALTIME,
-    {
-      params: {
-        userId,
-      },
-    }
+    API_ENDPOINTS.COHORTS_REALTIME
   );
   return response.data;
 };
