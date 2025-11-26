@@ -30,6 +30,16 @@ export default function JourneyListingPage() {
 
   useEffect(() => setPageNumber(0), [searchTerm, status]);
 
+  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+
+  console.log(
+    "env::: inside JourneyListingPage ",
+    env,
+    process.env.NEXT_PUBLIC_PRODUCTION_URL,
+    process.env.NEXT_PUBLIC_UAT_URL,
+    process.env.NEXT_PUBLIC_ENV,
+    process.env.NODE_ENV
+  );
   const {
     data: journeys,
     isLoading,
