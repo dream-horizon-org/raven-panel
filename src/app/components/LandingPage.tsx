@@ -9,15 +9,13 @@ import {
   CardContent,
   Avatar,
 } from "@mui/material";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import TuneIcon from "@mui/icons-material/Tune";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import {
-  APP_NAME,
-  BUTTON_TEXT,
-  FOOTER_TEXT,
-  PAGE_TITLES,
-} from "@/config/constants";
+import { APP_NAME, BUTTON_TEXT, FOOTER_TEXT } from "@/config/constants";
 import { landingPageStyles } from "./styles/landingPageStyles";
 import { useAuth } from "@/app/Auth/hooks/useAuth";
 
@@ -68,15 +66,18 @@ export default function LandingPage() {
       title: "Journey Management",
       description:
         "Create and manage customer engagement journeys with powerful triggers, filters, and scheduling",
+      icon: TimelineIcon,
     },
     {
       title: "Real-time Engagement",
       description:
         "Deliver personalized in-app experiences that engage users at the right moment",
+      icon: NotificationsActiveIcon,
     },
     {
       title: "Advanced Targeting",
       description: "Target users with precision using cohorts",
+      icon: TuneIcon,
     },
   ];
 
@@ -168,29 +169,59 @@ export default function LandingPage() {
                 xs: "1fr",
                 md: "repeat(3, 1fr)",
               },
-              gap: 4,
-              mt: 4,
+              gap: 3,
+              mt: 2,
             }}
           >
-            {features.map((feature, index) => (
-              <Card key={index} sx={landingPageStyles.featureCard(theme)}>
-                <CardContent>
-                  <Typography
-                    variant="h5"
-                    component="h3"
-                    sx={landingPageStyles.featureTitle(theme)}
-                  >
-                    {feature.title}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={landingPageStyles.featureDescription(theme)}
-                  >
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
+            {features.map((feature, index) => {
+              const IconComponent = feature.icon;
+              return (
+                <Card key={index} sx={landingPageStyles.featureCard(theme)}>
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 1.5,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: "50%",
+                          bgcolor: theme.palette.primary.main,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          mr: 2,
+                        }}
+                      >
+                        <IconComponent
+                          sx={{
+                            fontSize: "2rem",
+                            color: "#ffffff",
+                          }}
+                        />
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        component="h3"
+                        sx={landingPageStyles.featureTitle(theme)}
+                      >
+                        {feature.title}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body1"
+                      sx={landingPageStyles.featureDescription(theme)}
+                    >
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </Box>
         </Container>
       </Box>

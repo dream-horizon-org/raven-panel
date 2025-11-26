@@ -63,7 +63,7 @@ export const cohortSectionStyles = {
     }),
   },
   fieldLabel: (theme: Theme): SxProps<Theme> => ({
-    fontSize: "0.875rem",
+    fontSize: "16px",
     fontWeight: 600,
     color: "text.primary",
     bgcolor:
@@ -80,7 +80,7 @@ export const cohortSectionStyles = {
     cursor: "help",
   },
   fieldSubtext: {
-    fontSize: "0.75rem",
+    fontSize: "14px",
     color: "text.secondary",
     ml: 4.25,
   },

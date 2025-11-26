@@ -89,7 +89,7 @@ export const landingPageStyles = {
     display: "flex",
     justifyContent: "center",
     gap: 2,
-    mt: 2,
+    mt: 1,
   },
 
   ctaButton: (theme: Theme): SxProps => ({
@@ -118,13 +118,13 @@ export const landingPageStyles = {
   }),
 
   featuresSection: (theme: Theme): SxProps => ({
-    py: { xs: 8, md: 12 },
+    py: { xs: 6, md: 8 },
     backgroundColor: theme.palette.mode === "dark" ? "#0a0a0a" : "#1a1a2e",
   }),
 
   sectionTitle: (theme: Theme): SxProps => ({
     textAlign: "center",
-    mb: 6,
+    mb: 3,
     fontWeight: 700,
     color: "#ffffff",
   }),

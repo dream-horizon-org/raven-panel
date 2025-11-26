@@ -49,7 +49,8 @@ export const JOURNEY_TEXT = {
     },
     EVENT_TRIGGER: {
       TITLE: "Trigger",
-      TOOLTIP: "Event triggered journeys will start when a specific event occurs",
+      TOOLTIP:
+        "Event triggered journeys will start when a specific event occurs",
       DESCRIPTION: "Select the event that will trigger this journey",
       LABEL: "Event",
     },

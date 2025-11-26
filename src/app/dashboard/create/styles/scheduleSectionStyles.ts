@@ -37,7 +37,7 @@ export const scheduleSectionStyles = {
     color: "text.primary",
   },
   fieldLabel: (theme: Theme): SxProps<Theme> => ({
-    fontSize: "0.875rem",
+    fontSize: "16px",
     fontWeight: 600,
     color: "text.primary",
     bgcolor:
@@ -49,7 +49,7 @@ export const scheduleSectionStyles = {
     borderRadius: "4px",
   }),
   fieldSubtext: {
-    fontSize: "0.75rem",
+    fontSize: "14px",
     color: "text.secondary",
     ml: 0,
   },
