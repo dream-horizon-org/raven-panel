@@ -5,10 +5,10 @@ const getBaseUrl = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
 
   if (env === "production") {
-    return process.env.NEXT_PUBLIC_PRODUCTION_URL;
+    return "https://kong.dream11.local/thunder";
   }
   if (env === "uat") {
-    return process.env.NEXT_PUBLIC_UAT_URL;
+    return "https://kong-uat.dream11.local/thunder";
   }
   console.log(
     "env::: ",
@@ -16,7 +16,7 @@ const getBaseUrl = () => {
     process.env.NEXT_PUBLIC_PRODUCTION_URL,
     process.env.NEXT_PUBLIC_UAT_URL
   );
-  return process.env.NEXT_PUBLIC_PRODUCTION_URL;
+  return "https://kong.dream11.local/thunder";
 };
 
 export const API_BASE_URLS = {
