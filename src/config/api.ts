@@ -16,7 +16,7 @@ const getBaseUrl = () => {
     process.env.NEXT_PUBLIC_PRODUCTION_URL,
     process.env.NEXT_PUBLIC_UAT_URL
   );
-  return "/thunder";
+  return process.env.NEXT_PUBLIC_PRODUCTION_URL;
 };
 
 export const API_BASE_URLS = {
