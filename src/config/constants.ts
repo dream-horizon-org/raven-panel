@@ -1,5 +1,5 @@
 // App-wide constants
-export const APP_NAME = "Raven Panel";
+export const APP_NAME = "Raven";
 export const FOOTER_TEXT = `© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.`;
 
 // Page titles

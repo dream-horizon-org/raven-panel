@@ -12,6 +12,7 @@ interface JourneyActionsProps {
   isSubmitting?: boolean;
   isEditMode?: boolean;
   isTemplateValid?: boolean;
+  hasTemplate?: boolean;
 }
 
 export default function JourneyActions({
@@ -20,6 +21,7 @@ export default function JourneyActions({
   isSubmitting = false,
   isEditMode = false,
   isTemplateValid = false,
+  hasTemplate = false,
 }: JourneyActionsProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -33,7 +35,7 @@ export default function JourneyActions({
       >
         {JOURNEY_TEXT.ACTIONS.CANCEL}
       </Button>
-      {activeTab === "setup" ? (
+      {activeTab === "ui" ? (
         <Button
           type="button"
           onClick={(e) => {
@@ -44,6 +46,7 @@ export default function JourneyActions({
           variant="contained"
           sx={journeyActionsStyles.submitButton(theme)}
           size="large"
+          disabled={!hasTemplate}
         >
           {JOURNEY_TEXT.ACTIONS.NEXT}
         </Button>

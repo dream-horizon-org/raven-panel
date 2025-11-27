@@ -38,7 +38,7 @@ export const journeyFrequencySectionStyles = {
     color: "text.primary",
   },
   fieldLabel: (theme: Theme): SxProps<Theme> => ({
-    fontSize: "0.875rem",
+    fontSize: "16px",
     fontWeight: 600,
     color: "text.primary",
     bgcolor:
@@ -76,7 +76,7 @@ export const journeyFrequencySectionStyles = {
     flexWrap: "wrap",
   },
   labelText: {
-    fontSize: "0.875rem",
+    fontSize: "14px",
     color: "text.primary",
     whiteSpace: "nowrap",
   },
