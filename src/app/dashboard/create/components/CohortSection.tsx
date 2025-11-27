@@ -6,7 +6,6 @@ import {
   Tooltip,
   TextField,
   Autocomplete,
-  Select,
 } from "@mui/material";
 import GroupsIcon from "@mui/icons-material/Groups";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
@@ -18,6 +17,21 @@ import { cohortSectionStyles } from "../styles/cohortSectionStyles";
 import { CreateJourneyFormData } from "../types/journeyTypes";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 import { useCohortsList } from "@/hooks/useCohortsList";
+
+interface CohortRecord {
+  id: number;
+  name: string;
+  description?: string;
+  lastBatchExecutionTime?: number;
+  userCount?: number;
+  cohortType: string;
+  verified: boolean;
+}
+
+interface CohortOption {
+  value: string;
+  label: string;
+}
 
 interface CohortSectionProps {
   control: Control<CreateJourneyFormData>;
@@ -41,10 +55,10 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
 
   // Safely extract cohorts array from response
   // Handle different possible response structures
-  const cohortOptions = useMemo(() => {
+  const cohortOptions = useMemo((): CohortOption[] => {
     if (!cohortsData) return [];
 
-    let cohortsArray: string[] = [];
+    let cohortsArray: (string | CohortRecord)[] = [];
 
     // If data is directly an array
     if (Array.isArray(cohortsData.data)) {
@@ -52,13 +66,19 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
     }
     // If data is an object with an array property
     else if (cohortsData.data && typeof cohortsData.data === "object") {
-      // Check for common array property names
-      if (Array.isArray((cohortsData.data as any).items)) {
-        cohortsArray = (cohortsData.data as any).items;
-      } else if (Array.isArray((cohortsData.data as any).cohorts)) {
-        cohortsArray = (cohortsData.data as any).cohorts;
-      } else if (Array.isArray((cohortsData.data as any).data)) {
-        cohortsArray = (cohortsData.data as any).data;
+      const dataObj = cohortsData.data as Record<string, unknown>;
+
+      // Check for records array (API structure: data.records)
+      if (Array.isArray(dataObj.records)) {
+        cohortsArray = dataObj.records as CohortRecord[];
+      }
+      // Check for other common array property names
+      else if (Array.isArray(dataObj.items)) {
+        cohortsArray = dataObj.items as (string | CohortRecord)[];
+      } else if (Array.isArray(dataObj.cohorts)) {
+        cohortsArray = dataObj.cohorts as (string | CohortRecord)[];
+      } else if (Array.isArray(dataObj.data)) {
+        cohortsArray = dataObj.data as (string | CohortRecord)[];
       }
     }
     // If cohortsData itself is an array
@@ -70,15 +90,38 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
       const values = Object.values(cohortsData);
       const arrayValue = values.find((v) => Array.isArray(v));
       if (arrayValue) {
-        cohortsArray = arrayValue as string[];
+        cohortsArray = arrayValue as (string | CohortRecord)[];
       }
     }
 
     // Map to options format
-    return cohortsArray.map((cohortName) => ({
-      value: cohortName,
-      label: cohortName,
-    }));
+    // Handle both string arrays and object arrays (with name property)
+    return cohortsArray.map(
+      (cohort): CohortOption => {
+        // If cohort is a string, use it directly
+        if (typeof cohort === "string") {
+          return {
+            value: cohort,
+            label: cohort,
+          };
+        }
+        // If cohort is an object, extract the name property
+        else if (cohort && typeof cohort === "object" && "name" in cohort) {
+          const cohortRecord = cohort as CohortRecord;
+          return {
+            value: cohortRecord.name,
+            label: cohortRecord.name,
+          };
+        }
+        // Fallback: try to convert to string
+        else {
+          return {
+            value: String(cohort),
+            label: String(cohort),
+          };
+        }
+      }
+    );
   }, [cohortsData]);
 
   const filteredCohorts = useMemo(() => {
