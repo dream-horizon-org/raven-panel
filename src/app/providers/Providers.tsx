@@ -8,7 +8,7 @@ import { ThemeProvider } from "./ThemeProvider";
 import { ThemeModeProvider } from "./ThemeModeProvider";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-
+console.log("GOOGLE_CLIENT_ID", GOOGLE_CLIENT_ID);
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>

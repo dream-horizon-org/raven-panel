@@ -381,7 +381,7 @@ export default function CreateJourneyPage({
       setIsSubmitting(false);
     }
   };
-  const [activeTab, setActiveTab] = useState<"setup" | "ui">("setup");
+  const [activeTab, setActiveTab] = useState<"setup" | "ui">("ui");
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
   // Watch template to check validation
@@ -389,6 +389,19 @@ export default function CreateJourneyPage({
     control,
     name: "nudgeSelection.actions.0.template",
   });
+
+  const watchedActions = useWatch({
+    control,
+    name: "nudgeSelection.actions",
+  });
+
+  const hasTemplate = useMemo(() => {
+    return (
+      watchedActions &&
+      watchedActions.length > 0 &&
+      watchedActions.some((action) => action.template)
+    );
+  }, [watchedActions]);
 
   // State to force re-validation check when template is saved
   const [validationKey, setValidationKey] = useState(0);
@@ -426,7 +439,22 @@ export default function CreateJourneyPage({
   };
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
-    if (activeTab === "setup" && newTab === "ui") {
+    if (activeTab === "ui" && newTab === "setup") {
+      // Check if a template is selected
+      const currentData = getValues();
+      const hasTemplate =
+        currentData.nudgeSelection?.actions &&
+        currentData.nudgeSelection.actions.length > 0 &&
+        currentData.nudgeSelection.actions.some((action) => action.template);
+
+      if (!hasTemplate) {
+        toast.error(
+          "Please select and configure an engagement template before proceeding."
+        );
+        return;
+      }
+
+      // Validate UI tab fields before going to setup
       const isValid = await trigger([
         "ctaMetadata.ctaTitle",
         "ruleEngine.currentDropdownSelectedEvent",
@@ -439,7 +467,21 @@ export default function CreateJourneyPage({
     }
   };
   const handleNext = () => {
-    setActiveTab("ui");
+    // Check if a template is selected
+    const currentData = getValues();
+    const hasTemplate =
+      currentData.nudgeSelection?.actions &&
+      currentData.nudgeSelection.actions.length > 0 &&
+      currentData.nudgeSelection.actions.some((action) => action.template);
+
+    if (!hasTemplate) {
+      toast.error(
+        "Please select and configure an engagement template before proceeding."
+      );
+      return;
+    }
+
+    setActiveTab("setup");
   };
   const isLoading =
     (!eventsData && isFetchingEvents) ||
@@ -524,6 +566,15 @@ export default function CreateJourneyPage({
           <Box sx={createJourneyPageStyles.contentArea}>
             <JourneyTabs activeTab={activeTab} onTabChange={handleTabChange} />
             <form onSubmit={handleSubmit(onFormSubmit)}>
+              {activeTab === "ui" && (
+                <Box sx={createJourneyPageStyles.formContent}>
+                  <EngagementSelector
+                    control={control}
+                    errors={errors}
+                    onEngagementSelect={() => setSidePanelOpen(true)}
+                  />
+                </Box>
+              )}
               {activeTab === "setup" && (
                 <Box sx={createJourneyPageStyles.formContent}>
                   <CohortSection control={control} errors={errors} />
@@ -544,15 +595,7 @@ export default function CreateJourneyPage({
                   <JourneyFrequencySection control={control} errors={errors} />
                 </Box>
               )}
-              {activeTab === "ui" && (
-                <Box sx={createJourneyPageStyles.formContent}>
-                  <EngagementSelector
-                    control={control}
-                    errors={errors}
-                    onEngagementSelect={() => setSidePanelOpen(true)}
-                  />
-                </Box>
-              )}
+
               <EngagementSidePanel
                 open={sidePanelOpen}
                 onClose={() => setSidePanelOpen(false)}
@@ -566,6 +609,7 @@ export default function CreateJourneyPage({
                 isSubmitting={isSubmitting}
                 isEditMode={!!journeyId && !isCloneMode}
                 isTemplateValid={isTemplateValid}
+                hasTemplate={hasTemplate}
               />
             </form>
           </Box>
