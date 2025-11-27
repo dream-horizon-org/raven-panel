@@ -1,7 +1,3 @@
-import {
-  NudgeType,
-  ReactNativeJson,
-} from "@/app/dashboard/create/types/journeyTypes";
 import { RuleInput } from "./createJourney.interface";
 
 export interface UpdateCtaInput {
