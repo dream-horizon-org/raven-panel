@@ -5,6 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
 import { journeyActionsStyles } from "../styles/journeyActionsStyles";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
+import { usePermissions } from "@/app/providers/PermissionProvider";
 
 interface JourneyActionsProps {
   activeTab: "setup" | "ui";
@@ -25,6 +26,7 @@ export default function JourneyActions({
 }: JourneyActionsProps) {
   const theme = useTheme();
   const router = useRouter();
+  const { hasEditAccess } = usePermissions();
 
   return (
     <Box sx={journeyActionsStyles.actions}>
@@ -56,7 +58,7 @@ export default function JourneyActions({
           variant="contained"
           sx={journeyActionsStyles.submitButton(theme)}
           size="large"
-          disabled={isSubmitting || !isTemplateValid}
+          disabled={isSubmitting || !isTemplateValid || !hasEditAccess}
         >
           {isSubmitting
             ? isEditMode

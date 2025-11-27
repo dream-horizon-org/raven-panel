@@ -15,6 +15,7 @@ import { Control, FieldErrors } from "react-hook-form";
 import { CreateJourneyFormData } from "../types/journeyTypes";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 import { scheduleSectionStyles } from "../styles/scheduleSectionStyles";
+import { usePermissions } from "@/app/providers/PermissionProvider";
 
 interface ScheduleSectionProps {
   control: Control<CreateJourneyFormData>;
@@ -23,6 +24,7 @@ interface ScheduleSectionProps {
 
 export default function ScheduleSection({ control }: ScheduleSectionProps) {
   const theme = useTheme();
+  const { hasPublishAccess } = usePermissions();
 
   const getTimezone = () => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -64,6 +66,7 @@ export default function ScheduleSection({ control }: ScheduleSectionProps) {
                   label={
                     JOURNEY_TEXT.SECTIONS.SCHEDULE.START_DATE_TIME.IMMEDIATE
                   }
+                  disabled={!hasPublishAccess}
                 />
                 <FormControlLabel
                   value="scheduled"
@@ -71,6 +74,7 @@ export default function ScheduleSection({ control }: ScheduleSectionProps) {
                   label={
                     JOURNEY_TEXT.SECTIONS.SCHEDULE.START_DATE_TIME.SCHEDULED
                   }
+                  disabled={!hasPublishAccess}
                 />
               </RadioGroup>
             )}
@@ -97,6 +101,7 @@ export default function ScheduleSection({ control }: ScheduleSectionProps) {
                           size="small"
                           sx={scheduleSectionStyles.dateField}
                           value={dateField.value || ""}
+                          disabled={!hasPublishAccess}
                         />
                       )}
                     />
@@ -120,6 +125,7 @@ export default function ScheduleSection({ control }: ScheduleSectionProps) {
                           size="small"
                           sx={scheduleSectionStyles.timeField}
                           value={timeField.value || ""}
+                          disabled={!hasPublishAccess}
                         />
                       )}
                     />
@@ -159,6 +165,7 @@ export default function ScheduleSection({ control }: ScheduleSectionProps) {
                   size="small"
                   sx={scheduleSectionStyles.dateField}
                   value={dateField.value || ""}
+                  disabled={!hasPublishAccess}
                 />
               )}
             />
@@ -175,6 +182,7 @@ export default function ScheduleSection({ control }: ScheduleSectionProps) {
                   size="small"
                   sx={scheduleSectionStyles.timeField}
                   value={timeField.value || ""}
+                  disabled={!hasPublishAccess}
                 />
               )}
             />

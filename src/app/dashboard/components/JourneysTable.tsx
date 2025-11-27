@@ -85,6 +85,7 @@ import { toast } from "sonner";
 import { JOURNEY_ICONS } from "@/lib/mockData";
 import { updateJourneyStatus } from "@/api/services/journeyStatus.service";
 import { JourneyStatus } from "@/api/services/types/updateJourneyStatus.interface";
+import { usePermissions } from "@/app/providers/PermissionProvider";
 
 const getJourneyIcon = (journeyId: number): string => {
   const index = journeyId % JOURNEY_ICONS.length;
@@ -295,6 +296,7 @@ export default function JourneysTable({
   const router = useRouter();
   const queryClient = useQueryClient();
   const theme = useTheme();
+  const { hasEditAccess, hasPublishAccess } = usePermissions();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [menuAnchor, setMenuAnchor] = useState<{
     element: HTMLElement;
@@ -528,22 +530,28 @@ export default function JourneysTable({
                   <TableCell sx={tableCellStylesRight}>
                     <Box sx={tableActionsContainerStyles}>
                       <Tooltip title="Edit journey" placement="top">
-                        <IconButton
-                          sx={actionButtonStyles}
-                          size="small"
-                          onClick={() => handleEdit(journey.id)}
-                        >
-                          <EditOutlinedIcon />
-                        </IconButton>
+                        <span>
+                          <IconButton
+                            sx={actionButtonStyles}
+                            size="small"
+                            onClick={() => handleEdit(journey.id)}
+                            disabled={!hasEditAccess}
+                          >
+                            <EditOutlinedIcon />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                       <Tooltip title="Clone journey" placement="top">
-                        <IconButton
-                          sx={actionButtonStyles}
-                          size="small"
-                          onClick={() => handleClone(journey.id)}
-                        >
-                          <ContentCopyOutlinedIcon />
-                        </IconButton>
+                        <span>
+                          <IconButton
+                            sx={actionButtonStyles}
+                            size="small"
+                            onClick={() => handleClone(journey.id)}
+                            disabled={!hasEditAccess}
+                          >
+                            <ContentCopyOutlinedIcon />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                       <Tooltip title="More options" placement="top">
                         <IconButton
@@ -674,11 +682,21 @@ export default function JourneysTable({
             }
           };
 
+          // Determine if this action requires publish access (live, schedule) or edit access (others)
+          const requiresPublishAccess =
+            action.id === "live" || action.id === "schedule";
+          const requiresEditAccess =
+            !action.hasAction && !requiresPublishAccess;
+          const isDisabled =
+            (requiresPublishAccess && !hasPublishAccess) ||
+            (requiresEditAccess && !hasEditAccess);
+
           return (
             <MenuItem
               key={action.id}
               onClick={handleMenuItemClick}
               sx={actionMenuItemStyles}
+              disabled={isDisabled}
             >
               {IconComponent && (
                 <ListItemIcon sx={actionMenuIconStyles}>
