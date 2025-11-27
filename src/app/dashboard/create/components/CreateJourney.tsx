@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
 import { useWatch } from "react-hook-form";
 import { validateTemplate } from "../utils/validation";
+import { usePermissions } from "@/app/providers/PermissionProvider";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -56,6 +57,23 @@ export default function CreateJourneyPage({
   const journeyIdFromQuery = searchParams?.get("id");
   const journeyId = journeyIdProp || journeyIdFromQuery || undefined;
   const theme = useTheme();
+  const { hasEditAccess } = usePermissions();
+
+  // Redirect if user doesn't have edit access
+  useEffect(() => {
+    if (!hasEditAccess) {
+      toast.error("You don't have permission to create or edit journeys.");
+      router.push("/dashboard");
+    }
+  }, [hasEditAccess, router]);
+
+  // Redirect if user doesn't have edit access
+  useEffect(() => {
+    if (!hasEditAccess) {
+      toast.error("You don't have permission to create or edit journeys.");
+      router.push("/dashboard");
+    }
+  }, [hasEditAccess, router]);
   const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
   const {
     data: eventsData,

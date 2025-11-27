@@ -6,9 +6,15 @@ const nextConfig = {
     const isProduction = process.env.NODE_ENV === "production";
     const isUAT = process.env.NEXT_PUBLIC_ENV === "uat";
 
+    // Permissions rewrite should work in all environments to avoid CORS
+    const permissionsRewrite = {
+      source: "/raven-permissions.json",
+      destination: "https://raven.delivr.live/raven-permissions.json",
+    };
+
     if (isProduction || isUAT) {
-      // In production/UAT, don't use rewrites - use direct API URLs
-      return [];
+      // In production/UAT, only return permissions rewrite
+      return [permissionsRewrite];
     }
 
     // Development rewrites to local/internal services
@@ -29,6 +35,7 @@ const nextConfig = {
         source: "/user-cohorts/:path*",
         destination: "http://user-cohorts.dream11.local/:path*",
       },
+      permissionsRewrite,
     ];
   },
   eslint: {
