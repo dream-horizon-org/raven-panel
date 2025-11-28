@@ -10,10 +10,16 @@ export const getPermissions = async (): Promise<UserPermission[]> => {
     const isProduction = env === "production";
     const isUAT = env === "uat";
 
-    const PERMISSIONS_URL =
-      isProduction || isUAT
-        ? "https://raven.delivr.live/raven-permissions.json"
-        : "/raven-permissions.json";
+    let PERMISSIONS_URL = "/raven-permissions.json";
+
+    if (isProduction || isUAT) {
+      if (typeof window !== "undefined") {
+        const hostname = window.location.hostname;
+        PERMISSIONS_URL = `https://${hostname}/raven-permissions.json`;
+      } else {
+        PERMISSIONS_URL = "https://raven.horizonos.in/raven-permissions.json";
+      }
+    }
 
     const response = await axiosInstance.get<
       PermissionsResponse | UserPermission[]
