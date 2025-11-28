@@ -769,7 +769,6 @@ export const generateTemplate = (
   }
 
   if (type === NudgeType.TOOLTIP) {
-    console.log("tooltip", type);
     return {
       type: "TOOLTIP",
       props: {

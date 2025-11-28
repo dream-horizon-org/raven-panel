@@ -60,20 +60,7 @@ export default function CreateJourneyPage({
   const { hasEditAccess } = usePermissions();
 
   // Redirect if user doesn't have edit access
-  useEffect(() => {
-    if (!hasEditAccess) {
-      toast.error("You don't have permission to create or edit journeys.");
-      router.push("/dashboard");
-    }
-  }, [hasEditAccess, router]);
 
-  // Redirect if user doesn't have edit access
-  useEffect(() => {
-    if (!hasEditAccess) {
-      toast.error("You don't have permission to create or edit journeys.");
-      router.push("/dashboard");
-    }
-  }, [hasEditAccess, router]);
   const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
   const {
     data: eventsData,
@@ -319,7 +306,6 @@ export default function CreateJourneyPage({
     }
   }, [journeyId, eventsData, setValue, getValues]);
   const onFormSubmit = async (data: CreateJourneyFormData) => {
-    console.log("data", data);
     // Validate that templates are present
     if (
       !data.nudgeSelection?.actions ||
@@ -457,32 +443,7 @@ export default function CreateJourneyPage({
   };
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
-    if (activeTab === "ui" && newTab === "setup") {
-      // Check if a template is selected
-      const currentData = getValues();
-      const hasTemplate =
-        currentData.nudgeSelection?.actions &&
-        currentData.nudgeSelection.actions.length > 0 &&
-        currentData.nudgeSelection.actions.some((action) => action.template);
-
-      if (!hasTemplate) {
-        toast.error(
-          "Please select and configure an engagement template before proceeding."
-        );
-        return;
-      }
-
-      // Validate UI tab fields before going to setup
-      const isValid = await trigger([
-        "ctaMetadata.ctaTitle",
-        "ruleEngine.currentDropdownSelectedEvent",
-      ]);
-      if (isValid) {
-        setActiveTab(newTab);
-      }
-    } else {
-      setActiveTab(newTab);
-    }
+    setActiveTab(newTab);
   };
   const handleNext = () => {
     // Check if a template is selected
