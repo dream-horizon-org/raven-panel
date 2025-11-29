@@ -123,9 +123,12 @@ export const getJourneyFormDefaults = () => ({
   },
   schedule: {
     startType: "immediate",
+    enableImmediateStart: false,
+    enableScheduledStart: false,
     startDate: null,
     startTime: null,
     startDateTime: null,
+    enableScheduledEnd: false,
     endDate: null,
     endTime: null,
     endDateTime: null,

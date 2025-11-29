@@ -189,9 +189,9 @@ export const transformFormDataToApiFormat = (
       : ["1"];
 
   let startTime: number | null = null;
-  if (formData.schedule.startType === "immediate") {
+  if (formData.schedule.enableImmediateStart === true) {
     startTime = Date.now();
-  } else if (formData.schedule.startType === "scheduled") {
+  } else if (formData.schedule.enableScheduledStart === true) {
     if (formData.schedule.startDate && formData.schedule.startTime) {
       const dateTimeString = `${formData.schedule.startDate}T${formData.schedule.startTime}`;
       startTime = new Date(dateTimeString).getTime();

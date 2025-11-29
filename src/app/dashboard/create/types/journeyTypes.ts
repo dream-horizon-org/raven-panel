@@ -32,9 +32,12 @@ export type Cohort = {
 
 export type Schedule = {
   startType?: "immediate" | "scheduled";
+  enableImmediateStart?: boolean;
+  enableScheduledStart?: boolean;
   startDate?: string | null;
   startTime?: string | null;
   startDateTime?: string | null;
+  enableScheduledEnd?: boolean;
   endDate?: string | null;
   endTime?: string | null;
   endDateTime?: string | null;
@@ -305,14 +308,14 @@ export type ContentElement = {
 };
 
 export type JourneyFrequency = {
-    enableTimesInSession?: boolean;
-    timesInSession: number;
-    enableMaxTimesInPeriod?: boolean;
-    maxTimesInPeriod: number;
-    periodValue: number;
-    periodUnit: string;
-    enableMaxTimesInLifetime?: boolean;
-    maxTimesInLifetime: number;
+  enableTimesInSession?: boolean;
+  timesInSession: number;
+  enableMaxTimesInPeriod?: boolean;
+  maxTimesInPeriod: number;
+  periodValue: number;
+  periodUnit: string;
+  enableMaxTimesInLifetime?: boolean;
+  maxTimesInLifetime: number;
 };
 
 export type CampaignFormType = {

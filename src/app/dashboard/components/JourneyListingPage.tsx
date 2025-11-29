@@ -23,7 +23,8 @@ import { usePermissions } from "@/app/providers/PermissionProvider";
 
 export default function JourneyListingPage() {
   const router = useRouter();
-  const { hasEditAccess } = usePermissions();
+  const { hasEditAccess, isLoading: isPermissionsLoading } = usePermissions();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState<Status>("ALL");
 
@@ -34,14 +35,6 @@ export default function JourneyListingPage() {
 
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
 
-  console.log(
-    "env::: inside JourneyListingPage ",
-    env,
-    process.env.NEXT_PUBLIC_PRODUCTION_URL,
-    process.env.NEXT_PUBLIC_UAT_URL,
-    process.env.NEXT_PUBLIC_ENV,
-    process.env.NODE_ENV
-  );
   const {
     data: journeys,
     isLoading,
@@ -109,7 +102,7 @@ export default function JourneyListingPage() {
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
                 onClick={() => router.push("/dashboard/create")}
-                disabled={!hasEditAccess}
+                disabled={!hasEditAccess || isPermissionsLoading}
               >
                 {BUTTON_TEXT.CREATE_JOURNEY}
               </Button>

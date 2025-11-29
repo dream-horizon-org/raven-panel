@@ -9,7 +9,7 @@ const nextConfig = {
     // Permissions rewrite should work in all environments to avoid CORS
     const permissionsRewrite = {
       source: "/raven-permissions.json",
-      destination: "https://raven.delivr.live/raven-permissions.json",
+      destination: "https://raven.horizonos.in/raven-permissions.json",
     };
 
     if (isProduction || isUAT) {

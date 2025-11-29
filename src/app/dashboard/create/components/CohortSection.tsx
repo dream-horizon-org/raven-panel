@@ -46,10 +46,6 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
   // Debug: Log the response structure to understand the API format
   useEffect(() => {
     if (cohortsData) {
-      console.log("Cohorts API Response:", cohortsData);
-      console.log("Cohorts Data Type:", typeof cohortsData);
-      console.log("Cohorts Data.data:", cohortsData.data);
-      console.log("Is Array:", Array.isArray(cohortsData.data));
     }
   }, [cohortsData]);
 
