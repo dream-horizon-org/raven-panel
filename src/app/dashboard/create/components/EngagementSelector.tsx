@@ -7,6 +7,11 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import BottomSheetIcon from "@mui/icons-material/ViewAgenda";
@@ -29,6 +34,7 @@ import {
 } from "../types/journeyTypes";
 import { engagementSelectorStyles } from "../styles/engagementSelectorStyles";
 import { generateTemplate } from "./content/TemplateTab";
+import { useState } from "react";
 
 interface EngagementSelectorProps {
   control: Control<CreateJourneyFormData>;
@@ -77,7 +83,6 @@ const ENGAGEMENT_TYPES: {
   },
 ];
 
-
 export default function EngagementSelector({
   control,
   errors,
@@ -88,6 +93,9 @@ export default function EngagementSelector({
     control,
     name: "nudgeSelection.actions",
   });
+
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingNewType, setPendingNewType] = useState<NudgeType | null>(null);
 
   const currentAction = fields.length > 0 ? fields[0] : null;
   const selectedType = useWatch({
@@ -111,17 +119,14 @@ export default function EngagementSelector({
     if (currentAction) {
       const previousType = currentAction.type;
 
-      // Always reset template when changing engagement type
-      // This ensures old template data from previous type doesn't persist
       if (previousType !== newType) {
-        // Only generate default template for TOOLTIP
         if (newType === NudgeType.TOOLTIP) {
           const defaultVariant = "basic-tooltip";
           const freshTemplate = generateTemplate(newType, defaultVariant);
           setValue("nudgeSelection.actions.0.template", freshTemplate);
           setValue(
             "nudgeSelection.actions.0.variant",
-            defaultVariant as unknown as NudgeSelectionTooltipMenu
+            (defaultVariant as unknown) as NudgeSelectionTooltipMenu
           );
           setValue("nudgeSelection.actions.0.isNudgeValid", true);
         } else {
@@ -154,7 +159,7 @@ export default function EngagementSelector({
           actionId: "",
           type: newType,
           template: freshTemplate,
-          variant: defaultVariant as unknown as NudgeSelectionTooltipMenu,
+          variant: (defaultVariant as unknown) as NudgeSelectionTooltipMenu,
           isNudgeValid: true,
         });
       } else {
@@ -187,21 +192,42 @@ export default function EngagementSelector({
     if (type === "PICTURE_IN_PICTURE" || type === "ELEMENT_SPOTLIGHT") {
       return;
     }
-    
+
     const nudgeType = type as NudgeType;
     if (selectedType === nudgeType && hasTemplateData) {
       // If already selected and has data, open editor
       onEngagementSelect(nudgeType);
+    } else if (selectedType && selectedType !== nudgeType) {
+      setPendingNewType(nudgeType);
+      setShowConfirmDialog(true);
     } else {
-      // Select new engagement type
       handleTypeChange(nudgeType);
     }
+  };
+
+  const handleConfirmChange = () => {
+    if (pendingNewType) {
+      handleTypeChange(pendingNewType);
+      setPendingNewType(null);
+    }
+    setShowConfirmDialog(false);
+  };
+
+  const handleCancelChange = () => {
+    setPendingNewType(null);
+    setShowConfirmDialog(false);
+  };
+
+  const getEngagementLabel = (type: NudgeType | undefined): string => {
+    if (!type) return "";
+    const engagement = ENGAGEMENT_TYPES.find((e) => e.value === type);
+    return engagement?.label || type;
   };
 
   return (
     <Box sx={engagementSelectorStyles.container}>
       <Typography sx={engagementSelectorStyles.title}>
-          Select Engagement
+        Select Engagement
       </Typography>
       <Box
         sx={{
@@ -234,9 +260,7 @@ export default function EngagementSelector({
                 border: 1.5,
                 borderColor: isSelected ? "primary.main" : "divider",
                 borderRadius: 2,
-                bgcolor: isSelected
-                  ? "action.selected"
-                  : "background.paper",
+                bgcolor: isSelected ? "action.selected" : "background.paper",
                 transition: "all 0.2s ease-in-out",
                 overflow: "visible",
                 "&:hover": {
@@ -251,7 +275,9 @@ export default function EngagementSelector({
             >
               {isSelected && !isComingSoon && (
                 <Chip
-                  icon={<CheckCircleIcon sx={{ fontSize: "0.875rem !important" }} />}
+                  icon={
+                    <CheckCircleIcon sx={{ fontSize: "0.875rem !important" }} />
+                  }
                   label="Selected"
                   color="primary"
                   size="small"
@@ -279,7 +305,8 @@ export default function EngagementSelector({
                     fontWeight: 700,
                     fontSize: "0.688rem",
                     height: "22px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                     color: "white",
                     boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
                     animation: "pulse 2s ease-in-out infinite",
@@ -389,6 +416,46 @@ export default function EngagementSelector({
           {errors.nudgeSelection.actions[0].type.message}
         </Typography>
       )}
+
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelChange}
+        aria-labelledby="engagement-change-dialog-title"
+        aria-describedby="engagement-change-dialog-description"
+      >
+        <DialogTitle id="engagement-change-dialog-title">
+          Change Engagement Type
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="engagement-change-dialog-description">
+            You are about to change the engagement type from{" "}
+            <strong>{getEngagementLabel(selectedType)}</strong> to{" "}
+            <strong>{getEngagementLabel(pendingNewType || undefined)}</strong>.
+            <br />
+            <br />
+            The previous engagement will be removed and all its configuration
+            will be lost. Are you sure you want to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCancelChange}
+            color="inherit"
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleConfirmChange}
+            color="primary"
+            variant="contained"
+            autoFocus
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

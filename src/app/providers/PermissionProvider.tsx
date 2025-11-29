@@ -18,6 +18,7 @@ interface PermissionContextType {
   hasEditAccess: boolean;
   hasPublishAccess: boolean;
   isLoading: boolean;
+  setUserEmailFromOutside: (email: string | null) => void;
 }
 
 const PermissionContext = createContext<PermissionContextType | undefined>(
@@ -40,31 +41,39 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
   children,
 }) => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isEmailResolved, setIsEmailResolved] = useState(false);
 
-  // Get user email from localStorage
   useEffect(() => {
     try {
       const userData = localStorage.getItem("google_user");
       if (userData) {
         const user = JSON.parse(userData);
         setUserEmail(user.email || null);
+      } else {
+        setUserEmail(null);
       }
     } catch (error) {
       console.error("Error parsing user data:", error);
+      setUserEmail(null);
+    } finally {
+      setIsEmailResolved(true);
     }
   }, []);
 
-  // Fetch permissions
-  const { data: permissions = [], isLoading } = useQuery<UserPermission[]>({
-    queryKey: ["permissions"],
+  const { data: permissions = [], isLoading: isPermissionsLoading } = useQuery<
+    UserPermission[]
+  >({
+    queryKey: ["permissions", userEmail],
     queryFn: getPermissions,
+    enabled: !!userEmail,
     staleTime: 0,
-    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
   });
 
-  // Calculate user permissions
-  const userPermissions = useMemo(() => {
-    if (!userEmail) {
+  // 3) Compute effective access
+  const { hasViewAccess, hasEditAccess, hasPublishAccess } = useMemo(() => {
+    if (!isEmailResolved || isPermissionsLoading || !userEmail) {
       return {
         hasViewAccess: false,
         hasEditAccess: false,
@@ -72,16 +81,13 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
       };
     }
 
-    // Default: All @dream11.com and @ffancode.com emails have view access
     const isDream11Email = userEmail.endsWith("@dream11.com");
-    const isFancodeEmail =
-      userEmail.endsWith("@fancode.com") || userEmail.endsWith("@fancode.com");
+    const isFancodeEmail = userEmail.endsWith("@fancode.com");
+
     let hasViewAccess = isDream11Email || isFancodeEmail;
     let hasEditAccess = false;
     let hasPublishAccess = false;
 
-    // Find user's specific permissions
-    // Match by email (user field can be email or name)
     const userPermission = permissions.find(
       (p) => p.user.toLowerCase() === userEmail.toLowerCase()
     );
@@ -92,20 +98,18 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
       hasPublishAccess = userPermission.publish;
     }
 
-    return {
-      hasViewAccess,
-      hasEditAccess,
-      hasPublishAccess,
-    };
-  }, [permissions, userEmail]);
+    return { hasViewAccess, hasEditAccess, hasPublishAccess };
+  }, [permissions, userEmail, isEmailResolved, isPermissionsLoading]);
 
   const value: PermissionContextType = {
     permissions,
     userEmail,
-    ...userPermissions,
-    isLoading,
+    hasViewAccess,
+    hasEditAccess,
+    hasPublishAccess,
+    isLoading: !isEmailResolved || isPermissionsLoading,
+    setUserEmailFromOutside: setUserEmail,
   };
-
   return (
     <PermissionContext.Provider value={value}>
       {children}

@@ -37,11 +37,13 @@ import EngagementSidePanel from "./EngagementSidePanel";
 import { createJourney } from "@/api/services/createJourney.service";
 import { updateJourney } from "@/api/services/updateJourney.service";
 import { getJourneyById } from "@/api/services/getJourney.service";
+import { updateJourneyStatus } from "@/api/services/journeyStatus.service";
 import { toast } from "sonner";
 import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
-import { useWatch } from "react-hook-form";
+import { useWatch, Path } from "react-hook-form";
 import { validateTemplate } from "../utils/validation";
 import { usePermissions } from "@/app/providers/PermissionProvider";
+import { AxiosError } from "axios";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -60,20 +62,7 @@ export default function CreateJourneyPage({
   const { hasEditAccess } = usePermissions();
 
   // Redirect if user doesn't have edit access
-  useEffect(() => {
-    if (!hasEditAccess) {
-      toast.error("You don't have permission to create or edit journeys.");
-      router.push("/dashboard");
-    }
-  }, [hasEditAccess, router]);
 
-  // Redirect if user doesn't have edit access
-  useEffect(() => {
-    if (!hasEditAccess) {
-      toast.error("You don't have permission to create or edit journeys.");
-      router.push("/dashboard");
-    }
-  }, [hasEditAccess, router]);
   const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
   const {
     data: eventsData,
@@ -158,6 +147,8 @@ export default function CreateJourneyPage({
         schedule: {
           ...getJourneyFormDefaults().schedule,
           startType: "immediate" as "immediate" | "scheduled",
+          enableImmediateStart: false,
+          enableScheduledStart: false,
         },
       },
     }
@@ -320,6 +311,103 @@ export default function CreateJourneyPage({
   }, [journeyId, eventsData, setValue, getValues]);
   const onFormSubmit = async (data: CreateJourneyFormData) => {
     console.log("data", data);
+
+    if (data.schedule?.enableScheduledStart) {
+      if (!data.schedule.startDate || !data.schedule.startTime) {
+        if (!data.schedule.startDate) {
+          setError("schedule.startDate", {
+            type: "required",
+            message:
+              "Start date is required when 'At specific date/time' is selected",
+          });
+        }
+        if (!data.schedule.startTime) {
+          setError("schedule.startTime", {
+            type: "required",
+            message:
+              "Start time is required when 'At specific date/time' is selected",
+          });
+        }
+        toast.error(
+          "Please fill in both start date and time when 'At specific date/time' is selected"
+        );
+        return;
+      }
+
+      const startDateTime = new Date(
+        `${data.schedule.startDate}T${data.schedule.startTime}`
+      );
+      const now = new Date();
+      if (startDateTime < now) {
+        setError("schedule.startDate", {
+          type: "validation",
+          message: "Start date and time cannot be in the past",
+        });
+        setError("schedule.startTime", {
+          type: "validation",
+          message: "Start date and time cannot be in the past",
+        });
+        toast.error("Start date and time cannot be in the past");
+        return;
+      }
+    }
+
+    if (data.schedule?.enableScheduledEnd) {
+      if (!data.schedule.endDate || !data.schedule.endTime) {
+        if (!data.schedule.endDate) {
+          setError("schedule.endDate", {
+            type: "required",
+            message:
+              "End date is required when 'At specific date/time' is selected",
+          });
+        }
+        if (!data.schedule.endTime) {
+          setError("schedule.endTime", {
+            type: "required",
+            message:
+              "End time is required when 'At specific date/time' is selected",
+          });
+        }
+        toast.error(
+          "Please fill in both end date and time when 'At specific date/time' is selected"
+        );
+        return;
+      }
+
+      const endDateTime = new Date(
+        `${data.schedule.endDate}T${data.schedule.endTime}`
+      );
+      const now = new Date();
+      if (endDateTime < now) {
+        setError("schedule.endDate", {
+          type: "validation",
+          message: "End date and time cannot be in the past",
+        });
+        setError("schedule.endTime", {
+          type: "validation",
+          message: "End date and time cannot be in the past",
+        });
+        toast.error("End date and time cannot be in the past");
+        return;
+      }
+    }
+
+    const hasScheduleErrors =
+      errors.schedule?.startDate ||
+      errors.schedule?.startTime ||
+      errors.schedule?.endDate ||
+      errors.schedule?.endTime ||
+      errors.schedule?.enableScheduledStart ||
+      errors.schedule?.enableScheduledEnd;
+
+    if (hasScheduleErrors) {
+      console.error("Error: Schedule validation failed");
+      toast.error(
+        "Please fix all schedule errors before creating/updating the journey."
+      );
+      return;
+    }
+
     // Validate that templates are present
     if (
       !data.nudgeSelection?.actions ||
@@ -348,7 +436,9 @@ export default function CreateJourneyPage({
     for (let i = 0; i < data.nudgeSelection.actions.length; i++) {
       const action = data.nudgeSelection.actions[i];
       if (action.template) {
-        const basePath = `nudgeSelection.actions.${i}.template` as any;
+        const basePath = `nudgeSelection.actions.${i}.template` as Path<
+          CreateJourneyFormData
+        >;
         const isValid = validateTemplate(
           action.template,
           basePath,
@@ -372,29 +462,129 @@ export default function CreateJourneyPage({
 
     try {
       setIsSubmitting(true);
+      let createdOrUpdatedJourneyId: number | null = null;
+
+      // Step 1: Create or Update journey first
       if (journeyId && !isCloneMode) {
-        const response = await updateJourney(Number(journeyId), data);
-        toast.success("Journey updated successfully!");
+        // Update existing journey
+        try {
+          await updateJourney(Number(journeyId), data);
+          createdOrUpdatedJourneyId = Number(journeyId);
+          toast.success("Journey updated successfully!");
+        } catch (updateError) {
+          const error = updateError as AxiosError<{
+            error: { message: string };
+          }>;
+          const errorMessage =
+            error.response?.data?.error?.message ||
+            error.message ||
+            "Failed to update journey";
+          toast.error(errorMessage);
+          return;
+        }
+      } else {
+        try {
+          const response = await createJourney(data);
+
+          if (typeof response === "number") {
+            createdOrUpdatedJourneyId = response;
+          } else if (response?.data) {
+            if (typeof response.data === "number") {
+              createdOrUpdatedJourneyId = response.data;
+            } else if (response.data?.id) {
+              createdOrUpdatedJourneyId = response.data.id;
+            }
+          } else if (response?.id) {
+            createdOrUpdatedJourneyId = response.id;
+          }
+
+          toast.success(
+            isCloneMode
+              ? "Journey cloned successfully!"
+              : "Journey created successfully!"
+          );
+        } catch (createError) {
+          const error = createError as AxiosError<{
+            error: { message: string };
+          }>;
+          const errorMessage =
+            error.response?.data?.error?.message ||
+            error.message ||
+            "Failed to create journey";
+          toast.error(errorMessage);
+          return;
+        }
+      }
+
+      let statusUpdateSuccess = true;
+
+      if (createdOrUpdatedJourneyId) {
+        if (data.schedule?.enableImmediateStart === true) {
+          try {
+            const statusResponse = await updateJourneyStatus(
+              createdOrUpdatedJourneyId,
+              "live"
+            );
+            toast.success("Journey is now live!");
+            statusUpdateSuccess = true;
+          } catch (statusError) {
+            const error = statusError as AxiosError<{
+              error: { message: string };
+            }>;
+            console.error("Error updating journey status to live:", error);
+            const errorMessage =
+              error.response?.data?.error?.message ||
+              error.message ||
+              "Failed to set status to live";
+            toast.error(errorMessage);
+            statusUpdateSuccess = false;
+          }
+        } else if (data.schedule?.enableScheduledStart === true) {
+          try {
+            const statusResponse = await updateJourneyStatus(
+              createdOrUpdatedJourneyId,
+              "schedule"
+            );
+
+            toast.success("Journey is now scheduled!");
+            statusUpdateSuccess = true;
+          } catch (statusError) {
+            const error = statusError as AxiosError<{
+              error: { message: string };
+            }>;
+            console.error("Error updating journey status to scheduled:", error);
+            const errorMessage =
+              error.response?.data?.error?.message ||
+              error.message ||
+              "Failed to set status to scheduled";
+            toast.error(errorMessage);
+            statusUpdateSuccess = false;
+          }
+        } else {
+          statusUpdateSuccess = true;
+        }
+      } else {
+        console.error("No journey ID available for status update");
+        statusUpdateSuccess = true;
+      }
+
+      if (statusUpdateSuccess) {
         router.push("/dashboard");
       } else {
-        const response = await createJourney(data);
-        toast.success(
-          isCloneMode
-            ? "Journey cloned successfully!"
-            : "Journey created successfully!"
-        );
-        router.push("/dashboard");
       }
     } catch (error) {
+      const axiosError = error as AxiosError<{ error: { message: string } }>;
       console.error(
         `Error ${journeyId && !isCloneMode ? "updating" : "creating"} journey:`,
-        error
+        axiosError
       );
-      toast.error(
+      const errorMessage =
+        axiosError.response?.data?.error?.message ||
+        axiosError.message ||
         `Failed to ${
           journeyId && !isCloneMode ? "update" : "create"
-        } journey. Please try again.`
-      );
+        } journey. Please try again.`;
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -430,12 +620,12 @@ export default function CreateJourneyPage({
     if (!templateErrorsPath) return false;
 
     // Recursively check if any error exists
-    const checkForErrors = (obj: any): boolean => {
+    const checkForErrors = (obj: unknown): boolean => {
       if (!obj || typeof obj !== "object") return false;
       if ("message" in obj) return true;
 
       for (const key in obj) {
-        if (checkForErrors(obj[key])) return true;
+        if (checkForErrors((obj as Record<string, unknown>)[key])) return true;
       }
       return false;
     };
@@ -452,37 +642,14 @@ export default function CreateJourneyPage({
     setValidationKey((prev) => prev + 1);
     // Also trigger form validation to ensure errors object is updated
     setTimeout(() => {
-      trigger("nudgeSelection.actions.0.template" as any);
+      trigger(
+        "nudgeSelection.actions.0.template" as Path<CreateJourneyFormData>
+      );
     }, 0);
   };
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
-    if (activeTab === "ui" && newTab === "setup") {
-      // Check if a template is selected
-      const currentData = getValues();
-      const hasTemplate =
-        currentData.nudgeSelection?.actions &&
-        currentData.nudgeSelection.actions.length > 0 &&
-        currentData.nudgeSelection.actions.some((action) => action.template);
-
-      if (!hasTemplate) {
-        toast.error(
-          "Please select and configure an engagement template before proceeding."
-        );
-        return;
-      }
-
-      // Validate UI tab fields before going to setup
-      const isValid = await trigger([
-        "ctaMetadata.ctaTitle",
-        "ruleEngine.currentDropdownSelectedEvent",
-      ]);
-      if (isValid) {
-        setActiveTab(newTab);
-      }
-    } else {
-      setActiveTab(newTab);
-    }
+    setActiveTab(newTab);
   };
   const handleNext = () => {
     // Check if a template is selected

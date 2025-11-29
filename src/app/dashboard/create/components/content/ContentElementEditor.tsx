@@ -22,6 +22,7 @@ import {
   useWatch as useWatchHook,
   useFormContext,
 } from "react-hook-form";
+import ErrorIcon from "@mui/icons-material/Error";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
@@ -298,11 +299,149 @@ export default function ContentElementEditor({
     return displayName;
   };
 
+  // Helper to check if a specific path has errors
+  const checkPathForErrors = (path: string): boolean => {
+    const pathParts = path.split(".");
+    let current: any = errors;
+
+    for (const part of pathParts) {
+      if (!current || typeof current !== "object") return false;
+
+      const numericIndex = parseInt(part, 10);
+      const isNumericKey =
+        !isNaN(numericIndex) && part === String(numericIndex);
+
+      if (isNumericKey) {
+        if (part in current) {
+          current = current[part];
+        } else {
+          return false;
+        }
+      } else {
+        if (part in current) {
+          current = current[part];
+        } else {
+          return false;
+        }
+      }
+    }
+
+    // Check if current has error message or nested errors
+    if (current && typeof current === "object") {
+      if ("message" in current) return true;
+      // Check nested properties
+      for (const key in current) {
+        if (checkPathForErrors(`${path}.${key}`)) return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Helper to check if this element path has errors
+  const hasElementErrors = (): boolean => {
+    if (!elementPath || elementPath.length === 0) return false;
+
+    // Build the path string: nudgeSelection.actions.0.template.children.0.children.1...
+    let pathString = "nudgeSelection.actions.0.template";
+    for (let i = 0; i < elementPath.length; i++) {
+      pathString += `.children.${elementPath[i]}`;
+    }
+
+    // Check for errors in props and styles
+    const propsPath = `${pathString}.props`;
+    const stylesPath = `${pathString}.styles`;
+
+    return checkPathForErrors(propsPath) || checkPathForErrors(stylesPath);
+  };
+
+  // Helper to check if any child elements have errors (recursively)
+  const hasChildErrors = (): boolean => {
+    if (
+      !element ||
+      element.type !== "View" ||
+      !element.children ||
+      element.children.length === 0
+    ) {
+      return false;
+    }
+
+    // Build the base path for this element's children
+    let basePathString = "nudgeSelection.actions.0.template";
+    for (let i = 0; i < elementPath.length; i++) {
+      basePathString += `.children.${elementPath[i]}`;
+    }
+    const childrenPath = `${basePathString}.children`;
+
+    // Recursively check all children paths for errors
+    const checkChildrenRecursively = (path: string): boolean => {
+      // First check if this path has errors
+      if (checkPathForErrors(path)) {
+        return true;
+      }
+
+      // Navigate to the path in errors object
+      const pathParts = path.split(".");
+      let current: any = errors;
+      for (const part of pathParts) {
+        if (!current || typeof current !== "object") return false;
+        const numericIndex = parseInt(part, 10);
+        const isNumericKey =
+          !isNaN(numericIndex) && part === String(numericIndex);
+        if (isNumericKey) {
+          if (part in current) {
+            current = current[part];
+          } else {
+            return false;
+          }
+        } else {
+          if (part in current) {
+            current = current[part];
+          } else {
+            return false;
+          }
+        }
+      }
+
+      // If we found the children array in errors, check all indices
+      if (current && typeof current === "object") {
+        // Check all numeric keys (array indices)
+        for (const key in current) {
+          const numericKey = parseInt(key, 10);
+          if (!isNaN(numericKey) && key === String(numericKey)) {
+            // This is a child index, check if it has errors
+            const childPath = `${path}.${key}`;
+            if (
+              checkPathForErrors(`${childPath}.props`) ||
+              checkPathForErrors(`${childPath}.styles`)
+            ) {
+              return true;
+            }
+            // Recursively check this child's children
+            if (checkChildrenRecursively(`${childPath}.children`)) {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    };
+
+    return checkChildrenRecursively(childrenPath);
+  };
+
+  const elementHasErrors = hasElementErrors();
+  const childHasErrors = hasChildErrors();
+  const shouldHighlight = elementHasErrors || childHasErrors;
+
   if (!element) {
     return null;
   }
 
-  const elementTestID = (element.props as Record<string, unknown>)?.testID as string | undefined;
+  const elementTestID = (element.props as Record<string, unknown>)?.testID as
+    | string
+    | undefined;
 
   const handleLocatorClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -322,6 +461,11 @@ export default function ContentElementEditor({
           borderColor: "primary.light",
           borderWidth: 1,
         }),
+        ...(shouldHighlight && {
+          borderColor: "error.main",
+          borderWidth: 2,
+          borderStyle: "solid",
+        }),
       }}
     >
       <Box sx={contentElementEditorStyles.header}>
@@ -337,7 +481,15 @@ export default function ContentElementEditor({
               <ChevronRightIcon fontSize="small" />
             )}
           </IconButton>
-          <Typography sx={contentElementEditorStyles.elementLabel}>
+          <Typography
+            sx={{
+              ...contentElementEditorStyles.elementLabel,
+              ...(shouldHighlight && {
+                color: "error.main",
+                fontWeight: 600,
+              }),
+            }}
+          >
             {componentDef?.display || element.type}
           </Typography>
         </Box>

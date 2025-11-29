@@ -59,7 +59,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     const nodeProps = props as Record<string, any>;
     const nodeTestID = nodeProps.testID as string | undefined;
     const isHighlighted = nodeTestID && selectedTestID === nodeTestID;
-    
+
     // Use engagementType from action, fallback to template.type if not available
     let nudgeTypeForNode: string | NudgeType | undefined = engagementType;
     if (!nudgeTypeForNode && template?.type) {
@@ -409,8 +409,14 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
       const tooltipProps = (template.props || {}) as Record<string, any>;
       const tooltipStyles = template.styles || {};
+
+      // Only render tooltip if a template variant is selected (has templateVariantId)
+      const hasTemplateVariant = tooltipProps.templateVariantId;
+      if (!hasTemplateVariant) return null;
+
       const tooltipTestID = tooltipProps.testID as string | undefined;
-      const isTooltipHighlighted = tooltipTestID && selectedTestID === tooltipTestID;
+      const isTooltipHighlighted =
+        tooltipTestID && selectedTestID === tooltipTestID;
 
       // Convert styles to CSS
       const cssStyles: Record<string, string | number> = {};

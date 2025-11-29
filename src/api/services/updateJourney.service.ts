@@ -13,12 +13,22 @@ export const updateJourney = async (
 ): Promise<any> => {
   const apiPayload = transformFormDataToApiFormat(formData);
 
+  let startTime: number | null = null;
+  if (formData.schedule.enableImmediateStart === true) {
+    startTime = Date.now();
+  } else if (formData.schedule.enableScheduledStart === true) {
+    if (formData.schedule.startDate && formData.schedule.startTime) {
+      const dateTimeString = `${formData.schedule.startDate}T${formData.schedule.startTime}`;
+      startTime = new Date(dateTimeString).getTime();
+    }
+  }
+
   const updatePayload: UpdateCtaInput = {
     id: journeyId.toString(),
     description: formData.ctaMetadata.description || "",
     team: formData.ctaMetadata.team || "",
     tags: formData.ctaMetadata.tags.map((tag) => tag.label || ""),
-    startTime: formData.schedule.startType === "immediate" ? Date.now() : null,
+    startTime: startTime,
     endTime:
       formData.schedule.endDate && formData.schedule.endTime
         ? new Date(
