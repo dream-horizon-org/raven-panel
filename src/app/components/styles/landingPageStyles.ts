@@ -222,7 +222,12 @@ export const landingPageStyles = {
     },
   },
 
-  featureCard: (theme: Theme, gridArea?: string, color?: string, animationDelay?: string): SxProps => ({
+  featureCard: (
+    theme: Theme,
+    gridArea?: string,
+    color?: string,
+    animationDelay?: string
+  ): SxProps => ({
     height: "auto",
     transition: "all 0.3s ease",
     backgroundColor: "#ffffff",
@@ -236,8 +241,10 @@ export const landingPageStyles = {
     animationDelay: animationDelay || "0s",
     "@media (min-width: 960px)": {
       minHeight: gridArea === "left" || gridArea === "right" ? "auto" : "160px",
-      maxHeight: gridArea === "left" || gridArea === "right" ? "fit-content" : "none",
-      alignSelf: gridArea === "left" || gridArea === "right" ? "center" : "start",
+      maxHeight:
+        gridArea === "left" || gridArea === "right" ? "fit-content" : "none",
+      alignSelf:
+        gridArea === "left" || gridArea === "right" ? "center" : "start",
     },
     "&:hover": {
       transform: "translateY(-8px)",
@@ -272,19 +279,25 @@ export const landingPageStyles = {
     marginBottom: "4px",
   },
 
-  featureIconWrapper: (theme: Theme, index: number, color?: string): SxProps => {
+  featureIconWrapper: (
+    theme: Theme,
+    index: number,
+    color?: string
+  ): SxProps => {
     const iconBgColors = [
       "rgba(99, 102, 241, 0.1)", // Light indigo
       "rgba(239, 68, 68, 0.1)", // Light red
       "rgba(234, 179, 8, 0.1)", // Light yellow
       "rgba(59, 130, 246, 0.1)", // Light blue
     ];
-    
+
     return {
       width: 40,
       height: 40,
       borderRadius: "8px",
-      backgroundColor: color ? `${color}1A` : iconBgColors[index % iconBgColors.length],
+      backgroundColor: color
+        ? `${color}1A`
+        : iconBgColors[index % iconBgColors.length],
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -299,10 +312,14 @@ export const landingPageStyles = {
       "#eab308", // Yellow
       "#3b82f6", // Blue
     ];
-    
+
     return {
       fontSize: "1.25rem",
-      color: color || (index !== undefined ? iconColors[index % iconColors.length] : theme.palette.primary.main),
+      color:
+        color ||
+        (index !== undefined
+          ? iconColors[index % iconColors.length]
+          : theme.palette.primary.main),
     };
   },
 
@@ -337,5 +354,28 @@ export const landingPageStyles = {
   footerText: (theme: Theme): SxProps => ({
     color: "#6b7280",
     fontSize: "0.875rem",
+  }),
+
+  header: (theme: Theme): SxProps => ({
+    bgcolor: "#ffffff",
+    borderBottom: "1px solid #e5e7eb",
+    position: "sticky" as const,
+    top: 0,
+    zIndex: 1000,
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+  }),
+
+  headerContainer: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    py: 2,
+  },
+
+  logo: (theme: Theme): SxProps => ({
+    fontWeight: 700,
+    fontSize: "1.5rem",
+    color: "#111827",
+    fontFamily: "system-ui, -apple-system, sans-serif",
   }),
 };

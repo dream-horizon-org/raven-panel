@@ -70,11 +70,6 @@ export function Header() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  // Hide header on login page
-  if (pathname === "/login") {
-    return null;
-  }
-
   useEffect(() => {
     if (isAuthenticated) {
       setUserInfo(getUserInfo());
@@ -84,7 +79,7 @@ export function Header() {
   }, [isAuthenticated]);
 
   const handleSignIn = () => {
-    router.push("/login");
+    router.push("/");
   };
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {

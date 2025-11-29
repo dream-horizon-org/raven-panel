@@ -30,7 +30,7 @@ export const useAuth = () => {
         setIsAuthenticated(authenticated);
         if (!authenticated) {
           // Redirect to login if auth is lost
-          window.location.href = "/login";
+          window.location.href = "/";
         }
       }
     };
@@ -41,7 +41,7 @@ export const useAuth = () => {
       setIsAuthenticated((prev) => {
         if (prev !== authenticated && !authenticated) {
           // Redirect to login if auth is lost
-          window.location.href = "/login";
+          window.location.href = "/";
         }
         return authenticated;
       });

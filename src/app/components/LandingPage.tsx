@@ -9,6 +9,11 @@ import {
   InputAdornment,
   Card,
   CardContent,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import GridViewIcon from "@mui/icons-material/GridView";
@@ -17,15 +22,32 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import RouteIcon from "@mui/icons-material/Route";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import { APP_NAME, FOOTER_TEXT } from "@/config/constants";
 import { landingPageStyles } from "./styles/landingPageStyles";
+import { handleGoogleSuccess } from "@/app/Auth/components/GoogleSignIn";
+import { usePermissions } from "@/app/providers/PermissionProvider";
+import { useAuth } from "@/app/Auth/hooks/useAuth";
 
 export default function LandingPage() {
   const theme = useTheme();
   const router = useRouter();
+  const { setUserEmailFromOutside } = usePermissions();
+  const { isAuthenticated, isLoading } = useAuth();
   const [organization, setOrganization] = useState("");
   const [touched, setTouched] = useState(false);
+  const googleLoginRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading || isAuthenticated) {
+    return null;
+  }
 
   const features = [
     {
@@ -73,9 +95,14 @@ export default function LandingPage() {
       setTouched(true);
       return;
     }
-    router.push("/login");
-  };
 
+    const googleButton = googleLoginRef.current?.querySelector(
+      'div[role="button"]'
+    ) as HTMLElement;
+    if (googleButton) {
+      googleButton.click();
+    }
+  };
 
   return (
     <Box sx={landingPageStyles.container(theme)}>
@@ -85,10 +112,7 @@ export default function LandingPage() {
           <Box sx={landingPageStyles.loginFormContainer(theme)}>
             {/* Logo */}
             <Box sx={landingPageStyles.logoContainer(theme)}>
-              <Box
-                component="span"
-                sx={landingPageStyles.logoIcon(theme)}
-              >
+              <Box component="span" sx={landingPageStyles.logoIcon(theme)}>
                 {APP_NAME.charAt(0)}
               </Box>
               <Typography variant="h5" sx={landingPageStyles.logoText(theme)}>
@@ -107,34 +131,50 @@ export default function LandingPage() {
             </Typography>
 
             {/* Organization Field */}
-            <TextField
+            <FormControl
               fullWidth
               required
-              label="Organization"
-              placeholder="Enter your organization name"
-              value={organization}
-              onChange={(e) => handleOrganizationChange(e.target.value)}
-              onBlur={() => setTouched(true)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && organization.trim()) {
-                  handleSignIn();
-                }
-              }}
+              error={touched && !organization.trim()}
               sx={landingPageStyles.organizationField(theme)}
-              InputProps={{
-                startAdornment: (
+            >
+              <InputLabel id="organization-label">Organization</InputLabel>
+              <Select
+                labelId="organization-label"
+                id="organization-select"
+                value={organization}
+                label="Organization"
+                onChange={(e) => handleOrganizationChange(e.target.value)}
+                onBlur={() => setTouched(true)}
+                startAdornment={
                   <InputAdornment position="start">
                     <BusinessIcon sx={landingPageStyles.inputIcon(theme)} />
                   </InputAdornment>
-                ),
-              }}
-              helperText={
-                touched && !organization.trim()
-                  ? "Organization name is required"
-                  : ""
-              }
-              error={touched && !organization.trim()}
-            />
+                }
+              >
+                <MenuItem value="dream11">dream11</MenuItem>
+                <MenuItem value="criq">criq</MenuItem>
+              </Select>
+              {touched && !organization.trim() && (
+                <FormHelperText>Organization name is required</FormHelperText>
+              )}
+            </FormControl>
+
+            {/* Hidden GoogleLogin component */}
+            <Box ref={googleLoginRef} sx={{ display: "none" }}>
+              <GoogleLogin
+                onSuccess={(credentialResponse) =>
+                  handleGoogleSuccess(
+                    credentialResponse,
+                    router,
+                    setUserEmailFromOutside
+                  )
+                }
+                onError={() => {
+                  console.error("Google sign-in error occurred");
+                }}
+                width="0"
+              />
+            </Box>
 
             {/* Sign In Button */}
             <Button
@@ -164,25 +204,45 @@ export default function LandingPage() {
               {features.map((feature, index) => {
                 const IconComponent = feature.icon;
                 // Custom placement: 0=left, 1=center-top, 2=center-bottom, 3=right
-                const gridArea = 
-                  index === 0 ? "left" :
-                  index === 1 ? "center-top" :
-                  index === 2 ? "center-bottom" :
-                  "right";
+                const gridArea =
+                  index === 0
+                    ? "left"
+                    : index === 1
+                    ? "center-top"
+                    : index === 2
+                    ? "center-bottom"
+                    : "right";
                 // Staggered animation delay for floating effect
                 const animationDelay = `${index * 0.5}s`;
                 return (
-                  <Card 
-                    key={index} 
-                    sx={landingPageStyles.featureCard(theme, gridArea, feature.color, animationDelay)}
+                  <Card
+                    key={index}
+                    sx={landingPageStyles.featureCard(
+                      theme,
+                      gridArea,
+                      feature.color,
+                      animationDelay
+                    )}
                   >
-                    <Box sx={landingPageStyles.featureColorBar(feature.color)} />
+                    <Box
+                      sx={landingPageStyles.featureColorBar(feature.color)}
+                    />
                     <CardContent sx={landingPageStyles.featureCardContent}>
                       <Box sx={landingPageStyles.featureHeader}>
                         <Box
-                          sx={landingPageStyles.featureIconWrapper(theme, index, feature.color)}
+                          sx={landingPageStyles.featureIconWrapper(
+                            theme,
+                            index,
+                            feature.color
+                          )}
                         >
-                          <IconComponent sx={landingPageStyles.featureIcon(theme, index, feature.color)} />
+                          <IconComponent
+                            sx={landingPageStyles.featureIcon(
+                              theme,
+                              index,
+                              feature.color
+                            )}
+                          />
                         </Box>
                         <Typography
                           variant="h6"
