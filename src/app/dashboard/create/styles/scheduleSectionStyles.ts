@@ -23,6 +23,17 @@ export const scheduleSectionStyles = {
     flexDirection: "column",
     gap: 1.5,
   },
+  frequencyRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1.5,
+    flexWrap: "wrap",
+  },
+  labelText: {
+    fontSize: "14px",
+    color: "text.primary",
+    whiteSpace: "nowrap",
+  },
   fieldHeader: {
     mb: 1.5,
   },

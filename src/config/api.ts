@@ -10,12 +10,7 @@ const getBaseUrl = () => {
   if (env === "uat") {
     return "https://kong-uat.dream11.com/thunder";
   }
-  console.log(
-    "env::: ",
-    env,
-    process.env.NEXT_PUBLIC_PRODUCTION_URL,
-    process.env.NEXT_PUBLIC_UAT_URL
-  );
+
   return "/thunder";
 };
 
