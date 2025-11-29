@@ -60,7 +60,7 @@ export const useAuth = () => {
     localStorage.removeItem("google_user");
     localStorage.removeItem("x-permissions");
     setIsAuthenticated(false);
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return {

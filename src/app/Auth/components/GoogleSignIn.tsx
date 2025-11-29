@@ -42,7 +42,7 @@ export const handleGoogleSuccess = async (
     );
   } catch (error) {
     console.error("Error during sign-in process:", error);
-    router.push("/login");
+    router.push("/");
   }
 };
 
