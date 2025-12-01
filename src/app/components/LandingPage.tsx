@@ -29,21 +29,31 @@ import { landingPageStyles } from "./styles/landingPageStyles";
 import { handleGoogleSuccess } from "@/app/Auth/components/GoogleSignIn";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 import { useAuth } from "@/app/Auth/hooks/useAuth";
+import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
+import { buildPathWithTenant } from "@/app/utils/tenant.utils";
 
 export default function LandingPage() {
   const theme = useTheme();
   const router = useRouter();
   const { setUserEmailFromOutside } = usePermissions();
   const { isAuthenticated, isLoading } = useAuth();
+  const { setTenantData } = useMultiTenant();
   const [organization, setOrganization] = useState("");
   const [touched, setTouched] = useState(false);
   const googleLoginRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push("/dashboard");
+      const tenant =
+        organization.trim() || localStorage.getItem("organization");
+      if (tenant) {
+        const { pathname, search } = buildPathWithTenant("/dashboard", tenant);
+        router.push(`${pathname}${search}`);
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, organization]);
 
   if (isLoading || isAuthenticated) {
     return null;
@@ -82,11 +92,22 @@ export default function LandingPage() {
 
   const handleOrganizationChange = (value: string) => {
     setOrganization(value);
-    // Store organization in localStorage as user types
+    // Store organization in localStorage and set tenant
     if (value.trim()) {
       localStorage.setItem("organization", value.trim());
+      setTenantData({ name: value.trim() });
+
+      if (typeof window !== "undefined" && window.location.pathname !== "/") {
+        const { pathname, search } = buildPathWithTenant(
+          window.location.pathname,
+          value.trim(),
+          window.location.search
+        );
+        router.replace(`${pathname}${search}`);
+      }
     } else {
       localStorage.removeItem("organization");
+      setTenantData({});
     }
   };
 

@@ -205,11 +205,6 @@ export default function CreateJourneyPage({
 
         const formData = parseJourneyDataToFormData(journeyResponse);
         reset(formData);
-        toast.success(
-          isCloneMode
-            ? "Journey data loaded for cloning"
-            : "Journey data loaded successfully"
-        );
       } catch (error) {
         console.error("Error fetching journey data:", error);
         toast.error("Failed to load journey data. Please try again.");
@@ -275,7 +270,6 @@ export default function CreateJourneyPage({
           }
         }
         reset(formData);
-        toast.success("Journey data loaded successfully");
       } catch (error) {
         console.error("Error fetching journey data:", error);
         toast.error("Failed to load journey data. Please try again.");
