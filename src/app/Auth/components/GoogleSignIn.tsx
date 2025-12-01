@@ -7,6 +7,7 @@ import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { styles } from "./styles/Auth.style";
 import { handleGoogleSignInSuccess } from "../Auth.utils";
 import { usePermissions } from "@/app/providers/PermissionProvider";
+import { buildPathWithTenant } from "@/app/utils/tenant.utils";
 
 export const handleGoogleSuccess = async (
   credentialResponse: CredentialResponse,
@@ -32,7 +33,20 @@ export const handleGoogleSuccess = async (
     handleGoogleSignInSuccess(
       credentialResponse.credential,
       async () => {
-        router.push("/dashboard");
+        const tenant =
+          typeof window !== "undefined"
+            ? localStorage.getItem("organization") ||
+              JSON.parse(localStorage.getItem("tenantData") || "{}")?.name
+            : null;
+        if (tenant) {
+          const { pathname, search } = buildPathWithTenant(
+            "/dashboard",
+            tenant
+          );
+          router.push(`${pathname}${search}`);
+        } else {
+          router.push("/dashboard");
+        }
       },
       () => {
         // On error, redirect to login
