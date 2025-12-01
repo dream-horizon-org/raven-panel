@@ -173,7 +173,7 @@ export default function LandingPage() {
                 }
               >
                 <MenuItem value="dream11">dream11</MenuItem>
-                <MenuItem value="criq">criq</MenuItem>
+                {/* <MenuItem value="criq">criq</MenuItem> */}
               </Select>
               {touched && !organization.trim() && (
                 <FormHelperText>Organization name is required</FormHelperText>
