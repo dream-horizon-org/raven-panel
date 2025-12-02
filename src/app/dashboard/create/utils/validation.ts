@@ -367,6 +367,113 @@ export const validateElementStyles = (
   return !hasErrors;
 };
 
+export const validateElementActions = (
+  elementActions: any[] | undefined,
+  basePath: string,
+  setError: (
+    path: Path<CreateJourneyFormData>,
+    error: { type: string; message: string }
+  ) => void,
+  clearErrors: (path: Path<CreateJourneyFormData>) => void
+): boolean => {
+  if (!elementActions || !Array.isArray(elementActions)) {
+    return true;
+  }
+
+  let hasErrors = false;
+
+  elementActions.forEach((action: any, index: number) => {
+    if (!action || typeof action !== "object") {
+      return;
+    }
+
+    if (action.type === "deeplink" && action.params) {
+      const params = action.params;
+      const actionBasePath = `${basePath}.actions.${index}` as Path<
+        CreateJourneyFormData
+      >;
+
+      if (params.androidUrl !== undefined && params.androidUrl !== null) {
+        const androidUrlValue =
+          typeof params.androidUrl === "string"
+            ? params.androidUrl
+            : Array.isArray(params.androidUrl) && params.androidUrl.length > 0
+            ? params.androidUrl[0]?.value || params.androidUrl[0]
+            : "";
+
+        const androidUrlPath = `${actionBasePath}.params.androidUrl` as Path<
+          CreateJourneyFormData
+        >;
+
+        if (!androidUrlValue || typeof androidUrlValue !== "string") {
+          setError(androidUrlPath, {
+            type: "required",
+            message: "Android URL is required",
+          });
+          hasErrors = true;
+        } else if (!isValidUrl(androidUrlValue.trim())) {
+          setError(androidUrlPath, {
+            type: "validation",
+            message: "Invalid Android URL format. Please enter a valid URL.",
+          });
+          hasErrors = true;
+        } else {
+          clearErrors(androidUrlPath);
+        }
+      } else {
+        const androidUrlPath = `${actionBasePath}.params.androidUrl` as Path<
+          CreateJourneyFormData
+        >;
+        setError(androidUrlPath, {
+          type: "required",
+          message: "Android URL is required",
+        });
+        hasErrors = true;
+      }
+
+      if (params.iosUrl !== undefined && params.iosUrl !== null) {
+        const iosUrlValue =
+          typeof params.iosUrl === "string"
+            ? params.iosUrl
+            : Array.isArray(params.iosUrl) && params.iosUrl.length > 0
+            ? params.iosUrl[0]?.value || params.iosUrl[0]
+            : "";
+
+        const iosUrlPath = `${actionBasePath}.params.iosUrl` as Path<
+          CreateJourneyFormData
+        >;
+
+        if (!iosUrlValue || typeof iosUrlValue !== "string") {
+          setError(iosUrlPath, {
+            type: "required",
+            message: "iOS URL is required",
+          });
+          hasErrors = true;
+        } else if (!isValidUrl(iosUrlValue.trim())) {
+          setError(iosUrlPath, {
+            type: "validation",
+            message: "Invalid iOS URL format. Please enter a valid URL.",
+          });
+          hasErrors = true;
+        } else {
+          clearErrors(iosUrlPath);
+        }
+      } else {
+        const iosUrlPath = `${actionBasePath}.params.iosUrl` as Path<
+          CreateJourneyFormData
+        >;
+        setError(iosUrlPath, {
+          type: "required",
+          message: "iOS URL is required",
+        });
+        hasErrors = true;
+      }
+    }
+  });
+
+  return !hasErrors;
+};
+
 // Validate an element (props + styles) recursively
 export const validateElement = (
   element: any,
@@ -440,6 +547,19 @@ export const validateElement = (
     console.log(
       `[Validation] No component definition found for type "${element.type}" at ${basePath}`
     );
+  }
+
+  if (element.actions && Array.isArray(element.actions)) {
+    const actionsValid = validateElementActions(
+      element.actions,
+      basePath,
+      setError,
+      clearErrors
+    );
+    if (!actionsValid) {
+      console.log(`[Validation] Actions validation failed at ${basePath}`);
+      hasErrors = true;
+    }
   }
 
   // Always validate children recursively (even for container types like NUDGE_UI/POPUP)

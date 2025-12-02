@@ -14,7 +14,7 @@ export const transformFormDataToApiFormat = (
   formData: CreateJourneyFormData
 ): CreateCtaInput => {
   const cohortEligibility: CohortEligibilityInput = {
-    includes: ["real_time_nudge_internal"],
+    includes: formData.selectCohort.includedCohorts || [],
     excludes: formData.selectCohort.exculdedCohorts || [],
   };
 
@@ -124,6 +124,54 @@ export const transformFormDataToApiFormat = (
       (action, index) => action.actionId || `${index}_${baseTimestamp}`
     ) || [];
 
+  const transformDeeplinkParams = (node: any): any => {
+    if (!node || typeof node !== "object") {
+      return node;
+    }
+
+    if (Array.isArray(node.actions)) {
+      node.actions = node.actions.map((action: any) => {
+        if (
+          action.type === "deeplink" &&
+          action.params &&
+          typeof action.params === "object"
+        ) {
+          const params = { ...action.params };
+
+          if (params.androidUrl && typeof params.androidUrl === "string") {
+            params.androidUrl = [
+              {
+                value: params.androidUrl,
+                isTemplateString: false,
+              },
+            ];
+          }
+
+          if (params.iosUrl && typeof params.iosUrl === "string") {
+            params.iosUrl = [
+              {
+                value: params.iosUrl,
+                isTemplateString: false,
+              },
+            ];
+          }
+
+          return {
+            ...action,
+            params,
+          };
+        }
+        return action;
+      });
+    }
+
+    if (Array.isArray(node.children)) {
+      node.children = node.children.map(transformDeeplinkParams);
+    }
+
+    return node;
+  };
+
   const actions =
     formData.nudgeSelection.actions?.map((action, index) => {
       const actionId = actionIds[index];
@@ -152,7 +200,7 @@ export const transformFormDataToApiFormat = (
         };
       }
 
-      templateToStringify;
+      templateToStringify = transformDeeplinkParams(templateToStringify);
 
       const apiActionType: NudgeType = action.type;
 
