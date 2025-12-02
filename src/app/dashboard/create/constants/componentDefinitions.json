@@ -566,7 +566,6 @@
           "default": "EXTERNAL_BROWSER",
           "acceptedValues": [
             "EXTERNAL_BROWSER",
-            "INTERNAL_BROWSER",
             "INTERNAL_APP"
           ]
         },
@@ -578,7 +577,6 @@
           "default": "EXTERNAL_BROWSER",
           "acceptedValues": [
             "EXTERNAL_BROWSER",
-            "INTERNAL_BROWSER",
             "INTERNAL_APP"
           ]
         }
