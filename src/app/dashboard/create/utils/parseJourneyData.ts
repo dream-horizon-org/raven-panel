@@ -224,7 +224,7 @@ export const parseJourneyDataToFormData = (
     })
   );
 
-  const resetStates = rule.resetStates || ["1"];
+  const resetStates = rule.resetStates || [];
 
   return {
     ctaMetadata: {

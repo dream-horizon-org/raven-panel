@@ -3,10 +3,21 @@
 import { memo } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Box, Typography, Chip } from "@mui/material";
-import { JourneyNodeData, EngagementNodeData } from "./types";
+import {
+  JourneyNodeData,
+  EngagementNodeData,
+  Branch,
+  Engagement,
+} from "./types";
 import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
+
+// Type aliases to work around React Flow's NodeProps constraint
+// @ts-expect-error - NodeProps constraint requires Node type, but we only have data types
+type JourneyNodeProps = NodeProps<Record<string, unknown>>;
+// @ts-expect-error - NodeProps constraint requires Node type, but we only have data types
+type EngagementNodeProps = NodeProps<Record<string, unknown>>;
 
 const nodeStyle = {
   border: "2px solid",
@@ -17,7 +28,8 @@ const nodeStyle = {
 };
 
 // State Node (represents a node/state in the journey)
-export const StateNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
+export const StateNode = memo((props: JourneyNodeProps) => {
+  const data = props.data as JourneyNodeData;
   const branchCount = data.branches?.length || 0;
   const hasExitBranch = data.branches?.some((b) => b.targetNodeId === "exit");
   const hasNoBranches = branchCount === 0;
@@ -52,22 +64,36 @@ export const StateNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
           }}
         />
       )}
-      <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, mt: isEntry ? 0.5 : 0 }}>
+      <Typography
+        variant="subtitle2"
+        fontWeight={600}
+        sx={{ mb: 1, mt: isEntry ? 0.5 : 0 }}
+      >
         {data.eventName || data.label || "Node"}
       </Typography>
       {hasNoBranches ? (
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 0.5 }}
+        >
           → Exit (default)
         </Typography>
       ) : (
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 0.5 }}
+        >
           {branchCount} branch{branchCount !== 1 ? "es" : ""}
           {hasExitBranch && " (includes exit)"}
         </Typography>
       )}
       {data.engagements && data.engagements.length > 0 && (
         <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
-          {data.engagements.map((eng) => (
+          {data.engagements.map((eng: Engagement) => (
             <Chip
               key={eng.id}
               label={eng.type}
@@ -86,7 +112,8 @@ export const StateNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
 StateNode.displayName = "StateNode";
 
 // Exit Node
-export const ExitNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
+export const ExitNode = memo((props: JourneyNodeProps) => {
+  const data = props.data as JourneyNodeData;
   return (
     <Box
       sx={{
@@ -108,7 +135,8 @@ export const ExitNode = memo(({ data }: NodeProps<JourneyNodeData>) => {
 ExitNode.displayName = "ExitNode";
 
 // Engagement Node (represents an in-app nudge/engagement)
-export const EngagementNode = memo(({ data }: NodeProps<EngagementNodeData>) => {
+export const EngagementNode = memo((props: EngagementNodeProps) => {
+  const data = props.data as EngagementNodeData;
   const getIcon = () => {
     switch (data.engagementType) {
       case "tooltip":
@@ -147,11 +175,30 @@ export const EngagementNode = memo(({ data }: NodeProps<EngagementNodeData>) => 
       }}
     >
       <Handle type="target" position={Position.Left} />
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.25 }}>
-        <Box sx={{ color: "#ff9800", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 0.25,
+        }}
+      >
+        <Box
+          sx={{
+            color: "#ff9800",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           {getIcon()}
         </Box>
-        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ fontSize: "0.65rem" }}>
+        <Typography
+          variant="caption"
+          fontWeight={600}
+          color="text.secondary"
+          sx={{ fontSize: "0.65rem" }}
+        >
           {getTypeLabel()}
         </Typography>
         <Chip
@@ -174,4 +221,3 @@ export const EngagementNode = memo(({ data }: NodeProps<EngagementNodeData>) => 
 });
 
 EngagementNode.displayName = "EngagementNode";
-

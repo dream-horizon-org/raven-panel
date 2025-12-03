@@ -70,14 +70,14 @@ export interface EngagementVariant {
   preview?: string; // URL or path to preview image
 }
 
-export interface EngagementConfig {
+export interface EngagementConfig extends Record<string, unknown> {
   variant?: string; // Selected variant ID
   content?: {
     elements?: UIElement[];
   };
 }
 
-export interface EngagementNodeData {
+export interface EngagementNodeData extends Record<string, unknown> {
   label: string;
   nodeType: "engagement";
   engagementId: string;
@@ -91,7 +91,7 @@ export interface Branch {
   label?: string;
 }
 
-export interface JourneyNodeData {
+export interface JourneyNodeData extends Record<string, unknown> {
   label: string;
   nodeType: NodeType;
   // Event configuration
@@ -105,4 +105,3 @@ export interface JourneyNodeData {
   // Indicates if this is the entry node
   isEntry?: boolean;
 }
-

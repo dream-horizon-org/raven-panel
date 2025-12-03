@@ -26,7 +26,7 @@ export const headerContentStyles: SxProps<Theme> = {
 
 export const headerTitleStyles: SxProps<Theme> = {
   fontWeight: 600,
-  fontSize: "1.25rem",
+  fontSize: "20px", // Increased font size
   lineHeight: 1.2,
   color: "text.primary",
 };
@@ -53,35 +53,41 @@ export const formContainerStyles: SxProps<Theme> = {
   overflowY: "auto",
 };
 
-export const eventNameContainerStyles = (hasEventName: boolean): SxProps<Theme> => ({
+export const eventNameContainerStyles = (
+  hasEventName: boolean
+): SxProps<Theme> => ({
   mb: 3,
   mt: hasEventName ? 2 : 0,
 });
 
-export const eventNameInputStyles = (isEntry: boolean, hasValue: boolean): SxProps<Theme> => ({
+export const eventNameInputStyles = (
+  isEntry: boolean,
+  hasValue: boolean
+): SxProps<Theme> => ({
   "& .MuiOutlinedInput-root": {
-    ...(isEntry && !hasValue && {
-      "& fieldset": {
-        borderColor: "primary.main",
-        borderWidth: 2,
-      },
-      "&:hover fieldset": {
-        borderColor: "primary.main",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "primary.main",
-        borderWidth: 2,
-      },
-      animation: "pulse 2s ease-in-out infinite",
-      "@keyframes pulse": {
-        "0%, 100%": {
-          boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
+    ...(isEntry &&
+      !hasValue && {
+        "& fieldset": {
+          borderColor: "primary.main",
+          borderWidth: 2,
         },
-        "50%": {
-          boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
+        "&:hover fieldset": {
+          borderColor: "primary.main",
         },
-      },
-    }),
+        "&.Mui-focused fieldset": {
+          borderColor: "primary.main",
+          borderWidth: 2,
+        },
+        animation: "pulse 2s ease-in-out infinite",
+        "@keyframes pulse": {
+          "0%, 100%": {
+            boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
+          },
+          "50%": {
+            boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
+          },
+        },
+      }),
   },
 });
 
@@ -95,6 +101,7 @@ export const sectionHeaderStyles: SxProps<Theme> = {
 
 export const sectionTitleStyles: SxProps<Theme> = {
   mb: 0.5,
+  fontSize: "14px", // Description: 14px
 };
 
 // Engagement styles
@@ -108,7 +115,9 @@ export const engagementListStyles: SxProps<Theme> = {
   gap: 2,
 };
 
-export const engagementPaperStyles = (isHighlighted: boolean): SxProps<Theme> => ({
+export const engagementPaperStyles = (
+  isHighlighted: boolean
+): SxProps<Theme> => ({
   border: "2px solid",
   borderColor: isHighlighted ? "primary.main" : "divider",
   borderRadius: 2,
@@ -137,10 +146,14 @@ export const engagementMenuItemStyles: SxProps<Theme> = {
   gap: 1,
 };
 
-export const emptyEngagementBoxStyles = (isEntry: boolean, hasEventName: boolean): SxProps<Theme> => ({
+export const emptyEngagementBoxStyles = (
+  isEntry: boolean,
+  hasEventName: boolean
+): SxProps<Theme> => ({
   p: 2,
   textAlign: "center",
-  bgcolor: isEntry && !hasEventName ? "action.disabledBackground" : "action.hover",
+  bgcolor:
+    isEntry && !hasEventName ? "action.disabledBackground" : "action.hover",
   borderRadius: 1,
   border: isEntry && !hasEventName ? "1px dashed" : "none",
   borderColor: isEntry && !hasEventName ? "divider" : "transparent",
@@ -153,7 +166,10 @@ export const branchListStyles: SxProps<Theme> = {
   gap: 2,
 };
 
-export const branchPaperStyles = (shouldHighlight: boolean, isNewlyAdded: boolean): SxProps<Theme> => ({
+export const branchPaperStyles = (
+  shouldHighlight: boolean,
+  isNewlyAdded: boolean
+): SxProps<Theme> => ({
   border: "2px solid",
   borderColor: shouldHighlight ? "primary.main" : "divider",
   borderRadius: 2,
@@ -200,10 +216,14 @@ export const flowStepStyles: SxProps<Theme> = {
   flex: 1,
 };
 
-export const emptyBranchBoxStyles = (isEntry: boolean, hasEventName: boolean): SxProps<Theme> => ({
+export const emptyBranchBoxStyles = (
+  isEntry: boolean,
+  hasEventName: boolean
+): SxProps<Theme> => ({
   p: 3,
   textAlign: "center",
-  bgcolor: isEntry && !hasEventName ? "action.disabledBackground" : "action.hover",
+  bgcolor:
+    isEntry && !hasEventName ? "action.disabledBackground" : "action.hover",
   borderRadius: 1,
   border: isEntry && !hasEventName ? "1px dashed" : "none",
   borderColor: isEntry && !hasEventName ? "divider" : "transparent",
@@ -294,16 +314,18 @@ export const filterEditorStyles: SxProps<Theme> = {
 };
 
 export const filterPropertyFieldStyles: SxProps<Theme> = {
-  flex: 2,
+  flex: 1,
+  width: "100%",
 };
 
 export const filterOperatorFieldStyles: SxProps<Theme> = {
   flex: 1,
-  minWidth: 120,
+  width: "100%",
 };
 
 export const filterValueFieldStyles: SxProps<Theme> = {
-  flex: 2,
+  flex: 1,
+  width: "100%",
 };
 
 export const filterDeleteButtonStyles: SxProps<Theme> = {
@@ -340,7 +362,7 @@ export const dialogTitleIconStyles: SxProps<Theme> = {
 };
 
 export const dialogContentTextStyles: SxProps<Theme> = {
-  fontSize: "0.95rem",
+  fontSize: "1.075rem", // Increased from 0.95rem (15.2px) to 1.075rem (17.2px) - +2px
   lineHeight: 1.6,
   color: "text.primary",
   mb: 1,
@@ -363,4 +385,3 @@ export const branchDividerStyles: SxProps<Theme> = {
 export const footerDividerStyles: SxProps<Theme> = {
   my: 2,
 };
-

@@ -28,12 +28,12 @@ import {
 import JourneyHeader from "./JourneyHeader";
 import JourneyTabs from "./JourneyTabs";
 import CohortSection from "./CohortSection";
-import EventTriggerSection from "./EventTriggerSection";
 import ScheduleSection from "./ScheduleSection";
 import JourneyFrequencySection from "./JourneyFrequencySection";
 import JourneyActions from "./JourneyActions";
 import EngagementSelector from "./EngagementSelector";
 import EngagementSidePanel from "./EngagementSidePanel";
+import JourneyFlowBuilderIntegrated from "./JourneyFlowBuilderIntegrated";
 import { createJourney } from "@/api/services/createJourney.service";
 import { updateJourney } from "@/api/services/updateJourney.service";
 import { getJourneyById } from "@/api/services/getJourney.service";
@@ -630,8 +630,16 @@ export default function CreateJourneyPage({
   // Template is valid if it exists and has no errors
   const isTemplateValid = !!template && !hasTemplateErrors;
 
+  // Ref to store the sync function from JourneyFlowBuilderIntegrated
+  const syncTemplateRef = useRef<(() => void) | null>(null);
+
   // Callback to trigger re-validation when template is saved
   const handleTemplateSaved = () => {
+    // Sync template back to engagement config first
+    if (syncTemplateRef.current) {
+      syncTemplateRef.current();
+    }
+
     // Force re-check by updating validation key
     setValidationKey((prev) => prev + 1);
     // Also trigger form validation to ensure errors object is updated
@@ -643,6 +651,37 @@ export default function CreateJourneyPage({
   };
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
+    // If moving to setup tab, check if engagements have templates
+    if (newTab === "setup") {
+      const currentData = getValues();
+      const actions = currentData.nudgeSelection?.actions || [];
+
+      // Check if there are engagements without templates
+      // An engagement is considered to have a template if:
+      // 1. There's an action with a template that has more than just testID
+      // 2. For tooltip, template should have props with more than just testID
+      // 3. For popup/bottomsheet, template should have children or meaningful props
+      const engagementsWithoutTemplates = actions.filter((action) => {
+        if (!action.template) return true;
+
+        const template = action.template;
+        // Check if template has meaningful content
+        const hasContent =
+          (template.children && template.children.length > 0) ||
+          (template.props && Object.keys(template.props).length > 1) || // More than just testID
+          (template.styles && Object.keys(template.styles).length > 0);
+
+        return !hasContent;
+      });
+
+      if (engagementsWithoutTemplates.length > 0) {
+        toast.error(
+          "Please add template details for all engagements before proceeding to Journey Setup."
+        );
+        return;
+      }
+    }
+
     setActiveTab(newTab);
   };
   const handleNext = () => {
@@ -745,31 +784,32 @@ export default function CreateJourneyPage({
           <Box sx={createJourneyPageStyles.contentArea}>
             <JourneyTabs activeTab={activeTab} onTabChange={handleTabChange} />
             <form onSubmit={handleSubmit(onFormSubmit)}>
-              {activeTab === "ui" && (
-                <Box sx={createJourneyPageStyles.formContent}>
-                  <EngagementSelector
-                    control={control}
-                    errors={errors}
-                    onEngagementSelect={() => setSidePanelOpen(true)}
-                  />
-                </Box>
-              )}
+              <Box
+                sx={{
+                  ...createJourneyPageStyles.formContent,
+                  height: "calc(100vh - 200px)",
+                  minHeight: "600px",
+                  display: activeTab === "ui" ? "block" : "none",
+                }}
+              >
+                <JourneyFlowBuilderIntegrated
+                  control={control}
+                  errors={errors}
+                  events={eventsData?.data?.eventList || []}
+                  isLoadingEvents={isLoadingEvents || isFetchingEvents}
+                  systemPropertyNames={systemPropertyNames}
+                  systemPropertyTypes={systemPropertyTypes}
+                  onEngagementSelect={(nodeId, engagementId, stateNumber) => {
+                    // The integrated component handles the mapping to form actions
+                    // Just open the side panel for template selection
+                    setSidePanelOpen(true);
+                  }}
+                  syncTemplateRef={syncTemplateRef}
+                />
+              </Box>
               {activeTab === "setup" && (
                 <Box sx={createJourneyPageStyles.formContent}>
                   <CohortSection control={control} errors={errors} />
-                  <Box sx={createJourneyPageStyles.filtersSection}>
-                    <EventTriggerSection
-                      control={control}
-                      errors={errors}
-                      events={eventsData?.data?.eventList || []}
-                      isLoadingEvents={isLoadingEvents}
-                      isLoading={isLoading}
-                      availableProperties={availableProperties}
-                      isLoadingFilters={isLoadingFilters}
-                      systemProperties={systemPropertyNames}
-                      systemPropertyTypes={systemPropertyTypes}
-                    />
-                  </Box>
                   <ScheduleSection control={control} errors={errors} />
                   <JourneyFrequencySection control={control} errors={errors} />
                 </Box>
