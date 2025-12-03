@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=-1",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "test": "jest",
     "test:coverage": "jest --coverage",

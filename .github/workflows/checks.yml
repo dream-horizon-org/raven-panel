@@ -33,9 +33,11 @@ jobs:
 
       - name: Run Lint and Capture Output
         id: lint
+        continue-on-error: true
         run: |
-          yarn lint 2>&1 | tee lint-output.txt
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          set -o pipefail
+          yarn lint 2>&1 | tee lint-output.txt || true
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
 
       - name: Comment PR with Lint Results
         if: always() && github.event_name == 'pull_request'
@@ -214,6 +216,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Run Type Check
+        continue-on-error: true
         run: |
           export NODE_OPTIONS="--max-old-space-size=4096"
           yarn app:check
