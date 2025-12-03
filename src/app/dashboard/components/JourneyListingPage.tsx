@@ -100,8 +100,8 @@ export default function JourneyListingPage() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
-                onClick={() => router.push("/dashboard/create-journey")}
-                // onClick={() => router.push("/dashboard/create")}
+                // onClick={() => router.push("/dashboard/create-journey")}
+                onClick={() => router.push("/dashboard/create")}
                 disabled={!hasEditAccess || isPermissionsLoading}
               >
                 {BUTTON_TEXT.CREATE_JOURNEY}
