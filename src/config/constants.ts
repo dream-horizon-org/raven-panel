@@ -1,5 +1,5 @@
 // App-wide constants
-export const APP_NAME = "Raven Panel";
+export const APP_NAME = "Raven";
 export const FOOTER_TEXT = `© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.`;
 
 // Page titles
@@ -22,6 +22,46 @@ export const LABELS = {
   TOTAL_JOURNEYS: "Total journeys",
   LIVE_JOURNEYS: "Live journeys",
 };
+
+// Journey action menu items
+export const JOURNEY_MENU_ACTIONS = [
+  {
+    id: "copy",
+    label: "Copy journey ID",
+    icon: "FileCopyOutlined",
+    hasAction: true,
+  },
+  {
+    id: "live",
+    label: "Live",
+    icon: "PlayCircleOutline",
+    hasAction: false,
+  },
+  {
+    id: "schedule",
+    label: "Schedule",
+    icon: "Schedule",
+    hasAction: false,
+  },
+  {
+    id: "pause",
+    label: "Pause",
+    icon: "PauseCircleOutline",
+    hasAction: false,
+  },
+  {
+    id: "terminate",
+    label: "Terminate",
+    icon: "StopCircle",
+    hasAction: false,
+  },
+  {
+    id: "conclude",
+    label: "Conclude",
+    icon: "CheckCircleOutline",
+    hasAction: false,
+  },
+] as const;
 
 // Static data for mapping
 export const FILTERS = [

@@ -261,8 +261,8 @@ export const tableLoadingOverlayStyles: SxProps<Theme> = (theme) => ({
   alignItems: "center",
   bgcolor:
     theme.palette.mode === "light"
-      ? "rgba(255, 255, 255, 0.9)"
-      : "rgba(26, 26, 26, 0.9)",
+      ? THEME_COLORS.OVERLAY.light
+      : THEME_COLORS.OVERLAY.dark,
   zIndex: 9999,
   borderRadius: "16px",
   pointerEvents: "none",

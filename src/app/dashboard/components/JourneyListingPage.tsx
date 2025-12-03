@@ -19,8 +19,10 @@ import { BUTTON_TEXT, PAGE_TITLES } from "@/config/constants";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useJourneysList } from "@/hooks/useJourneysList";
+import { usePermissions } from "@/app/providers/PermissionProvider";
 
-export default function Body() {
+export default function JourneyListingPage() {
+  const { hasEditAccess, isLoading: isPermissionsLoading } = usePermissions();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState<Status>("ALL");
@@ -29,6 +31,8 @@ export default function Body() {
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => setPageNumber(0), [searchTerm, status]);
+
+  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
 
   const {
     data: journeys,
@@ -96,7 +100,9 @@ export default function Body() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
-                onClick={() => router.push("/dashboard/create-journey")}
+                // onClick={() => router.push("/dashboard/create-journey")}
+                onClick={() => router.push("/dashboard/create")}
+                disabled={!hasEditAccess || isPermissionsLoading}
               >
                 {BUTTON_TEXT.CREATE_JOURNEY}
               </Button>

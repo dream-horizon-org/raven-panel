@@ -1,0 +1,640 @@
+{
+  "components": [
+    {
+      "id": 1,
+      "componentVariant": "REGULAR",
+      "type": "View",
+      "display": "Vertical Stack",
+      "description": "Group other components",
+      "maxAllowedChildren": 100,
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "alignItems"
+      ]
+    },
+    {
+      "id": 1,
+      "componentVariant": "REGULAR",
+      "type": "View",
+      "display": "Horizontal Stack",
+      "description": "Group other components",
+      "maxAllowedChildren": 100,
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "alignItems"
+      ]
+    },
+    {
+      "id": 2,
+      "componentVariant": "REGULAR",
+      "type": "Text",
+      "display": "Text",
+      "description": "Text",
+      "maxAllowedChildren": 0,
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "display": "Title",
+          "isTemplate": true
+        },
+        {
+          "name": "fontWeight",
+          "display": "Font Weight",
+          "type": "enum",
+          "default": "regular",
+          "acceptedValues": ["regular", "medium", "bold"]
+        }
+      ],
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "alignItems"
+      ],
+      "actions": [
+        {
+          "name": "dismiss"
+        },
+        {
+          "name": "analyticsEvent"
+        },
+        {
+          "name": "deeplink"
+        },
+        {
+          "name": "emitNativeEvent"
+        },
+        {
+          "name": "openPlayStore"
+        },
+        {
+          "name": "none"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "componentVariant": "REGULAR",
+      "type": "Button",
+      "display": "Button",
+      "description": "Button",
+      "maxAllowedChildren": 0,
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "display": "Title",
+          "isTemplate": true
+        },
+        {
+          "name": "fontWeight",
+          "display": "Font Weight",
+          "type": "enum",
+          "default": "regular",
+          "acceptedValues": ["regular", "medium", "bold"]
+        }
+      ],
+      "actions": [
+        {
+          "name": "dismiss"
+        },
+        {
+          "name": "analyticsEvent"
+        },
+        {
+          "name": "deeplink"
+        },
+        {
+          "name": "emitNativeEvent"
+        },
+        {
+          "name": "openPlayStore"
+        },
+        {
+          "name": "none"
+        }
+      ],
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "alignItems"
+      ]
+    },
+    {
+      "id": 4,
+      "componentVariant": "REGULAR",
+      "type": "Image",
+      "display": "Image",
+      "description": "Image",
+      "maxAllowedChildren": 0,
+      "actions": [
+        {
+          "name": "dismiss"
+        },
+        {
+          "name": "analyticsEvent"
+        },
+        {
+          "name": "deeplink"
+        },
+        {
+          "name": "emitNativeEvent"
+        },
+        {
+          "name": "openPlayStore"
+        },
+        {
+          "name": "none"
+        }
+      ],
+      "props": [
+        {
+          "name": "uri",
+          "type": "url",
+          "display": "Image URL",
+          "default": ""
+        },
+        {
+          "name": "resizeMode",
+          "type": "enum",
+          "display": "Resize Mode",
+          "acceptedValues": ["contain", "cover", "stretch", "center"]
+        }
+      ],
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "alignItems"
+      ]
+    },
+    {
+      "id": 8,
+      "componentVariant": "REGULAR",
+      "type": "Lottie",
+      "display": "Lottie",
+      "description": "Lottie",
+      "maxAllowedChildren": 0,
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "height",
+        "width",
+        "marginLeft",
+        "marginRight",
+        "marginTop",
+        "marginBottom",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "flex",
+        "flexGrow",
+        "flexShrink",
+        "flexBasis",
+        "flexDirection",
+        "alignItems",
+        "borderWidth",
+        "justifyContent",
+        "maxHeight",
+        "maxWidth",
+        "minHeight",
+        "minWidth",
+        "aspectRatio"
+      ],
+      "actions": [
+        {
+          "name": "dismiss"
+        },
+        {
+          "name": "analyticsEvent"
+        },
+        {
+          "name": "deeplink"
+        },
+        {
+          "name": "emitNativeEvent"
+        },
+        {
+          "name": "openPlayStore"
+        },
+        {
+          "name": "none"
+        }
+      ],
+      "props": [
+        {
+          "name": "uri",
+          "type": "url",
+          "display": "Lottie URL",
+          "default": ""
+        },
+        {
+          "name": "resizeMode",
+          "type": "enum",
+          "display": "Resize Mode",
+          "acceptedValues": ["contain", "cover", "center"]
+        },
+        {
+          "name": "autoPlay",
+          "type": "boolean",
+          "display": "Auto Play"
+        },
+        {
+          "name": "loop",
+          "type": "boolean",
+          "display": "Loop"
+        },
+        {
+          "name": "speed",
+          "type": "number"
+        },
+        {
+          "name": "progress",
+          "type": "number",
+          "display": "Progress"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "componentVariant": "CONTAINER",
+      "type": "BottomSheet",
+      "display": "Bottom Sheet",
+      "description": "BottomSheet",
+      "maxAllowedChildren": 1
+    },
+    {
+      "id": 6,
+      "componentVariant": "CONTAINER",
+      "type": "POPUP",
+      "display": "POPUP",
+      "description": "POPUP",
+      "maxAllowedChildren": 1,
+      "config": {
+        "uiConfig": "Default"
+      }
+    },
+    {
+      "id": 7,
+      "componentVariant": "PREBAKED",
+      "type": "ContestUpsellBottomSheet",
+      "display": "ContestUpsellBottomSheet",
+      "description": "ContestUpsellBottomSheet",
+      "props": [
+        {
+          "name": "mode",
+          "type": "string",
+          "default": "",
+          "isTemplate": true
+        },
+        {
+          "name": "contestId",
+          "type": "string",
+          "default": "",
+          "isTemplate": true
+        },
+        {
+          "name": "roundId",
+          "type": "number",
+          "default": "",
+          "isTemplate": true
+        },
+        {
+          "name": "tourId",
+          "type": "number",
+          "default": "",
+          "isTemplate": true
+        },
+        {
+          "name": "site",
+          "type": "string",
+          "default": "",
+          "isTemplate": true
+        }
+      ],
+      "maxAllowedChildren": 0
+    },
+    {
+      "id": 9,
+      "componentVariant": "CONTAINER",
+      "type": "TOOLTIP",
+      "display": "TOOLTIP",
+      "description": "TOOLTIP",
+      "maxAllowedChildren": 0,
+      "config": {
+        "uiConfig": "Default"
+      },
+      "props": [
+        {
+          "name": "title",
+          "type": "string",
+          "display": "Title",
+          "isRequired": true
+        },
+        {
+          "name": "subTitle",
+          "type": "string",
+          "display": "Sub Title"
+        },
+        {
+          "name": "position",
+          "type": "enum",
+          "display": "Position",
+          "acceptedValues": ["top", "bottom", "left", "right"]
+        },
+        {
+          "name": "titleFontSize",
+          "type": "number",
+          "display": "Title Font Size"
+        },
+        {
+          "name": "subTitleFontSize",
+          "type": "number",
+          "display": "Sub Title Font Size"
+        },
+        {
+          "name": "autoDismissMs",
+          "type": "number",
+          "display": "Auto Dismiss (ms)"
+        },
+        {
+          "name": "targetScreen",
+          "type": "string",
+          "display": "Target Screen",
+          "isRequired": true
+        },
+        {
+          "name": "targetId",
+          "type": "string",
+          "display": "Target Id",
+          "isRequired": true
+        },
+        {
+          "name": "titleColor",
+          "type": "color",
+          "display": "Title Color"
+        },
+        {
+          "name": "subTitleColor",
+          "type": "color",
+          "display": "Sub Title Color"
+        },
+        {
+          "name": "dismissOnOutsideTouch",
+          "type": "boolean",
+          "display": "Dismiss On Outside Touch"
+        },
+        {
+          "name": "triggerDelay",
+          "type": "number",
+          "display": "Trigger Delay"
+        },
+        {
+          "name": "titleAlignment",
+          "type": "enum",
+          "display": "Title Alignment",
+          "acceptedValues": ["left", "center", "right"]
+        },
+        {
+          "name": "subTitleAlignment",
+          "type": "enum",
+          "display": "Sub Title Alignment",
+          "acceptedValues": ["left", "center", "right"]
+        },
+        {
+          "name": "arrowSize",
+          "type": "number",
+          "display": "Arrow Size"
+        },
+        {
+          "name": "titleFontFamily",
+          "type": "enum",
+          "display": "Title Font Family",
+          "acceptedValues": ["Roboto", "Inter", "Trim"]
+        },
+        {
+          "name": "subTitleFontFamily",
+          "type": "enum",
+          "display": "Sub Title Font Family",
+          "acceptedValues": ["Roboto", "Inter", "Trim"]
+        },
+        {
+          "name": "titleFontWeight",
+          "type": "enum",
+          "display": "Title Font Weight",
+          "acceptedValues": ["Bold", "Medium", "Regular"]
+        },
+        {
+          "name": "subTitleFontWeight",
+          "type": "enum",
+          "display": "Sub Title Font Weight",
+          "acceptedValues": ["Bold", "Medium", "Regular"]
+        }
+      ],
+      "styles": [
+        "backgroundColor",
+        "borderRadius",
+        "paddingLeft",
+        "paddingRight",
+        "paddingTop",
+        "paddingBottom",
+        "marginTop",
+        "marginBottom",
+        "marginLeft",
+        "marginRight"
+      ]
+    }
+  ],
+  "clickActions": [
+    {
+      "id": "1",
+      "type": "dismiss",
+      "name": "dismiss",
+      "display": "Dismiss",
+      "category": "toggle",
+      "executionOrder": 1
+    },
+    {
+      "id": "2",
+      "type": "analyticsEvent",
+      "name": "analyticsEvent",
+      "display": "Send Analytics Event",
+      "category": "toggle",
+      "executionOrder": 2,
+      "params": [
+        {
+          "name": "eventName",
+          "type": "string",
+          "display": "Event Name",
+          "isTemplate": false,
+          "default": null,
+          "acceptedValues": null
+        },
+        {
+          "name": "eventParams",
+          "type": "dynamicArray",
+          "display": "Event Params",
+          "isTemplate": null,
+          "default": null,
+          "acceptedValues": null
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "category": "dropdown",
+      "display": "Open Deeplink",
+      "type": "deeplink",
+      "name": "deeplink",
+      "executionOrder": 3,
+      "params": [
+        {
+          "name": "androidUrl",
+          "type": "url",
+          "isTemplate": true,
+          "default": null,
+          "acceptedValues": null,
+          "isRequired": true,
+          "display": "Android URL"
+        },
+        {
+          "name": "iosUrl",
+          "display": "iOS URL",
+          "type": "url",
+          "isTemplate": true,
+          "default": null,
+          "acceptedValues": null,
+          "isRequired": true
+        },
+        {
+          "name": "androidUrlRedirectionType",
+          "type": "enum",
+          "isTemplate": null,
+          "display": "Android URL Redirection Type",
+          "default": "EXTERNAL_BROWSER",
+          "acceptedValues": [
+            "EXTERNAL_BROWSER",
+            "INTERNAL_APP"
+          ]
+        },
+        {
+          "name": "iosUrlRedirectionType",
+          "type": "enum",
+          "display": "iOS URL Redirection Type",
+          "isTemplate": null,
+          "default": "EXTERNAL_BROWSER",
+          "acceptedValues": [
+            "EXTERNAL_BROWSER",
+            "INTERNAL_APP"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "category": "dropdown",
+      "display": "Emit Native Event",
+      "type": "emitNativeEvent",
+      "name": "emitNativeEvent",
+      "executionOrder": 3,
+      "params": [
+        {
+          "name": "eventName",
+          "type": "string",
+          "display": "Event Name",
+          "isTemplate": false,
+          "default": null,
+          "acceptedValues": null
+        },
+        {
+          "name": "eventParams",
+          "type": "dynamicArray",
+          "display": "Event Params",
+          "isTemplate": null,
+          "default": null,
+          "acceptedValues": null
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "category": "dropdown",
+      "display": "Open PlayStore",
+      "name": "openPlayStore",
+      "executionOrder": 3,
+      "type": "preBakedFunction",
+      "params": [
+        {
+          "name": "platform",
+          "type": "string",
+          "isTemplate": true,
+          "default": null,
+          "acceptedValues": null,
+          "display": "Platform"
+        }
+      ]
+    },
+    {
+      "id": "-1",
+      "category": "dropdown",
+      "display": "None",
+      "executionOrder": 1000,
+      "type": "preBakedFunction",
+      "name": "none",
+      "params": []
+    }
+  ]
+}
+

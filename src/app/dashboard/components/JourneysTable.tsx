@@ -29,6 +29,11 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import {
   tableContainerStyles,
   tableStyles,
@@ -66,11 +71,21 @@ import {
   tableLoadingOverlayStyles,
   journeyIconStyles,
 } from "./styles/journeysTableStyles";
-import { JOURNEY_TABLE_HEADERS, PAGE_SIZES } from "@/config/constants";
+import {
+  JOURNEY_TABLE_HEADERS,
+  PAGE_SIZES,
+  JOURNEY_MENU_ACTIONS,
+} from "@/config/constants";
 import { GetListOfCTAsResponse } from "@/api/services/types/journeys.interface";
 import { THEME_COLORS } from "@/config/colors";
 import { useState, useMemo, MouseEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { JOURNEY_ICONS } from "@/lib/mockData";
+import { updateJourneyStatus } from "@/api/services/journeyStatus.service";
+import { JourneyStatus } from "@/api/services/types/updateJourneyStatus.interface";
+import { usePermissions } from "@/app/providers/PermissionProvider";
 
 const getJourneyIcon = (journeyId: number): string => {
   const index = journeyId % JOURNEY_ICONS.length;
@@ -278,7 +293,10 @@ export default function JourneysTable({
   handlePageSizeChange: (size: number) => void;
   pageSize: number;
 }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const theme = useTheme();
+  const { hasEditAccess, hasPublishAccess } = usePermissions();
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [menuAnchor, setMenuAnchor] = useState<{
     element: HTMLElement;
@@ -339,23 +357,43 @@ export default function JourneysTable({
   };
 
   const handleEdit = (journeyId: number) => {
-    console.log("Edit journey:", journeyId);
-    // TODO: Implement edit functionality
+    router.push(`/dashboard/edit/${journeyId}`);
   };
 
   const handleClone = (journeyId: number) => {
-    console.log("Clone journey:", journeyId);
-    // TODO: Implement clone functionality
+    router.push(`/dashboard/clone/${journeyId}`);
   };
 
   const handleCopyJourneyId = async (journeyId: number) => {
     try {
       await navigator.clipboard.writeText(journeyId.toString());
-      // TODO: Show success toast/notification
-      console.log("Journey ID copied:", journeyId);
+      toast.success("Journey ID copied to clipboard");
     } catch (err) {
       console.error("Failed to copy journey ID:", err);
-      // TODO: Show error toast/notification
+      toast.error("Failed to copy journey ID");
+    }
+    handleMenuClose();
+  };
+
+  const handleStatusChange = async (
+    journeyId: number,
+    status: JourneyStatus
+  ) => {
+    try {
+      await updateJourneyStatus(journeyId, status);
+      const statusLabels: Record<JourneyStatus, string> = {
+        live: "Live",
+        schedule: "Scheduled",
+        pause: "Paused",
+        terminate: "Terminated",
+        conclude: "Concluded",
+      };
+      toast.success(`Journey ${statusLabels[status]} successfully`);
+      // Invalidate and refetch journeys list
+      queryClient.invalidateQueries({ queryKey: ["journeys"] });
+    } catch (error) {
+      console.error(`Error updating journey status to ${status}:`, error);
+      toast.error(`Failed to update journey status. Please try again.`);
     }
     handleMenuClose();
   };
@@ -492,22 +530,28 @@ export default function JourneysTable({
                   <TableCell sx={tableCellStylesRight}>
                     <Box sx={tableActionsContainerStyles}>
                       <Tooltip title="Edit journey" placement="top">
-                        <IconButton
-                          sx={actionButtonStyles}
-                          size="small"
-                          onClick={() => handleEdit(journey.id)}
-                        >
-                          <EditOutlinedIcon />
-                        </IconButton>
+                        <span>
+                          <IconButton
+                            sx={actionButtonStyles}
+                            size="small"
+                            onClick={() => handleEdit(journey.id)}
+                            disabled={!hasEditAccess}
+                          >
+                            <EditOutlinedIcon />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                       <Tooltip title="Clone journey" placement="top">
-                        <IconButton
-                          sx={actionButtonStyles}
-                          size="small"
-                          onClick={() => handleClone(journey.id)}
-                        >
-                          <ContentCopyOutlinedIcon />
-                        </IconButton>
+                        <span>
+                          <IconButton
+                            sx={actionButtonStyles}
+                            size="small"
+                            onClick={() => handleClone(journey.id)}
+                            disabled={!hasEditAccess}
+                          >
+                            <ContentCopyOutlinedIcon />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                       <Tooltip title="More options" placement="top">
                         <IconButton
@@ -593,17 +637,76 @@ export default function JourneysTable({
         }}
         sx={actionMenuStyles}
       >
-        <MenuItem
-          onClick={() =>
-            menuAnchor && handleCopyJourneyId(menuAnchor.journeyId)
-          }
-          sx={actionMenuItemStyles}
-        >
-          <ListItemIcon sx={actionMenuIconStyles}>
-            <FileCopyOutlinedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="Copy journey ID" />
-        </MenuItem>
+        {JOURNEY_MENU_ACTIONS.map((action) => {
+          const getIconComponent = () => {
+            if (!("icon" in action)) return null;
+            switch (action.icon) {
+              case "FileCopyOutlined":
+                return FileCopyOutlinedIcon;
+              case "PlayCircleOutline":
+                return PlayCircleOutlineIcon;
+              case "Schedule":
+                return ScheduleIcon;
+              case "PauseCircleOutline":
+                return PauseCircleOutlineIcon;
+              case "StopCircle":
+                return StopCircleIcon;
+              case "CheckCircleOutline":
+                return CheckCircleOutlineIcon;
+              default:
+                return null;
+            }
+          };
+
+          const IconComponent = getIconComponent();
+
+          const handleMenuItemClick = () => {
+            const journeyId = menuAnchor?.journeyId ?? 0;
+            if (action.hasAction) {
+              if (action.id === "copy") {
+                handleCopyJourneyId(journeyId);
+              }
+            } else {
+              // Handle status changes
+              const statusMap: Record<string, JourneyStatus> = {
+                live: "live",
+                schedule: "schedule",
+                pause: "pause",
+                terminate: "terminate",
+                conclude: "conclude",
+              };
+              const status = statusMap[action.id];
+              if (status) {
+                handleStatusChange(journeyId, status);
+              }
+            }
+          };
+
+          // Determine if this action requires publish access (live, schedule) or edit access (others)
+          const requiresPublishAccess =
+            action.id === "live" || action.id === "schedule";
+          const requiresEditAccess =
+            !action.hasAction && !requiresPublishAccess;
+          const isDisabled =
+            (requiresPublishAccess && !hasPublishAccess) ||
+            (requiresEditAccess && !hasEditAccess);
+
+          return (
+            <MenuItem
+              key={action.id}
+              onClick={handleMenuItemClick}
+              sx={actionMenuItemStyles}
+              disabled={isDisabled}
+            >
+              {IconComponent && (
+                <ListItemIcon sx={actionMenuIconStyles}>
+                  <IconComponent fontSize="small" />
+                </ListItemIcon>
+              )}
+              <ListItemText primary={action.label} />
+            </MenuItem>
+          );
+        })}
       </Menu>
     </>
   );

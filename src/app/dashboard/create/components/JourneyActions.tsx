@@ -1,0 +1,74 @@
+"use client";
+
+import { Box, Button } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { useRouter } from "next/navigation";
+import { journeyActionsStyles } from "../styles/journeyActionsStyles";
+import { JOURNEY_TEXT } from "../constants/journeyConstants";
+import { usePermissions } from "@/app/providers/PermissionProvider";
+
+interface JourneyActionsProps {
+  activeTab: "setup" | "ui";
+  onNext: () => void;
+  isSubmitting?: boolean;
+  isEditMode?: boolean;
+  isTemplateValid?: boolean;
+  hasTemplate?: boolean;
+}
+
+export default function JourneyActions({
+  activeTab,
+  onNext,
+  isSubmitting = false,
+  isEditMode = false,
+  isTemplateValid = false,
+  hasTemplate = false,
+}: JourneyActionsProps) {
+  const theme = useTheme();
+  const router = useRouter();
+  const { hasEditAccess } = usePermissions();
+
+  return (
+    <Box sx={journeyActionsStyles.actions}>
+      <Button
+        onClick={() => router.back()}
+        sx={journeyActionsStyles.cancelButton}
+        size="large"
+      >
+        {JOURNEY_TEXT.ACTIONS.CANCEL}
+      </Button>
+      {activeTab === "ui" ? (
+        <Button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onNext();
+          }}
+          variant="contained"
+          sx={journeyActionsStyles.submitButton(theme)}
+          size="large"
+          disabled={!hasTemplate}
+        >
+          {JOURNEY_TEXT.ACTIONS.NEXT}
+        </Button>
+      ) : (
+        <Button
+          type="submit"
+          variant="contained"
+          sx={journeyActionsStyles.submitButton(theme)}
+          size="large"
+          disabled={isSubmitting || !isTemplateValid || !hasEditAccess}
+        >
+          {isSubmitting
+            ? isEditMode
+              ? "Updating..."
+              : "Creating..."
+            : isEditMode
+            ? "Update Journey"
+            : JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
+        </Button>
+      )}
+    </Box>
+  );
+}
