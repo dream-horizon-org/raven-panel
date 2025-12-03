@@ -632,6 +632,10 @@ export default function CreateJourneyPage({
 
   // Ref to store the sync function from JourneyFlowBuilderIntegrated
   const syncTemplateRef = useRef<(() => void) | null>(null);
+  // Ref to check if all engagements have templates
+  const checkAllEngagementsHaveTemplatesRef = useRef<(() => boolean) | null>(
+    null
+  );
 
   // Callback to trigger re-validation when template is saved
   const handleTemplateSaved = () => {
@@ -651,34 +655,42 @@ export default function CreateJourneyPage({
   };
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
-    // If moving to setup tab, check if engagements have templates
+    // If moving to setup tab, check if all engagement nodes have templates
     if (newTab === "setup") {
-      const currentData = getValues();
-      const actions = currentData.nudgeSelection?.actions || [];
+      // Check if there are any engagement nodes in the flow
+      if (checkAllEngagementsHaveTemplatesRef.current) {
+        const allHaveTemplates = checkAllEngagementsHaveTemplatesRef.current();
+        if (!allHaveTemplates) {
+          toast.error(
+            "Please add template details for all engagement nodes before proceeding to Journey Setup."
+          );
+          return;
+        }
+      } else {
+        // Fallback: check actions in form data if ref is not available
+        const currentData = getValues();
+        const actions = currentData.nudgeSelection?.actions || [];
 
-      // Check if there are engagements without templates
-      // An engagement is considered to have a template if:
-      // 1. There's an action with a template that has more than just testID
-      // 2. For tooltip, template should have props with more than just testID
-      // 3. For popup/bottomsheet, template should have children or meaningful props
-      const engagementsWithoutTemplates = actions.filter((action) => {
-        if (!action.template) return true;
+        // Check if there are engagements without templates
+        const engagementsWithoutTemplates = actions.filter((action) => {
+          if (!action.template) return true;
 
-        const template = action.template;
-        // Check if template has meaningful content
-        const hasContent =
-          (template.children && template.children.length > 0) ||
-          (template.props && Object.keys(template.props).length > 1) || // More than just testID
-          (template.styles && Object.keys(template.styles).length > 0);
+          const template = action.template;
+          // Check if template has meaningful content
+          const hasContent =
+            (template.children && template.children.length > 0) ||
+            (template.props && Object.keys(template.props).length > 1) || // More than just testID
+            (template.styles && Object.keys(template.styles).length > 0);
 
-        return !hasContent;
-      });
+          return !hasContent;
+        });
 
-      if (engagementsWithoutTemplates.length > 0) {
-        toast.error(
-          "Please add template details for all engagements before proceeding to Journey Setup."
-        );
-        return;
+        if (engagementsWithoutTemplates.length > 0) {
+          toast.error(
+            "Please add template details for all engagements before proceeding to Journey Setup."
+          );
+          return;
+        }
       }
     }
 
@@ -805,6 +817,9 @@ export default function CreateJourneyPage({
                     setSidePanelOpen(true);
                   }}
                   syncTemplateRef={syncTemplateRef}
+                  checkAllEngagementsHaveTemplatesRef={
+                    checkAllEngagementsHaveTemplatesRef
+                  }
                 />
               </Box>
               {activeTab === "setup" && (

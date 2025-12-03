@@ -133,6 +133,9 @@ interface JourneyFlowBuilderIntegratedProps {
   onSave?: () => void;
   onTemplateSaved?: () => void;
   syncTemplateRef?: React.MutableRefObject<(() => void) | null>;
+  checkAllEngagementsHaveTemplatesRef?: React.MutableRefObject<
+    (() => boolean) | null
+  >;
 }
 
 export default function JourneyFlowBuilderIntegrated({
@@ -146,8 +149,11 @@ export default function JourneyFlowBuilderIntegrated({
   onSave,
   onTemplateSaved,
   syncTemplateRef,
+  checkAllEngagementsHaveTemplatesRef,
 }: JourneyFlowBuilderIntegratedProps) {
-  const { setValue, watch } = useFormContext<CreateJourneyFormData>();
+  const { setValue, watch, getValues } = useFormContext<
+    CreateJourneyFormData
+  >();
 
   // Store current engagement context for syncing template back
   const currentEngagementContextRef = useRef<{
@@ -462,8 +468,8 @@ export default function JourneyFlowBuilderIntegrated({
       );
       if (!engagement) return currentNodes;
 
-      // Get the saved template from form
-      const currentActions = watch("nudgeSelection.actions") || [];
+      // Get the saved template from form (use getValues to get latest data)
+      const currentActions = getValues("nudgeSelection.actions") || [];
       const savedAction = currentActions[0]; // Template is at index 0
       if (savedAction && savedAction.template) {
         // Sync template back to engagement config
@@ -493,7 +499,54 @@ export default function JourneyFlowBuilderIntegrated({
       }
       return currentNodes;
     });
-  }, [nodes, watch, setNodes]);
+  }, [nodes, getValues, setNodes]);
+
+  // Function to check if all engagement nodes have templates
+  const checkAllEngagementsHaveTemplates = useCallback((): boolean => {
+    // Get all state nodes
+    const stateNodes = nodes.filter((n) => n.type === "state") as Node<
+      JourneyNodeData
+    >[];
+
+    // Check each state node's engagements
+    for (const node of stateNodes) {
+      const nodeData = node.data as JourneyNodeData;
+      const engagements = nodeData.engagements || [];
+
+      // If there are engagements, check if all have templates
+      if (engagements.length > 0) {
+        for (const engagement of engagements) {
+          // Check if engagement has a template in its config
+          const hasTemplate =
+            engagement.config &&
+            typeof engagement.config === "object" &&
+            engagement.config.template &&
+            typeof engagement.config.template === "object" &&
+            Object.keys(engagement.config.template).length > 0;
+
+          // Check if template has meaningful content (more than just default structure)
+          if (hasTemplate) {
+            const template = engagement.config.template as any;
+            const hasContent =
+              (template.children &&
+                Array.isArray(template.children) &&
+                template.children.length > 0) ||
+              (template.props && Object.keys(template.props).length > 1) || // More than just testID
+              (template.styles && Object.keys(template.styles).length > 0) ||
+              (template.type && template.type !== "undefined");
+
+            if (!hasContent) {
+              return false; // Engagement exists but template is empty/default
+            }
+          } else {
+            return false; // Engagement exists but no template
+          }
+        }
+      }
+    }
+
+    return true; // All engagements have templates
+  }, [nodes]);
 
   // Expose sync function via ref for parent to call
   useEffect(() => {
@@ -501,6 +554,13 @@ export default function JourneyFlowBuilderIntegrated({
       syncTemplateRef.current = syncTemplateToEngagement;
     }
   }, [syncTemplateToEngagement, syncTemplateRef]);
+
+  // Expose check function via ref for parent to call
+  useEffect(() => {
+    if (checkAllEngagementsHaveTemplatesRef) {
+      checkAllEngagementsHaveTemplatesRef.current = checkAllEngagementsHaveTemplates;
+    }
+  }, [checkAllEngagementsHaveTemplates, checkAllEngagementsHaveTemplatesRef]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -1101,6 +1161,12 @@ export default function JourneyFlowBuilderIntegrated({
                   (e) => e.id === engagementId
                 );
                 if (engagement) {
+                  // Store engagement context for syncing template back
+                  currentEngagementContextRef.current = {
+                    nodeId: selectedNode.id,
+                    engagementId: engagementId,
+                  };
+
                   // Sync engagement to form action
                   const currentActions = watch("nudgeSelection.actions") || [];
                   const updatedActions = syncEngagementToAction(

@@ -1112,16 +1112,7 @@ export default function NodeConfigurationPanel({
                       <Box
                         sx={{
                           ...styles.engagementIconContainerStyles,
-                          cursor: "pointer",
                           flex: 1,
-                        }}
-                        onClick={() => {
-                          if (onEngagementTemplateSelect) {
-                            onEngagementTemplateSelect(
-                              engagement.id,
-                              engagement.type
-                            );
-                          }
                         }}
                       >
                         {engagement.type === "tooltip" && (
