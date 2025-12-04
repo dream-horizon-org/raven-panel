@@ -25,6 +25,7 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  useTheme,
 } from "@mui/material";
 import {
   Control,
@@ -47,6 +48,7 @@ import {
   convertFlowToEventInfo,
   convertEventInfoToFlow,
   findUnconnectedNodes,
+  findUnconnectedEngagementNodes,
   EventStateMap,
   NodeStateMap,
 } from "../utils/stateMapping";
@@ -133,6 +135,7 @@ interface JourneyFlowBuilderIntegratedProps {
   checkAllEngagementsHaveTemplatesRef?: React.MutableRefObject<
     (() => boolean) | null
   >;
+  checkUnconnectedNodesRef?: React.MutableRefObject<(() => boolean) | null>;
 }
 
 export default function JourneyFlowBuilderIntegrated({
@@ -145,7 +148,9 @@ export default function JourneyFlowBuilderIntegrated({
   onSave,
   syncTemplateRef,
   checkAllEngagementsHaveTemplatesRef,
+  checkUnconnectedNodesRef,
 }: JourneyFlowBuilderIntegratedProps) {
+  const theme = useTheme();
   const { setValue, watch, getValues } = useFormContext<
     CreateJourneyFormData
   >();
@@ -191,7 +196,14 @@ export default function JourneyFlowBuilderIntegrated({
   const [unconnectedNodesDialog, setUnconnectedNodesDialog] = useState<{
     open: boolean;
     nodeIds: string[];
-  }>({ open: false, nodeIds: [] });
+    engagementNodeIds: string[];
+    isInitialNodeOnly: boolean;
+  }>({
+    open: false,
+    nodeIds: [],
+    engagementNodeIds: [],
+    isInitialNodeOnly: false,
+  });
 
   // Initialize flow from form data
   useEffect(() => {
@@ -333,7 +345,7 @@ export default function JourneyFlowBuilderIntegrated({
                   type: "smoothstep",
                   animated: false,
                   style: {
-                    stroke: "#ff9800",
+                    stroke: theme.palette.warning.main,
                     strokeWidth: 2,
                     strokeDasharray: "5,5",
                   },
@@ -993,10 +1005,13 @@ export default function JourneyFlowBuilderIntegrated({
                 data: { engagementId: engagement.id },
                 style: {
                   strokeWidth: 2,
-                  stroke: "#ff9800",
+                  stroke: theme.palette.warning.main,
                   strokeDasharray: "5,5",
                 },
-                markerEnd: { type: "arrowclosed" as any, color: "#ff9800" },
+                markerEnd: {
+                  type: "arrowclosed" as any,
+                  color: theme.palette.warning.main,
+                },
               });
             }
           });
@@ -1064,15 +1079,67 @@ export default function JourneyFlowBuilderIntegrated({
   // }, [nodes, edges, syncFlowToForm, onSave]);
 
   const handleRemoveUnconnectedNodes = useCallback(() => {
-    const { nodeIds } = unconnectedNodesDialog;
-    setNodes((nds) => nds.filter((node) => !nodeIds.includes(node.id)));
+    const {
+      nodeIds,
+      engagementNodeIds,
+      isInitialNodeOnly,
+    } = unconnectedNodesDialog;
+
+    // If it's just the initial node with no data, don't remove it - just close dialog
+    if (isInitialNodeOnly) {
+      setUnconnectedNodesDialog({
+        open: false,
+        nodeIds: [],
+        engagementNodeIds: [],
+        isInitialNodeOnly: false,
+      });
+      return;
+    }
+
+    const allNodeIdsToRemove = [...nodeIds, ...engagementNodeIds];
+
+    setNodes((nds) => {
+      const remainingNodes = nds.filter(
+        (node) => !allNodeIdsToRemove.includes(node.id)
+      );
+
+      // If no state nodes remain, add initial node
+      const stateNodes = remainingNodes.filter((n) => n.type === "state");
+      if (stateNodes.length === 0) {
+        const initialNodeId = `state-${Date.now()}`;
+        const initialNode: Node<JourneyNodeData> = {
+          id: initialNodeId,
+          type: "state",
+          position: { x: 250, y: 100 },
+          data: {
+            label: "Initial Node",
+            nodeType: "state",
+            eventName: "",
+            engagements: [],
+            branches: [],
+            isEntry: true,
+          },
+        };
+        return [...remainingNodes, initialNode];
+      }
+
+      return remainingNodes;
+    });
+
     setEdges((eds) =>
       eds.filter(
         (edge) =>
-          !nodeIds.includes(edge.source) && !nodeIds.includes(edge.target)
+          !allNodeIdsToRemove.includes(edge.source) &&
+          !allNodeIdsToRemove.includes(edge.target)
       )
     );
-    setUnconnectedNodesDialog({ open: false, nodeIds: [] });
+
+    setUnconnectedNodesDialog({
+      open: false,
+      nodeIds: [],
+      engagementNodeIds: [],
+      isInitialNodeOnly: false,
+    });
     syncFlowToForm();
     if (onSave) {
       onSave();
@@ -1080,12 +1147,61 @@ export default function JourneyFlowBuilderIntegrated({
   }, [unconnectedNodesDialog, setNodes, setEdges, syncFlowToForm, onSave]);
 
   const handleKeepUnconnectedNodes = useCallback(() => {
-    setUnconnectedNodesDialog({ open: false, nodeIds: [] });
-    syncFlowToForm();
-    if (onSave) {
-      onSave();
+    setUnconnectedNodesDialog({
+      open: false,
+      nodeIds: [],
+      engagementNodeIds: [],
+      isInitialNodeOnly: false,
+    });
+    // Do nothing on cancel - just close the dialog
+  }, []);
+
+  // Function to check for unconnected nodes/engagements (exposed via ref)
+  const checkUnconnectedNodes = useCallback((): boolean => {
+    const stateNodes = nodes.filter((n) => n.type === "state") as Node<
+      JourneyNodeData
+    >[];
+
+    // Check if there's only one initial node with no event data
+    const isInitialNodeOnly =
+      stateNodes.length === 1 &&
+      stateNodes[0].data.isEntry &&
+      (!stateNodes[0].data.eventName ||
+        stateNodes[0].data.eventName.trim() === "") &&
+      (!stateNodes[0].data.engagements ||
+        stateNodes[0].data.engagements.length === 0);
+
+    if (isInitialNodeOnly) {
+      setUnconnectedNodesDialog({
+        open: true,
+        nodeIds: [],
+        engagementNodeIds: [],
+        isInitialNodeOnly: true,
+      });
+      return true;
     }
-  }, [syncFlowToForm, onSave]);
+
+    const unconnectedStateNodes = findUnconnectedNodes(stateNodes, edges);
+    const unconnectedEngagements = findUnconnectedEngagementNodes(nodes, edges);
+
+    if (unconnectedStateNodes.length > 0 || unconnectedEngagements.length > 0) {
+      setUnconnectedNodesDialog({
+        open: true,
+        nodeIds: unconnectedStateNodes,
+        engagementNodeIds: unconnectedEngagements,
+        isInitialNodeOnly: false,
+      });
+      return true;
+    }
+    return false;
+  }, [nodes, edges]);
+
+  // Expose checkUnconnectedNodes via ref if provided
+  useEffect(() => {
+    if (checkUnconnectedNodesRef) {
+      checkUnconnectedNodesRef.current = checkUnconnectedNodes;
+    }
+  }, [checkUnconnectedNodes, checkUnconnectedNodesRef]);
 
   // Get event names from events prop
   const eventNames = events.map((e) => e.metadata.eventName);
@@ -1098,6 +1214,21 @@ export default function JourneyFlowBuilderIntegrated({
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        "& .react-flow__controls": {
+          backgroundColor: `${theme.palette.background.paper} !important`,
+          border: `1px solid ${theme.palette.divider} !important`,
+        },
+        "& .react-flow__controls-button": {
+          backgroundColor: `${theme.palette.background.paper} !important`,
+          borderBottom: `1px solid ${theme.palette.divider} !important`,
+          color: `${theme.palette.text.primary} !important`,
+          "&:hover": {
+            backgroundColor: `${theme.palette.action.hover} !important`,
+          },
+          "&:last-child": {
+            borderBottom: "none !important",
+          },
+        },
       }}
     >
       <Box sx={{ flex: 1, position: "relative" }}>
@@ -1116,7 +1247,12 @@ export default function JourneyFlowBuilderIntegrated({
             defaultEdgeOptions={{ type: "bezier" }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-            <Controls />
+            <Controls
+              style={{
+                backgroundColor: theme.palette.background.paper,
+                border: `1px solid ${theme.palette.divider}`,
+              }}
+            />
           </ReactFlow>
         </ReactFlowProvider>
       </Box>
@@ -1188,23 +1324,50 @@ export default function JourneyFlowBuilderIntegrated({
 
       <Dialog
         open={unconnectedNodesDialog.open}
-        onClose={() => setUnconnectedNodesDialog({ open: false, nodeIds: [] })}
+        onClose={() =>
+          setUnconnectedNodesDialog({
+            open: false,
+            nodeIds: [],
+            engagementNodeIds: [],
+            isInitialNodeOnly: false,
+          })
+        }
       >
-        <DialogTitle>Unconnected Nodes</DialogTitle>
+        <DialogTitle>
+          {unconnectedNodesDialog.isInitialNodeOnly
+            ? "Initial Journey Setup"
+            : "Detached Nodes/Engagements"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            There are {unconnectedNodesDialog.nodeIds.length} node(s) that are
-            not connected to any other node. Do you want to remove them or keep
-            them?
+            {unconnectedNodesDialog.isInitialNodeOnly
+              ? "Please fill the initial journey and engagement. Select an event for the initial node and add engagements to configure your journey."
+              : unconnectedNodesDialog.nodeIds.length > 0 &&
+                unconnectedNodesDialog.engagementNodeIds.length > 0
+              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) and ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Do you want to remove them?`
+              : unconnectedNodesDialog.nodeIds.length > 0
+              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) that are not connected. Do you want to remove them?`
+              : `There are ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Do you want to remove them?`}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleRemoveUnconnectedNodes} color="error">
-            Remove
+          <Button
+            onClick={() =>
+              setUnconnectedNodesDialog({
+                open: false,
+                nodeIds: [],
+                engagementNodeIds: [],
+                isInitialNodeOnly: false,
+              })
+            }
+          >
+            Cancel
           </Button>
-          <Button onClick={handleKeepUnconnectedNodes} variant="contained">
-            Keep
-          </Button>
+          {!unconnectedNodesDialog.isInitialNodeOnly && (
+            <Button onClick={handleRemoveUnconnectedNodes} color="error">
+              Remove
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

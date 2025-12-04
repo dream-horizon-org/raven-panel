@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Box, Typography, Chip } from "@mui/material";
+import { Box, Typography, Chip, useTheme } from "@mui/material";
 import {
   JourneyNodeData,
   EngagementNodeData,
@@ -18,28 +18,39 @@ type JourneyNodeProps = NodeProps<Record<string, unknown>>;
 // @ts-expect-error - NodeProps constraint requires Node type, but we only have data types
 type EngagementNodeProps = NodeProps<Record<string, unknown>>;
 
-const nodeStyle = {
-  border: "2px solid",
-  borderRadius: "8px",
-  padding: "12px 16px",
-  minWidth: "200px",
-  backgroundColor: "white",
-};
+// nodeStyle will be created with theme inside component
 
 // State Node (represents a node/state in the journey)
 export const StateNode = memo((props: JourneyNodeProps) => {
+  const theme = useTheme();
   const data = props.data as JourneyNodeData;
   const branchCount = data.branches?.length || 0;
   const hasExitBranch = data.branches?.some((b) => b.targetNodeId === "exit");
   const hasNoBranches = branchCount === 0;
   const isEntry = data.isEntry || false;
 
+  const nodeStyle = {
+    border: "2px solid",
+    borderRadius: "8px",
+    padding: "12px 16px",
+    minWidth: "200px",
+    backgroundColor: theme.palette.background.paper,
+  };
+
   return (
     <Box
       sx={{
         ...nodeStyle,
-        borderColor: isEntry ? "#4caf50" : "#2196f3",
-        backgroundColor: isEntry ? "#e8f5e9" : "#e3f2fd",
+        borderColor: isEntry
+          ? theme.palette.success.main
+          : theme.palette.primary.main,
+        backgroundColor: isEntry
+          ? theme.palette.mode === "dark"
+            ? theme.palette.success.dark + "20"
+            : "#e8f5e9"
+          : theme.palette.mode === "dark"
+          ? theme.palette.primary.dark + "20"
+          : "#e3f2fd",
         borderWidth: isEntry ? "3px" : "2px",
         position: "relative",
       }}
@@ -54,7 +65,7 @@ export const StateNode = memo((props: JourneyNodeProps) => {
             top: -12,
             left: "50%",
             transform: "translateX(-50%)",
-            bgcolor: "#4caf50",
+            bgcolor: theme.palette.success.main,
             color: "white",
             fontSize: "10px",
             height: "20px",
@@ -66,7 +77,11 @@ export const StateNode = memo((props: JourneyNodeProps) => {
       <Typography
         variant="subtitle2"
         fontWeight={600}
-        sx={{ mb: 1, mt: isEntry ? 0.5 : 0 }}
+        sx={{
+          mb: 1,
+          mt: isEntry ? 0.5 : 0,
+          color: theme.palette.text.primary,
+        }}
       >
         {data.eventName || data.label || "Node"}
       </Typography>
@@ -112,18 +127,35 @@ StateNode.displayName = "StateNode";
 
 // Exit Node
 export const ExitNode = memo((props: JourneyNodeProps) => {
+  const theme = useTheme();
   const data = props.data as JourneyNodeData;
+
+  const nodeStyle = {
+    border: "2px solid",
+    borderRadius: "8px",
+    padding: "12px 16px",
+    minWidth: "200px",
+    backgroundColor: theme.palette.background.paper,
+  };
+
   return (
     <Box
       sx={{
         ...nodeStyle,
-        borderColor: "#f44336",
-        backgroundColor: "#ffebee",
+        borderColor: theme.palette.error.main,
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? theme.palette.error.dark + "20"
+            : "#ffebee",
       }}
     >
       <Handle type="target" position={Position.Top} />
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Typography variant="subtitle2" fontWeight={600}>
+        <Typography
+          variant="subtitle2"
+          fontWeight={600}
+          sx={{ color: theme.palette.text.primary }}
+        >
           Exit
         </Typography>
       </Box>
@@ -135,6 +167,7 @@ ExitNode.displayName = "ExitNode";
 
 // Engagement Node (represents an in-app nudge/engagement)
 export const EngagementNode = memo((props: EngagementNodeProps) => {
+  const theme = useTheme();
   const data = props.data as EngagementNodeData;
   const getIcon = () => {
     switch (data.engagementType) {
@@ -165,10 +198,13 @@ export const EngagementNode = memo((props: EngagementNodeProps) => {
   return (
     <Box
       sx={{
-        border: "2px dashed #ff9800",
+        border: `2px dashed ${theme.palette.warning.main}`,
         borderRadius: "6px",
         padding: "8px 12px",
-        backgroundColor: "#fff3e0",
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? theme.palette.warning.dark + "20"
+            : "#fff3e0",
         minWidth: "120px",
         maxWidth: "120px",
       }}
@@ -184,7 +220,7 @@ export const EngagementNode = memo((props: EngagementNodeProps) => {
       >
         <Box
           sx={{
-            color: "#ff9800",
+            color: theme.palette.warning.main,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -206,7 +242,7 @@ export const EngagementNode = memo((props: EngagementNodeProps) => {
           sx={{
             fontSize: "8px",
             height: "16px",
-            bgcolor: "#ff9800",
+            bgcolor: theme.palette.warning.main,
             color: "white",
             fontWeight: 600,
             "& .MuiChip-label": {

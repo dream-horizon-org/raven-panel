@@ -20,6 +20,7 @@ import {
   DialogContentText,
   DialogActions,
   Autocomplete,
+  useTheme,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -86,6 +87,7 @@ export default function NodeConfigurationPanel({
   onRequestClose,
   onEngagementTemplateSelect,
 }: NodeConfigurationPanelProps) {
+  const theme = useTheme();
   // Initialize form data
   const getInitialData = useCallback((): JourneyNodeData => {
     const hasBranches =
@@ -347,6 +349,19 @@ export default function NodeConfigurationPanel({
 
   const onSubmit = useCallback(
     (data: JourneyNodeData) => {
+      // Validate that event name is selected before allowing save
+      const currentEventName = data.eventName || "";
+      if (!currentEventName || currentEventName.trim() === "") {
+        setError("eventName", {
+          type: "required",
+          message:
+            "Please select an event first to enable transitions and engagements.",
+        });
+        return;
+      } else {
+        clearErrors("eventName");
+      }
+
       // First, clear all existing filter errors to start fresh
       // This prevents stale errors from deleted filters
       if (data.branches && Array.isArray(data.branches)) {
@@ -508,7 +523,7 @@ export default function NodeConfigurationPanel({
       // The component will unmount, preventing any further re-renders
       onClose();
     },
-    [node.id, onUpdate, onClose]
+    [node.id, onUpdate, onClose, setError, clearErrors]
   );
 
   // Wrapper to clear stale errors before calling handleSubmit
@@ -1033,24 +1048,30 @@ export default function NodeConfigurationPanel({
                   onChange={(_: unknown, newValue: string | null) => {
                     handleEventNameChange(newValue || "");
                   }}
-                  renderInput={(params: unknown) => (
-                    <TextField
-                      {...(params as Record<string, unknown>)}
-                      label="Event Name"
-                      required
-                      error={node.data.isEntry && !field.value}
-                      focused={node.data.isEntry && !field.value}
-                      helperText={
-                        node.data.isEntry && !field.value
-                          ? "⚠️ Please select an event first to enable transitions and engagements"
-                          : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties."
-                      }
-                      sx={styles.eventNameInputStyles(
-                        node.data.isEntry || false,
-                        !!field.value
-                      )}
-                    />
-                  )}
+                  renderInput={(params: unknown) => {
+                    const fieldError = errors.eventName;
+                    const hasError =
+                      (node.data.isEntry && !field.value) || !!fieldError;
+                    return (
+                      <TextField
+                        {...(params as Record<string, unknown>)}
+                        label="Event Name"
+                        required
+                        error={hasError}
+                        focused={hasError}
+                        helperText={
+                          fieldError?.message ||
+                          (node.data.isEntry && !field.value
+                            ? "⚠️ Please select an event first to enable transitions and engagements"
+                            : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties.")
+                        }
+                        sx={styles.eventNameInputStyles(
+                          node.data.isEntry || false,
+                          !!field.value
+                        )}
+                      />
+                    );
+                  }}
                   noOptionsText={
                     isLoadingEvents ? "Loading events..." : "No events found"
                   }
@@ -1121,13 +1142,19 @@ export default function NodeConfigurationPanel({
                         }}
                       >
                         {engagement.type === "tooltip" && (
-                          <InfoIcon sx={{ color: "#ff9800" }} />
+                          <InfoIcon
+                            sx={{ color: theme.palette.warning.main }}
+                          />
                         )}
                         {engagement.type === "popup" && (
-                          <OpenInNewIcon sx={{ color: "#ff9800" }} />
+                          <OpenInNewIcon
+                            sx={{ color: theme.palette.warning.main }}
+                          />
                         )}
                         {engagement.type === "bottomsheet" && (
-                          <ViewAgendaIcon sx={{ color: "#ff9800" }} />
+                          <ViewAgendaIcon
+                            sx={{ color: theme.palette.warning.main }}
+                          />
                         )}
                         <Typography variant="subtitle2" fontWeight={600}>
                           Engagement {index + 1}

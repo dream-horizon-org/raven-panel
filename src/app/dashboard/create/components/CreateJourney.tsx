@@ -578,7 +578,19 @@ export default function CreateJourneyPage({
     }, 0);
   };
 
+  const checkUnconnectedNodesRef = useRef<(() => boolean) | null>(null);
+
   const handleTabChange = async (newTab: "setup" | "ui") => {
+    // Check for unconnected nodes/engagements when changing tabs
+    if (checkUnconnectedNodesRef.current) {
+      const hasUnconnected = checkUnconnectedNodesRef.current();
+      if (hasUnconnected) {
+        // Dialog will be shown by JourneyFlowBuilderIntegrated
+        // Don't proceed with tab change
+        return;
+      }
+    }
+
     // If moving to setup tab, check if all engagement nodes have templates
     if (newTab === "setup") {
       // Check if there are any engagement nodes in the flow
@@ -694,6 +706,7 @@ export default function CreateJourneyPage({
                   checkAllEngagementsHaveTemplatesRef={
                     checkAllEngagementsHaveTemplatesRef
                   }
+                  checkUnconnectedNodesRef={checkUnconnectedNodesRef}
                 />
               </Box>
               {activeTab === "setup" && (

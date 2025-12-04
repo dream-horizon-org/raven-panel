@@ -579,3 +579,29 @@ export function findUnconnectedNodes(
 
   return unconnected;
 }
+
+/**
+ * Finds unconnected engagement nodes (engagement nodes without a source state node)
+ * Returns array of unconnected engagement node IDs
+ */
+export function findUnconnectedEngagementNodes(
+  nodes: Node[],
+  edges: Edge[]
+): string[] {
+  const unconnected: string[] = [];
+
+  nodes.forEach((node) => {
+    if (node.type !== "engagement") return;
+
+    // Check if this engagement node has an incoming edge from a state node
+    const hasIncomingFromState = edges.some(
+      (e) => e.target === node.id && e.sourceHandle === "engagement-source"
+    );
+
+    if (!hasIncomingFromState) {
+      unconnected.push(node.id);
+    }
+  });
+
+  return unconnected;
+}
