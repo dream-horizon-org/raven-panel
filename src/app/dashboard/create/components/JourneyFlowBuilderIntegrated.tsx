@@ -232,6 +232,7 @@ export default function JourneyFlowBuilderIntegrated({
 
       // Restore engagements from nudgeSelection.actions
       if (nudgeActions && nudgeActions.length > 0) {
+        // First pass: attach engagements to nodes that match the state directly
         const updatedNodes = initialNodes.map((node) => {
           if (node.type !== "state" || !node.data.eventName) return node;
 
@@ -265,6 +266,8 @@ export default function JourneyFlowBuilderIntegrated({
                   config: {
                     template: action.template,
                     variant: action.variant,
+                    originalOnState: action.onState, // Store original onState to preserve it when syncing
+                    originalActionId: action.actionId, // Store original actionId for exact matching
                   },
                 };
               }
@@ -280,6 +283,133 @@ export default function JourneyFlowBuilderIntegrated({
           }
 
           return node;
+        });
+
+        // Second pass: handle engagements on states that don't have event nodes
+        // Find actions whose onState doesn't match any existing node's state
+        const unassignedActions = nudgeActions.filter((action) => {
+          const actionState = action.onState;
+          // Check if any node has this state
+          return !updatedNodes.some((node) => {
+            if (node.type !== "state") return false;
+            const nodeData = node.data as JourneyNodeData;
+            if (!nodeData.eventName) return false;
+            const nodeState =
+              nsm.get(node.id) || esm.get(nodeData.eventName || "");
+            return nodeState === actionState;
+          });
+        });
+
+        // For each unassigned action, find the node that transitions to that state
+        // Use eventInfo to find which node has a nextState that transitions to the target state
+        unassignedActions.forEach((action) => {
+          const targetState = action.onState;
+
+          // Find node that has a branch transitioning to this state by checking eventInfo
+          let sourceNode: Node<Record<string, unknown>> | undefined;
+
+          if (eventInfo && eventInfo.length > 0) {
+            // Find which eventInfo entry has a nextState that transitions to targetState
+            for (const info of eventInfo) {
+              for (const cs of info.currentState) {
+                if (cs.nextState && Array.isArray(cs.nextState)) {
+                  const hasTransitionToTarget = cs.nextState.some(
+                    (ns) => String(ns.transitionTo) === targetState
+                  );
+
+                  if (hasTransitionToTarget) {
+                    // Found the event that transitions to targetState
+                    // Now find the corresponding node
+                    sourceNode = updatedNodes.find(
+                      (node) =>
+                        node.type === "state" &&
+                        (node.data as JourneyNodeData).eventName ===
+                          info.eventname
+                    );
+                    if (sourceNode) break;
+                  }
+                }
+              }
+              if (sourceNode) break;
+            }
+          }
+
+          // Fallback: if not found in eventInfo, check branches directly
+          if (!sourceNode) {
+            sourceNode = updatedNodes.find((node) => {
+              if (node.type !== "state") return false;
+              const nodeData = node.data as JourneyNodeData;
+              if (!nodeData.eventName) return false;
+              if (!nodeData.branches || !Array.isArray(nodeData.branches))
+                return false;
+
+              // Check if any branch transitions to a state that matches targetState
+              return nodeData.branches.some((branch) => {
+                // If branch targets an event, check if that event's state matches
+                if (branch.targetNodeId !== "exit") {
+                  const targetNode = updatedNodes.find(
+                    (n) =>
+                      n.type === "state" &&
+                      (n.data as JourneyNodeData).eventName ===
+                        branch.targetNodeId
+                  );
+                  if (targetNode) {
+                    const targetNodeData = targetNode.data as JourneyNodeData;
+                    const targetNodeState =
+                      nsm.get(targetNode.id) ||
+                      esm.get(targetNodeData.eventName || "");
+                    return targetNodeState === targetState;
+                  }
+                }
+                return false;
+              });
+            });
+          }
+
+          // If we found a source node, attach the engagement to it
+          if (sourceNode) {
+            const sourceNodeIndex = updatedNodes.findIndex(
+              (n) => n.id === sourceNode.id
+            );
+            if (sourceNodeIndex >= 0) {
+              const sourceNodeData = updatedNodes[sourceNodeIndex]
+                .data as JourneyNodeData;
+              const existingEngagements = sourceNodeData.engagements || [];
+
+              // Extract engagement ID from actionId
+              const engagementId = action.actionId.includes("_")
+                ? action.actionId.split("_")[0]
+                : action.actionId;
+
+              const engagementType = mapNudgeTypeToEngagementType(action.type);
+
+              const newEngagement: Engagement = {
+                id: engagementId,
+                type: engagementType as "tooltip" | "popup" | "bottomsheet",
+                config: {
+                  template: action.template,
+                  variant: action.variant,
+                  originalOnState: action.onState, // Store original onState to preserve it when syncing
+                  originalActionId: action.actionId, // Store original actionId for exact matching
+                },
+              };
+
+              // Check if engagement already exists
+              const engagementExists = existingEngagements.some(
+                (e) => e.id === engagementId
+              );
+
+              if (!engagementExists) {
+                updatedNodes[sourceNodeIndex] = {
+                  ...updatedNodes[sourceNodeIndex],
+                  data: ({
+                    ...sourceNodeData,
+                    engagements: [...existingEngagements, newEngagement],
+                  } as unknown) as Record<string, unknown>,
+                };
+              }
+            }
+          }
         });
 
         // Create engagement nodes and edges for restored engagements
@@ -1181,6 +1311,36 @@ export default function JourneyFlowBuilderIntegrated({
       return true;
     }
 
+    // Check if there are actions that haven't been attached to nodes yet
+    // This handles the case where engagements are on states without event nodes
+    // If there are unattached engagements but nodes exist with events, don't show popup
+    // The engagements will be attached in the useEffect
+    if (nudgeActions && nudgeActions.length > 0 && stateNodes.length > 0) {
+      const hasUnattachedEngagements = nudgeActions.some((action) => {
+        const actionState = action.onState;
+        // Check if any node has this state
+        return !stateNodes.some((node) => {
+          const nodeState =
+            nodeStateMap.get(node.id) ||
+            eventStateMap.get(node.data.eventName || "");
+          return nodeState === actionState;
+        });
+      });
+
+      // If there are unattached engagements but nodes exist with events, don't show popup
+      // The engagements will be attached in the useEffect
+      if (hasUnattachedEngagements) {
+        // Check if at least one node has an event name (not just initial node)
+        const hasNodesWithEvents = stateNodes.some(
+          (node) => node.data.eventName && node.data.eventName.trim() !== ""
+        );
+        if (hasNodesWithEvents) {
+          // Engagements will be attached, don't show popup
+          return false;
+        }
+      }
+    }
+
     const unconnectedStateNodes = findUnconnectedNodes(stateNodes, edges);
     const unconnectedEngagements = findUnconnectedEngagementNodes(nodes, edges);
 
@@ -1194,7 +1354,7 @@ export default function JourneyFlowBuilderIntegrated({
       return true;
     }
     return false;
-  }, [nodes, edges]);
+  }, [nodes, edges, nudgeActions, nodeStateMap, eventStateMap]);
 
   // Expose checkUnconnectedNodes via ref if provided
   useEffect(() => {

@@ -53,16 +53,58 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
 ) => {
   const nudgeType = mapEngagementTypeToNudgeType(engagement.type);
 
-  // Find existing action for this state, or create new one
-  const actionIndex = currentActions.findIndex(
-    (action) => action.onState === stateNumber
-  );
+  // First, try to find existing action by originalActionId stored in engagement config
+  // This handles cases where engagement was restored from API and has a specific actionId
+  const engagementConfig = engagement.config as
+    | Record<string, unknown>
+    | undefined;
+  const originalActionId = engagementConfig?.originalActionId as
+    | string
+    | undefined;
+  const originalOnState = engagementConfig?.originalOnState as
+    | string
+    | undefined;
 
-  const baseTimestamp = Date.now();
-  const actionId =
-    actionIndex >= 0
-      ? currentActions[actionIndex].actionId
-      : `${engagement.id}_${baseTimestamp}`;
+  let actionIndex = -1;
+  let actionId: string;
+  let onState: string;
+
+  if (originalActionId) {
+    // Try to find action by exact originalActionId match
+    actionIndex = currentActions.findIndex(
+      (action) => action.actionId === originalActionId
+    );
+  }
+
+  // If not found by originalActionId, try to find by actionId prefix (for backwards compatibility)
+  if (actionIndex === -1) {
+    actionIndex = currentActions.findIndex((action) => {
+      if (action.actionId.includes("_")) {
+        const actionIdPrefix = action.actionId.split("_")[0];
+        return actionIdPrefix === engagement.id;
+      }
+      return action.actionId === engagement.id;
+    });
+  }
+
+  // If not found by actionId, try to find by state
+  if (actionIndex === -1) {
+    actionIndex = currentActions.findIndex(
+      (action) => action.onState === stateNumber
+    );
+  }
+
+  // Determine the actionId and onState to use
+  if (actionIndex >= 0) {
+    // Use existing action's actionId and onState to preserve original state
+    actionId = currentActions[actionIndex].actionId;
+    onState = originalOnState || currentActions[actionIndex].onState;
+  } else {
+    // Create new action - use originalOnState if available, otherwise use node's state
+    const baseTimestamp = Date.now();
+    actionId = originalActionId || `${engagement.id}_${baseTimestamp}`;
+    onState = originalOnState || stateNumber;
+  }
 
   // Create default template based on type
   const defaultTemplate: ReactNativeJson = {
@@ -95,14 +137,16 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
 
   const newAction = {
     config: {
-      triggerDelay: 0,
+      triggerDelay:
+        actionIndex >= 0 ? currentActions[actionIndex].config.triggerDelay : 0,
     },
-    onState: stateNumber,
+    onState,
     actionId,
     type: nudgeType,
-    variant: undefined,
+    variant: actionIndex >= 0 ? currentActions[actionIndex].variant : undefined,
     template,
-    isNudgeValid: false,
+    isNudgeValid:
+      actionIndex >= 0 ? currentActions[actionIndex].isNudgeValid : false,
   };
 
   // If action exists, update it; otherwise add new one
