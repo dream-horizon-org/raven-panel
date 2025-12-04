@@ -1,21 +1,10 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-} from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import { useEventsList } from "@/hooks/useEventsList";
 import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
-import { useTheme } from "@mui/material/styles";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
@@ -58,7 +47,6 @@ export default function CreateJourneyPage({
   const searchParams = useSearchParams();
   const journeyIdFromQuery = searchParams?.get("id");
   const journeyId = journeyIdProp || journeyIdFromQuery || undefined;
-  const theme = useTheme();
   const { hasEditAccess } = usePermissions();
 
   // Redirect if user doesn't have edit access
@@ -180,7 +168,6 @@ export default function CreateJourneyPage({
   } = methods;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);
-  const [showMultipleEventDialog, setShowMultipleEventDialog] = useState(false);
   const hasFetchedJourneyRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -191,66 +178,9 @@ export default function CreateJourneyPage({
         setIsLoadingJourney(true);
         hasFetchedJourneyRef.current = journeyId;
         const journeyResponse = await getJourneyById(Number(journeyId));
-
-        // Check if journey has multiple events in stateTransition
-        const stateTransition = journeyResponse?.data?.rule?.stateTransition;
-        if (stateTransition && typeof stateTransition === "object") {
-          const eventCount = Object.keys(stateTransition).length;
-          if (eventCount > 1) {
-            setShowMultipleEventDialog(true);
-            setIsLoadingJourney(false);
-            return;
-          }
-        }
-
         const formData = parseJourneyDataToFormData(journeyResponse);
-        reset(formData);
-      } catch (error) {
-        console.error("Error fetching journey data:", error);
-        toast.error("Failed to load journey data. Please try again.");
-        hasFetchedJourneyRef.current = undefined;
-      } finally {
-        setIsLoadingJourney(false);
-      }
-    };
 
-    if (journeyId) {
-      fetchJourneyData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [journeyId, isCloneMode]);
-
-  useEffect(() => {
-    if (
-      journeyId &&
-      !isLoadingJourney &&
-      eventsData?.data?.eventList &&
-      eventsData.data.eventList.length > 0
-    ) {
-      const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
-      if (currentEvent?.label) {
-        const matchingEvent = eventsData.data.eventList.find(
-          (event) => event.metadata.eventName === currentEvent.label
-        );
-
-        if (matchingEvent) {
-          const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
-          setValue("ruleEngine.currentDropdownSelectedEvent", {
-            id: eventIndex + 1,
-            label: currentEvent.label,
-          });
-        }
-      }
-    }
-  }, [journeyId, isLoadingJourney, eventsData, setValue, getValues]);
-
-  useEffect(() => {
-    const fetchJourneyData = async () => {
-      if (!journeyId) return;
-      try {
-        setIsLoadingJourney(true);
-        const journeyResponse = await getJourneyById(Number(journeyId));
-        const formData = parseJourneyDataToFormData(journeyResponse);
+        // Match event with events list if available
         if (
           formData.ruleEngine.currentDropdownSelectedEvent &&
           eventsData?.data?.eventList &&
@@ -269,27 +199,33 @@ export default function CreateJourneyPage({
             };
           }
         }
+
         reset(formData);
       } catch (error) {
         console.error("Error fetching journey data:", error);
         toast.error("Failed to load journey data. Please try again.");
+        hasFetchedJourneyRef.current = undefined;
       } finally {
         setIsLoadingJourney(false);
       }
     };
+
     if (journeyId) {
       fetchJourneyData();
     }
-  }, [journeyId, reset, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journeyId, isCloneMode, eventsData]);
 
+  // Update event ID when events list loads after journey data
   useEffect(() => {
     if (
       journeyId &&
+      !isLoadingJourney &&
       eventsData?.data?.eventList &&
       eventsData.data.eventList.length > 0
     ) {
       const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
-      if (currentEvent?.label && currentEvent.id === 0) {
+      if (currentEvent?.label && (currentEvent.id === 0 || !currentEvent.id)) {
         const matchingEvent = eventsData.data.eventList.find(
           (event) => event.metadata.eventName === currentEvent.label
         );
@@ -302,7 +238,7 @@ export default function CreateJourneyPage({
         }
       }
     }
-  }, [journeyId, eventsData, setValue, getValues]);
+  }, [journeyId, isLoadingJourney, eventsData, setValue, getValues]);
   const onFormSubmit = async (data: CreateJourneyFormData) => {
     console.log("data", data);
 
@@ -717,20 +653,6 @@ export default function CreateJourneyPage({
     (!eventsData && isFetchingEvents) ||
     (!systemPropertiesData && isFetchingSystemProperties);
 
-  const handleCloseMultipleEventDialog = () => {
-    setShowMultipleEventDialog(false);
-    router.push("/dashboard");
-  };
-
-  const handleGoToRTNPanel = () => {
-    window.open(
-      "https://msd.dream11.com/e1847819ec7438d48900dac635b5cb40/d11-configurability/d11-configurabilityPage",
-      "_blank"
-    );
-    setShowMultipleEventDialog(false);
-    router.push("/dashboard");
-  };
-
   if (journeyId && isLoadingJourney) {
     return (
       <Box
@@ -748,43 +670,6 @@ export default function CreateJourneyPage({
 
   return (
     <FormProvider {...methods}>
-      <Dialog
-        open={showMultipleEventDialog}
-        onClose={handleCloseMultipleEventDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Multiple Event Journey Not Supported</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Multiple event journeys are not supported through this panel right
-            now. Please use the{" "}
-            <a
-              href="https://msd.dream11.com/e1847819ec7438d48900dac635b5cb40/d11-configurability/d11-configurabilityPage"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: theme.palette.primary.main,
-                textDecoration: "underline",
-              }}
-            >
-              RTN MSD
-            </a>{" "}
-            panel for this.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseMultipleEventDialog}>Close</Button>
-          <Button
-            onClick={handleGoToRTNPanel}
-            variant="contained"
-            color="primary"
-          >
-            Go to RTN Panel
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <Box sx={createJourneyPageStyles.pageContainer}>
         <JourneyHeader
           control={control}
