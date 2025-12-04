@@ -66,6 +66,18 @@
           "type": "enum",
           "default": "regular",
           "acceptedValues": ["regular", "medium", "bold"]
+        },
+        {
+          "name": "fontFamily",
+          "display": "Font Family",
+          "type": "enum",
+          "default": "Roboto",
+          "acceptedValues": ["Roboto", "Inter", "Trim"]
+        },
+        {
+          "name": "fontSize",
+          "display": "Font Size",
+          "type": "number"
         }
       ],
       "styles": [
@@ -566,7 +578,6 @@
           "default": "EXTERNAL_BROWSER",
           "acceptedValues": [
             "EXTERNAL_BROWSER",
-            "INTERNAL_BROWSER",
             "INTERNAL_APP"
           ]
         },
@@ -578,7 +589,6 @@
           "default": "EXTERNAL_BROWSER",
           "acceptedValues": [
             "EXTERNAL_BROWSER",
-            "INTERNAL_BROWSER",
             "INTERNAL_APP"
           ]
         }

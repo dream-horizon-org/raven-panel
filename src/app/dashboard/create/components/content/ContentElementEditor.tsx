@@ -355,6 +355,21 @@ export default function ContentElementEditor({
     return checkPathForErrors(propsPath) || checkPathForErrors(stylesPath);
   };
 
+  const hasActionErrors = (): boolean => {
+    if (!element || !element.actions || !Array.isArray(element.actions)) {
+      return false;
+    }
+
+    let basePathString = "nudgeSelection.actions.0.template";
+    for (let i = 0; i < elementPath.length; i++) {
+      basePathString += `.children.${elementPath[i]}`;
+    }
+
+    const actionsPath = `${basePathString}.actions`;
+
+    return checkPathForErrors(actionsPath);
+  };
+
   // Helper to check if any child elements have errors (recursively)
   const hasChildErrors = (): boolean => {
     if (
@@ -417,6 +432,54 @@ export default function ContentElementEditor({
             ) {
               return true;
             }
+
+            const childActionsPath = `${childPath}.actions`;
+            const childActionsParts = childActionsPath.split(".");
+            let childActionsCurrent: any = errors;
+            for (const part of childActionsParts) {
+              if (
+                !childActionsCurrent ||
+                typeof childActionsCurrent !== "object"
+              )
+                break;
+              const numericIndex = parseInt(part, 10);
+              const isNumericKey =
+                !isNaN(numericIndex) && part === String(numericIndex);
+              if (isNumericKey) {
+                if (part in childActionsCurrent) {
+                  childActionsCurrent = childActionsCurrent[part];
+                } else {
+                  break;
+                }
+              } else {
+                if (part in childActionsCurrent) {
+                  childActionsCurrent = childActionsCurrent[part];
+                } else {
+                  break;
+                }
+              }
+            }
+
+            if (
+              childActionsCurrent &&
+              typeof childActionsCurrent === "object"
+            ) {
+              for (const actionKey in childActionsCurrent) {
+                const actionNumericKey = parseInt(actionKey, 10);
+                if (
+                  !isNaN(actionNumericKey) &&
+                  actionKey === String(actionNumericKey)
+                ) {
+                  const actionPath = `${childActionsPath}.${actionKey}`;
+                  if (
+                    checkPathForErrors(`${actionPath}.params.androidUrl`) ||
+                    checkPathForErrors(`${actionPath}.params.iosUrl`)
+                  ) {
+                    return true;
+                  }
+                }
+              }
+            }
             // Recursively check this child's children
             if (checkChildrenRecursively(`${childPath}.children`)) {
               return true;
@@ -433,7 +496,8 @@ export default function ContentElementEditor({
 
   const elementHasErrors = hasElementErrors();
   const childHasErrors = hasChildErrors();
-  const shouldHighlight = elementHasErrors || childHasErrors;
+  const actionHasErrors = hasActionErrors();
+  const shouldHighlight = elementHasErrors || childHasErrors || actionHasErrors;
 
   if (!element) {
     return null;
@@ -544,6 +608,13 @@ export default function ContentElementEditor({
               componentType={element.type}
               onActionsChange={handleActionsChange}
               engagementType={engagementType}
+              basePath={
+                elementPath.length === 0
+                  ? "nudgeSelection.actions.0.template"
+                  : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                      ".children."
+                    )}`
+              }
             />
           )}
 

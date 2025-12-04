@@ -25,12 +25,16 @@ import {
 } from "../../utils/componentDefinitions";
 import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
 import { useState } from "react";
+import { useFormContext, Path } from "react-hook-form";
+import { CreateJourneyFormData } from "../../types/journeyTypes";
+import FormHelperText from "@mui/material/FormHelperText";
 
 interface ElementActionsEditorProps {
   element: ReactNativeJson;
   componentType: string;
   onActionsChange: (actions: ReactNativeJson["actions"]) => void;
   engagementType?: NudgeType;
+  basePath?: string;
 }
 
 interface EventParam {
@@ -44,7 +48,51 @@ export default function ElementActionsEditor({
   componentType,
   onActionsChange,
   engagementType,
+  basePath = "nudgeSelection.actions.0.template",
 }: ElementActionsEditorProps) {
+  const {
+    formState: { errors },
+  } = useFormContext<CreateJourneyFormData>();
+
+  const getFieldError = (actionIndex: number, paramName: string) => {
+    if (!basePath) return undefined;
+    const fieldPath = `${basePath}.actions.${actionIndex}.params.${paramName}`;
+
+    const pathParts = fieldPath.split(".");
+    let current: any = errors;
+
+    for (let i = 0; i < pathParts.length; i++) {
+      const part = pathParts[i];
+
+      if (!current || typeof current !== "object") {
+        return undefined;
+      }
+      const numericIndex = parseInt(part, 10);
+      const isNumericKey =
+        !isNaN(numericIndex) && part === String(numericIndex);
+
+      if (isNumericKey) {
+        if (part in current) {
+          current = current[part];
+        } else {
+          return undefined;
+        }
+      } else {
+        if (part in current) {
+          current = current[part];
+        } else {
+          return undefined;
+        }
+      }
+    }
+
+    if (current && typeof current === "object" && "message" in current) {
+      return current;
+    }
+
+    return undefined;
+  };
+
   const availableActionNames = getAvailableActions(componentType);
   const allClickActions = getAllClickActions();
   const elementActions = element.actions || [];
@@ -238,6 +286,13 @@ export default function ElementActionsEditor({
     }
 
     const params = getActionParams(actionDef.name);
+
+    const actionIndex = elementActions.findIndex(
+      (action: any) =>
+        typeof action === "object" &&
+        "name" in action &&
+        action.name === actionDef.name
+    );
 
     return (
       <Box
@@ -496,25 +551,39 @@ export default function ElementActionsEditor({
               );
 
             case "url":
+              const fieldError =
+                actionIndex >= 0
+                  ? getFieldError(actionIndex, param.name)
+                  : undefined;
+
               return (
-                <TextField
+                <FormControl
                   key={param.name}
                   fullWidth
-                  size="small"
-                  type="url"
-                  label={param.name}
-                  value={currentValue}
-                  onChange={(e) =>
-                    handleActionParamChange(
-                      actionDef.name,
-                      param.name,
-                      e.target.value
-                    )
-                  }
-                  required={param.isRequired}
-                  placeholder="https://..."
+                  error={!!fieldError}
                   sx={{ mb: 2 }}
-                />
+                >
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="url"
+                    label={param.name}
+                    value={currentValue}
+                    onChange={(e) =>
+                      handleActionParamChange(
+                        actionDef.name,
+                        param.name,
+                        e.target.value
+                      )
+                    }
+                    required={param.isRequired}
+                    placeholder="https://..."
+                    error={!!fieldError}
+                  />
+                  {fieldError && (
+                    <FormHelperText>{fieldError.message}</FormHelperText>
+                  )}
+                </FormControl>
               );
 
             default:

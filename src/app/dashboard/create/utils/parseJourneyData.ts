@@ -99,6 +99,48 @@ export const parseJourneyDataToFormData = (
       nudgeType = NudgeType.TOOLTIP;
     }
 
+    const transformDeeplinkParamsForForm = (node: any): any => {
+      if (!node || typeof node !== "object") {
+        return node;
+      }
+
+      if (Array.isArray(node.actions)) {
+        node.actions = node.actions.map((action: any) => {
+          if (
+            action.type === "deeplink" &&
+            action.params &&
+            typeof action.params === "object"
+          ) {
+            const params = { ...action.params };
+
+            if (
+              Array.isArray(params.androidUrl) &&
+              params.androidUrl.length > 0
+            ) {
+              params.androidUrl =
+                params.androidUrl[0]?.value || params.androidUrl[0] || "";
+            }
+
+            if (Array.isArray(params.iosUrl) && params.iosUrl.length > 0) {
+              params.iosUrl = params.iosUrl[0]?.value || params.iosUrl[0] || "";
+            }
+
+            return {
+              ...action,
+              params,
+            };
+          }
+          return action;
+        });
+      }
+
+      if (Array.isArray(node.children)) {
+        node.children = node.children.map(transformDeeplinkParamsForForm);
+      }
+
+      return node;
+    };
+
     let template: any = null;
     if (action.template) {
       try {
@@ -106,6 +148,8 @@ export const parseJourneyDataToFormData = (
           typeof action.template === "string"
             ? JSON.parse(action.template)
             : action.template;
+
+        template = transformDeeplinkParamsForForm(template);
       } catch (e) {
         console.error("Failed to parse template:", e);
       }

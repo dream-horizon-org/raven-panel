@@ -15,18 +15,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <QueryProvider>
+      <QueryProvider>
           <MultiTenantProvider>
             <PermissionProvider>
-              <ThemeModeProvider>
-                <ThemeProvider>
-                  {children}
-                  <Toaster position="top-center" />
-                </ThemeProvider>
-              </ThemeModeProvider>
+        <ThemeModeProvider>
+          <ThemeProvider>
+            {children}
+            <Toaster position="top-center" />
+          </ThemeProvider>
+        </ThemeModeProvider>
             </PermissionProvider>
           </MultiTenantProvider>
-        </QueryProvider>
+      </QueryProvider>
       </GoogleOAuthProvider>
     </ErrorBoundary>
   );
