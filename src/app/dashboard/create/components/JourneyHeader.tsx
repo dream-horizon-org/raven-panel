@@ -6,9 +6,9 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useRouter } from "next/navigation";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
-import { journeyHeaderStyles } from "../styles/journeyHeaderStyles";
+import { journeyHeaderStyles } from "./content/styles/journeyHeaderStyles";
 import { JOURNEY_ICONS } from "@/lib/mockData";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 
 interface JourneyHeaderProps {

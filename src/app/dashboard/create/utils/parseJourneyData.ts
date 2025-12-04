@@ -1,6 +1,13 @@
-import { CreateJourneyFormData } from "../types/journeyTypes";
-import { NudgeType } from "../types/journeyTypes";
+import {
+  CreateJourneyFormData,
+  NextStateTransition,
+  ReactNativeJson,
+} from "../types/journey.interface";
+import { NudgeType } from "../types/journey.interface";
 import { GetJourneyResponse } from "@/api/services/types/getJourney.interface";
+
+// Helper type for template transformation (allows index signature for dynamic properties)
+type TemplateNode = ReactNativeJson & Record<string, unknown>;
 
 export const parseJourneyDataToFormData = (
   apiResponse: GetJourneyResponse
@@ -49,24 +56,32 @@ export const parseJourneyDataToFormData = (
 
   const stateTransition = rule.stateTransition || {};
   const eventInfo = Object.entries(stateTransition).map(
-    ([eventName, transitions]: [string, any]) => {
+    ([eventName, transitions]) => {
       const currentStates = Object.entries(transitions).map(
-        ([currentState, nextStates]: [string, any]) => {
-          const nextStateArray = Array.isArray(nextStates) ? nextStates : [];
-          const nextState = nextStateArray.map((ns: any) => {
+        ([currentState, nextStates]) => {
+          const nextStateArray = Array.isArray(nextStates)
+            ? (nextStates as NextStateTransition[])
+            : [];
+          const nextState = nextStateArray.map((ns) => {
             const filters = ns.filters || {};
             const filterArray = filters.filter || [];
 
             return {
               transitionTo: Number(ns.transitionTo),
               filters: {
-                operator: filters.operator || "AND",
-                filter: filterArray.map((f: any) => ({
-                  propertyName: { label: f.propertyName, isLocal: false },
+                operator: (filters.operator || "AND") as "AND" | "OR",
+                filter: filterArray.map((f) => ({
+                  propertyName: {
+                    label: String(f.propertyName),
+                    isLocal: false,
+                  },
                   propertyType: f.propertyType || "string",
                   comparisonType: f.comparisonType || "=",
-                  comparisonValue: f.comparisonValue,
-                  componentType: "Filter",
+                  comparisonValue: f.comparisonValue as
+                    | string
+                    | number
+                    | boolean,
+                  componentType: "Filter" as const,
                 })),
               },
             };
@@ -89,7 +104,7 @@ export const parseJourneyDataToFormData = (
   const actions = rule.actions || [];
   const stateToAction = rule.stateToAction || {};
 
-  const nudgeSelectionActions = actions.map((action: any, index: number) => {
+  const nudgeSelectionActions = actions.map((action) => {
     let nudgeType: NudgeType = NudgeType.TOOLTIP;
     if (action.type === "NUDGE_UI") {
       nudgeType = NudgeType.NUDGE_UI;
@@ -99,19 +114,23 @@ export const parseJourneyDataToFormData = (
       nudgeType = NudgeType.TOOLTIP;
     }
 
-    const transformDeeplinkParamsForForm = (node: any): any => {
+    const transformDeeplinkParamsForForm = (
+      node: TemplateNode
+    ): TemplateNode => {
       if (!node || typeof node !== "object") {
         return node;
       }
 
       if (Array.isArray(node.actions)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         node.actions = node.actions.map((action: any) => {
           if (
             action.type === "deeplink" &&
             action.params &&
             typeof action.params === "object"
           ) {
-            const params = { ...action.params };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const params: any = { ...action.params };
 
             if (
               Array.isArray(params.androidUrl) &&
@@ -135,46 +154,57 @@ export const parseJourneyDataToFormData = (
       }
 
       if (Array.isArray(node.children)) {
-        node.children = node.children.map(transformDeeplinkParamsForForm);
+        node.children = node.children.map((child) =>
+          transformDeeplinkParamsForForm(child as TemplateNode)
+        ) as ReactNativeJson[];
       }
 
       return node;
     };
 
-    let template: any = null;
+    let template: ReactNativeJson | null = null;
     if (action.template) {
       try {
-        template =
-          typeof action.template === "string"
-            ? JSON.parse(action.template)
-            : action.template;
-
-        template = transformDeeplinkParamsForForm(template);
+        // Template is already ReactNativeJson from GetJourneyResponse
+        const parsedTemplate = action.template as ReactNativeJson;
+        template = (transformDeeplinkParamsForForm(
+          parsedTemplate as TemplateNode
+        ) as unknown) as ReactNativeJson;
       } catch (e) {
         console.error("Failed to parse template:", e);
       }
     }
 
     // Extract variant from action.variant or template.props.templateVariantId
-    let variant = action.variant;
+    let variant: string | undefined = action.variant;
     if (!variant && template?.props?.templateVariantId) {
-      variant = template.props.templateVariantId;
+      variant = String(template.props.templateVariantId);
     }
 
     if (!variant || variant === "Default") {
       if (nudgeType === NudgeType.NUDGE_UI && template?.children) {
-        const hasMultipleButtons = template.children.some((child: any) => {
-          const buttons =
-            child.children?.filter((c: any) => c.type === "Button") || [];
-          return buttons.length > 1;
-        });
+        const hasMultipleButtons = (template.children as ReactNativeJson[]).some(
+          (child: ReactNativeJson) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const buttons = ((child as any).children?.filter(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (c: any) => c.type === "Button"
+            ) || []) as ReactNativeJson[];
+            return buttons.length > 1;
+          }
+        );
         variant = hasMultipleButtons ? "bottomsheet-cta" : "basic-bottomsheet";
       } else if (nudgeType === NudgeType.POPUP && template?.children) {
-        const hasSingleButton = template.children.some((child: any) => {
-          const buttons =
-            child.children?.filter((c: any) => c.type === "Button") || [];
-          return buttons.length === 1;
-        });
+        const hasSingleButton = (template.children as ReactNativeJson[]).some(
+          (child: ReactNativeJson) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const buttons = ((child as any).children?.filter(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (c: any) => c.type === "Button"
+            ) || []) as ReactNativeJson[];
+            return buttons.length === 1;
+          }
+        );
         variant = hasSingleButton ? "popup-single-button" : "basic-popup";
       } else if (nudgeType === NudgeType.TOOLTIP) {
         variant = "basic-tooltip";
@@ -195,17 +225,17 @@ export const parseJourneyDataToFormData = (
 
     const onState =
       Object.entries(stateToAction).find(
-        ([_, actionId]) => actionId === action.actionId
+        ([, actionId]) => actionId === action.actionId
       )?.[0] || "1";
 
     return {
       config: {
-        triggerDelay: action.config?.triggerDelay || 0,
+        triggerDelay: Number(action.config?.triggerDelay) || 0,
       },
       onState,
-      actionId: action.actionId || "",
+      actionId: String(action.actionId || ""),
       type: nudgeType,
-      variant,
+      variant: variant as CreateJourneyFormData["nudgeSelection"]["actions"][0]["variant"],
       template: template || {
         type: nudgeType,
         props: { testID: `testID-${Date.now()}` },
@@ -218,7 +248,7 @@ export const parseJourneyDataToFormData = (
   });
 
   const contextParams = (rule.contextParams || []).map(
-    (param: string, index: number) => ({
+    (param: string, index) => ({
       id: index,
       label: param,
     })

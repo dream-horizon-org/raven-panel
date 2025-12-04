@@ -3,7 +3,7 @@ import { API_BASE_URLS } from "@/config/api";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
-} from "@/app/dashboard/create/types/journeyTypes";
+} from "@/app/dashboard/create/types/journey.interface";
 import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney";
 import { UpdateCtaInput } from "./types/updateJourney.interface";
 

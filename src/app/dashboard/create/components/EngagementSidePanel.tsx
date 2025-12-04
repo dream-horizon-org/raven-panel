@@ -29,13 +29,13 @@ import {
   CreateJourneyFormData,
   NudgeType,
   ReactNativeJson,
-} from "../types/journeyTypes";
+} from "../types/journey.interface";
 import { useState, useEffect, useRef } from "react";
 import TemplateTab from "./content/TemplateTab";
 import ContentTab from "./content/ContentTab";
 import LocationTab from "./content/LocationTab";
 import PreviewPanel from "./content/PreviewPanel";
-import { engagementSidePanelStyles } from "../styles/engagementSidePanelStyles";
+import { engagementSidePanelStyles } from "./content/styles/engagementSidePanelStyles";
 import { validateTemplate } from "../utils/validation";
 import { ElementLocatorProvider } from "../contexts/ElementLocatorContext";
 
@@ -77,7 +77,6 @@ export default function EngagementSidePanel({
   const initialTemplateRef = useRef<ReactNativeJson | null>(null);
 
   // Use formState.errors for reactive updates (errors set by setError will appear here)
-  const formErrors = formState.errors;
   // Use formErrors if available, otherwise fall back to errors prop
   const errorSource = formState.errors as FieldErrors<CreateJourneyFormData>;
 
@@ -100,29 +99,29 @@ export default function EngagementSidePanel({
   }, [open, getValues]);
 
   // Helper to get nested error from errors object
-  const getNestedError = (path: string) => {
-    const pathParts = path.split(".");
-    let current: Record<string, unknown> | unknown = errorSource;
-    for (const part of pathParts) {
-      if (current && typeof current === "object" && !Array.isArray(current)) {
-        const index = parseInt(part, 10);
-        if (!isNaN(index) && part === String(index)) {
-          if (part in current) {
-            current = (current as Record<string, unknown>)[part];
-          } else {
-            return undefined;
-          }
-        } else if (part in current) {
-          current = (current as Record<string, unknown>)[part];
-        } else {
-          return undefined;
-        }
-      } else {
-        return undefined;
-      }
-    }
-    return current;
-  };
+  // const getNestedError = (path: string) => {
+  //   const pathParts = path.split(".");
+  //   let current: Record<string, unknown> | unknown = errorSource;
+  //   for (const part of pathParts) {
+  //     if (current && typeof current === "object" && !Array.isArray(current)) {
+  //       const index = parseInt(part, 10);
+  //       if (!isNaN(index) && part === String(index)) {
+  //         if (part in current) {
+  //           current = (current as Record<string, unknown>)[part];
+  //         } else {
+  //           return undefined;
+  //         }
+  //       } else if (part in current) {
+  //         current = (current as Record<string, unknown>)[part];
+  //       } else {
+  //         return undefined;
+  //       }
+  //     } else {
+  //       return undefined;
+  //     }
+  //   }
+  //   return current;
+  // };
 
   const hasErrorsInPath = (path: string): boolean => {
     const value = get(errorSource, path);
@@ -219,11 +218,18 @@ export default function EngagementSidePanel({
       setValue("nudgeSelection.actions.0.template", initialTemplateRef.current);
     } else {
       // If no initial template, clear it
-      setValue("nudgeSelection.actions.0.template", undefined as any);
+      setValue(
+        "nudgeSelection.actions.0.template",
+        (undefined as unknown) as ReactNativeJson
+      );
     }
     setShowConfirmDialog(false);
     setPendingCloseAction(null);
-    onClose();
+    if (pendingCloseAction) {
+      pendingCloseAction();
+    } else {
+      onClose();
+    }
   };
 
   const handleCloseRequest = (closeAction: () => void) => {
@@ -236,7 +242,7 @@ export default function EngagementSidePanel({
       JSON.stringify(currentTemplate) !== JSON.stringify(initialTemplate);
 
     if (hasChanges) {
-      setPendingCloseAction(() => closeAction);
+      setPendingCloseAction(closeAction);
       setShowConfirmDialog(true);
     } else {
       closeAction();
@@ -245,8 +251,12 @@ export default function EngagementSidePanel({
 
   const handleConfirmSave = () => {
     setShowConfirmDialog(false);
+    const closeAction = pendingCloseAction;
     setPendingCloseAction(null);
     handleSave();
+    if (closeAction) {
+      closeAction();
+    }
   };
 
   const handleConfirmDiscard = () => {
@@ -256,6 +266,7 @@ export default function EngagementSidePanel({
   const handleDialogCancel = () => {
     setShowConfirmDialog(false);
     setPendingCloseAction(null);
+    // Keep panel open when canceling
   };
 
   const handleContinueEditing = () => {

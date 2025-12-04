@@ -31,13 +31,18 @@ import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { JourneyNodeData, Condition, Branch, Engagement } from "./types";
+import {
+  JourneyNodeData,
+  Condition,
+  Branch,
+  Engagement,
+} from "../../types/JourneyNode.interface";
 import * as styles from "./styles/nodeConfigurationPanelStyles";
 import {
   getInputType,
   isNumericType,
   normalizePropertyType,
-} from "../../create/utils/propertyTypeUtils";
+} from "../../utils/propertyTypeUtils";
 import { FormControl, InputLabel, Select } from "@mui/material";
 
 interface NodeConfigurationPanelProps {

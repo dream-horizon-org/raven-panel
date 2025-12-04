@@ -32,18 +32,15 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form";
-import { CreateJourneyFormData, EventInfo } from "../types/journeyTypes";
-import {
-  StateNode,
-  EngagementNode,
-} from "../../create-journey/components/FlowNodes";
-import NodeConfigurationPanel from "../../create-journey/components/NodeConfigurationPanel";
+import { CreateJourneyFormData, EventInfo } from "../types/journey.interface";
+import { StateNode, EngagementNode } from "./content/FlowNodes";
+import NodeConfigurationPanel from "./content/NodeConfigurationPanel";
 import {
   JourneyNodeData,
   Branch,
   EngagementNodeData,
   Engagement,
-} from "../../create-journey/components/types";
+} from "../types/JourneyNode.interface";
 import {
   buildEventStateMap,
   buildNodeStateMap,
@@ -140,14 +137,12 @@ interface JourneyFlowBuilderIntegratedProps {
 
 export default function JourneyFlowBuilderIntegrated({
   control,
-  errors,
   events,
   isLoadingEvents = false,
   systemPropertyNames = [],
   systemPropertyTypes = new Map(),
   onEngagementSelect,
   onSave,
-  onTemplateSaved,
   syncTemplateRef,
   checkAllEngagementsHaveTemplatesRef,
 }: JourneyFlowBuilderIntegratedProps) {
@@ -225,7 +220,7 @@ export default function JourneyFlowBuilderIntegrated({
 
       // Restore engagements from nudgeSelection.actions
       if (nudgeActions && nudgeActions.length > 0) {
-        let updatedNodes = initialNodes.map((node) => {
+        const updatedNodes = initialNodes.map((node) => {
           if (node.type !== "state" || !node.data.eventName) return node;
 
           const nodeData = (node.data as unknown) as JourneyNodeData;
@@ -408,7 +403,7 @@ export default function JourneyFlowBuilderIntegrated({
 
   // Sync flow changes back to form
   const syncFlowToForm = useCallback(() => {
-    const esm = buildEventStateMap(nodes as Node<JourneyNodeData>[], edges);
+    const esm = buildEventStateMap(nodes as Node<JourneyNodeData>[]);
     const nsm = buildNodeStateMap(nodes as Node<JourneyNodeData>[], esm);
     setEventStateMap(esm);
     setNodeStateMap(nsm);
@@ -532,6 +527,7 @@ export default function JourneyFlowBuilderIntegrated({
 
           // Check if template has meaningful content (more than just default structure)
           if (hasTemplate) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const template = engagement.config.template as any;
             const hasContent =
               (template.children &&
@@ -609,9 +605,7 @@ export default function JourneyFlowBuilderIntegrated({
                 sourceNode as Node<JourneyNodeData>,
                 engagement,
                 stateNumber,
-                currentActions,
-                eventStateMap,
-                nodeStateMap
+                currentActions
               );
               setValue("nudgeSelection.actions", updatedActions);
             }
@@ -972,6 +966,7 @@ export default function JourneyFlowBuilderIntegrated({
                 type: "bezier",
                 data: { branchId: branch.id },
                 style: { strokeWidth: 2 },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 markerEnd: { type: "arrowclosed" as any },
               });
             }
@@ -1050,23 +1045,23 @@ export default function JourneyFlowBuilderIntegrated({
     });
   }, [nodes, setEdges]);
 
-  // Validate unconnected nodes before save
-  const validateAndSave = useCallback(() => {
-    const unconnected = findUnconnectedNodes(
-      nodes as Node<JourneyNodeData>[],
-      edges
-    );
-
-    if (unconnected.length > 0) {
-      setUnconnectedNodesDialog({ open: true, nodeIds: unconnected });
-      return;
-    }
-
-    syncFlowToForm();
-    if (onSave) {
-      onSave();
-    }
-  }, [nodes, edges, syncFlowToForm, onSave]);
+  // Validate unconnected nodes before save (unused but kept for potential future use)
+  // const validateAndSave = useCallback(() => {
+  //   const unconnected = findUnconnectedNodes(
+  //     nodes as Node<JourneyNodeData>[],
+  //     edges
+  //   );
+  //
+  //   if (unconnected.length > 0) {
+  //     setUnconnectedNodesDialog({ open: true, nodeIds: unconnected });
+  //     return;
+  //   }
+  //
+  //   syncFlowToForm();
+  //   if (onSave) {
+  //     onSave();
+  //   }
+  // }, [nodes, edges, syncFlowToForm, onSave]);
 
   const handleRemoveUnconnectedNodes = useCallback(() => {
     const { nodeIds } = unconnectedNodesDialog;
@@ -1154,7 +1149,7 @@ export default function JourneyFlowBuilderIntegrated({
             onRequestClose={panelCloseHandlerRef}
             onEngagementTemplateSelect={(
               engagementId: string,
-              engagementType: string
+              _engagementType: string
             ) => {
               if (onEngagementSelect && selectedNode) {
                 const stateNumber =
@@ -1179,9 +1174,7 @@ export default function JourneyFlowBuilderIntegrated({
                     selectedNode,
                     engagement,
                     stateNumber,
-                    currentActions,
-                    eventStateMap,
-                    nodeStateMap
+                    currentActions
                   );
                   setValue("nudgeSelection.actions", updatedActions);
                 }

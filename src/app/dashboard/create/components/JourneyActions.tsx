@@ -3,7 +3,7 @@
 import { Box, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
-import { journeyActionsStyles } from "../styles/journeyActionsStyles";
+import { journeyActionsStyles } from "./content/styles/journeyActionsStyles";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 

@@ -1,5 +1,4 @@
 import { SxProps, Theme } from "@mui/material";
-import { THEME_COLORS } from "@/config/colors";
 
 export const filterRowStyles = {
   filterCard: (theme: Theme): SxProps<Theme> => ({

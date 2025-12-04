@@ -6,9 +6,8 @@ import { Box, Typography, Chip } from "@mui/material";
 import {
   JourneyNodeData,
   EngagementNodeData,
-  Branch,
   Engagement,
-} from "./types";
+} from "../../types/JourneyNode.interface";
 import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";

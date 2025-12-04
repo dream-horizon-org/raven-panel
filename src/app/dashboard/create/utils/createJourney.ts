@@ -6,9 +6,14 @@ import {
 } from "@/api/services/types/createJourney.interface";
 import {
   CreateJourneyFormData,
+  Filter,
+  FilterFunction,
+  FilterGroup,
   NudgeType,
+  NudgeSelectionPopupMenu,
+  NudgeSelectionTooltipMenu,
   ReactNativeJson,
-} from "../types/journeyTypes";
+} from "../types/journey.interface";
 
 export const transformFormDataToApiFormat = (
   formData: CreateJourneyFormData
@@ -64,7 +69,25 @@ export const transformFormDataToApiFormat = (
       stateTransition[eventName][currentState] = [];
 
       state.nextState?.forEach((nextState) => {
-        const transformFilter = (filter: any): any => {
+        const transformFilter = (
+          filter: Filter | FilterGroup | FilterFunction | null | undefined
+        ):
+          | {
+              propertyName: string;
+              propertyType: string;
+              comparisonType: string;
+              comparisonValue: string;
+            }
+          | {
+              operator: string;
+              filter: Array<{
+                propertyName: string;
+                propertyType: string;
+                comparisonType: string;
+                comparisonValue: string;
+              }>;
+            }
+          | null => {
           if (!filter) return null;
 
           if ("propertyName" in filter && "comparisonType" in filter) {
@@ -72,17 +95,27 @@ export const transformFormDataToApiFormat = (
               propertyName:
                 typeof filter.propertyName === "object"
                   ? filter.propertyName.label
-                  : filter.propertyName,
+                  : String(filter.propertyName || ""),
               propertyType: filter.propertyType || "string",
               comparisonType: filter.comparisonType || "=",
-              comparisonValue: filter.comparisonValue,
+              comparisonValue: String(filter.comparisonValue || ""),
             };
           }
 
           if ("operator" in filter && "filter" in filter) {
             return {
-              operator: filter.operator || "AND",
-              filter: filter.filter?.map(transformFilter).filter(Boolean) || [],
+              operator: (filter.operator || "AND") as string,
+              filter:
+                filter.filter?.map(transformFilter).filter(
+                  (
+                    f
+                  ): f is {
+                    propertyName: string;
+                    propertyType: string;
+                    comparisonType: string;
+                    comparisonValue: string;
+                  } => f !== null && "propertyName" in f
+                ) || [],
             };
           }
 
@@ -91,7 +124,16 @@ export const transformFormDataToApiFormat = (
 
         const filters = nextState.filters || {};
         const transformedFilters =
-          filters.filter?.map(transformFilter).filter(Boolean) || [];
+          filters.filter?.map(transformFilter).filter(
+            (
+              f
+            ): f is {
+              propertyName: string;
+              propertyType: string;
+              comparisonType: string;
+              comparisonValue: string;
+            } => f !== null && "propertyName" in f
+          ) || [];
 
         stateTransition[eventName][currentState].push({
           transitionTo: Number(nextState.transitionTo),
@@ -124,13 +166,13 @@ export const transformFormDataToApiFormat = (
       (action, index) => action.actionId || `${index}_${baseTimestamp}`
     ) || [];
 
-  const transformDeeplinkParams = (node: any): any => {
+  const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
     if (!node || typeof node !== "object") {
       return node;
     }
 
     if (Array.isArray(node.actions)) {
-      node.actions = node.actions.map((action: any) => {
+      node.actions = node.actions.map((action) => {
         if (
           action.type === "deeplink" &&
           action.params &&
@@ -179,11 +221,17 @@ export const transformFormDataToApiFormat = (
 
       // Remove templateVariantId from props
       if (templateToStringify?.props?.templateVariantId) {
-        const { templateVariantId, ...restProps } = templateToStringify.props;
+        // Remove templateVariantId from props by destructuring
+        const {
+          templateVariantId: _removed,
+          ...restProps
+        } = templateToStringify.props;
         templateToStringify = {
           ...templateToStringify,
           props: restProps,
         };
+        // Explicitly reference to avoid unused variable warning
+        void _removed;
       }
 
       if (templateToStringify?.type) {
@@ -204,9 +252,35 @@ export const transformFormDataToApiFormat = (
 
       const apiActionType: NudgeType = action.type;
 
-      let variant = action.variant;
+      let variant:
+        | NudgeSelectionPopupMenu
+        | NudgeSelectionTooltipMenu
+        | undefined = action.variant;
       if (!variant && templateToStringify?.props?.templateVariantId) {
-        variant = templateToStringify.props.templateVariantId as any;
+        const templateVariantIdValue =
+          typeof templateToStringify.props.templateVariantId === "string"
+            ? templateToStringify.props.templateVariantId
+            : String(templateToStringify.props.templateVariantId || "");
+
+        // Cast to appropriate variant type based on action type
+        // Check if the value matches any enum value
+        if (action.type === NudgeType.POPUP) {
+          if (
+            Object.values(NudgeSelectionPopupMenu).includes(
+              templateVariantIdValue as NudgeSelectionPopupMenu
+            )
+          ) {
+            variant = templateVariantIdValue as NudgeSelectionPopupMenu;
+          }
+        } else if (action.type === NudgeType.TOOLTIP) {
+          if (
+            Object.values(NudgeSelectionTooltipMenu).includes(
+              templateVariantIdValue as NudgeSelectionTooltipMenu
+            )
+          ) {
+            variant = templateVariantIdValue as NudgeSelectionTooltipMenu;
+          }
+        }
       }
       const apiVariant = variant || undefined;
 

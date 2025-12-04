@@ -14,8 +14,8 @@ import {
   ReactNativeJson,
   NudgeType,
   DynamicTextValueType,
-} from "../../types/journeyTypes";
-import { contentTabStyles } from "../../styles/contentTabStyles";
+} from "../../types/journey.interface";
+import { contentTabStyles } from "./styles/contentTabStyles";
 import ContentElementEditor from "./ContentElementEditor";
 import {
   getComponentDefinition,
@@ -219,7 +219,6 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
         }
       : undefined;
 
-
     return (
       <Box sx={contentTabStyles.container}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
@@ -249,60 +248,65 @@ export default function ContentTab({ control, errors }: ContentTabProps) {
     <Box sx={contentTabStyles.container}>
       {!template || children.length === 0 ? (
         <Box sx={contentTabStyles.container}>
-        <Box sx={contentTabStyles.header}>
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={(e) => setAnchorEl(e.currentTarget)}
-          sx={contentTabStyles.addButton}>
-          Add Element
-        </Button>
-        <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-          {ELEMENT_TYPES.map((type) => (
-            <MenuItem
-              key={type.value}
-              onClick={() =>
-                handleAddElement(
-                  type.value as
-                    | "Vertical Stack"
-                    | "Horizontal Stack"
-                    | "Text"
-                    | "Image"
-                    | "Button"
-                )
-              }
+          <Box sx={contentTabStyles.header}>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              sx={contentTabStyles.addButton}
             >
-              {type.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      </Box>
-        <Box sx={contentTabStyles.emptyState}>
-          <Typography sx={contentTabStyles.emptyStateText}>
-            {!template
-              ? "Please select a template first"
-              : "No elements added yet"}
-          </Typography>
-          <Typography sx={contentTabStyles.emptyStateSubtext}>
-            {!template
-              ? "Go to the Template tab to select a template"
-              : "Use the 'Add Element' dropdown to start building your engagement UI"}
-          </Typography>
-        </Box>
+              Add Element
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={() => setAnchorEl(null)}
+            >
+              {ELEMENT_TYPES.map((type) => (
+                <MenuItem
+                  key={type.value}
+                  onClick={() =>
+                    handleAddElement(
+                      type.value as
+                        | "Vertical Stack"
+                        | "Horizontal Stack"
+                        | "Text"
+                        | "Image"
+                        | "Button"
+                    )
+                  }
+                >
+                  {type.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+          <Box sx={contentTabStyles.emptyState}>
+            <Typography sx={contentTabStyles.emptyStateText}>
+              {!template
+                ? "Please select a template first"
+                : "No elements added yet"}
+            </Typography>
+            <Typography sx={contentTabStyles.emptyStateSubtext}>
+              {!template
+                ? "Go to the Template tab to select a template"
+                : "Use the 'Add Element' dropdown to start building your engagement UI"}
+            </Typography>
+          </Box>
         </Box>
       ) : (
         <Box sx={contentTabStyles.container}>
-        <Box sx={contentTabStyles.elementsList}>
-          {children.map((child: ReactNativeJson, index: number) => (
-            <ContentElementEditor
-              key={child.props?.testID || index}
-              control={control}
-              errors={errors}
-              index={index}
-              onRemove={() => handleRemoveElement(index)}
-            />
-          ))}
-        </Box>
+          <Box sx={contentTabStyles.elementsList}>
+            {children.map((child: ReactNativeJson, index: number) => (
+              <ContentElementEditor
+                key={child.props?.testID || index}
+                control={control}
+                errors={errors}
+                index={index}
+                onRemove={() => handleRemoveElement(index)}
+              />
+            ))}
+          </Box>
         </Box>
       )}
     </Box>

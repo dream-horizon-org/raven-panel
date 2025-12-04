@@ -11,15 +11,15 @@ import { Controller } from "react-hook-form";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
-} from "../../types/journeyTypes";
-import { contentTabStyles } from "../../styles/contentTabStyles";
+} from "../../types/journey.interface";
+import { contentTabStyles } from "./styles/contentTabStyles";
 
 interface LocationTabProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
 }
 
-export default function LocationTab({ control, errors }: LocationTabProps) {
+export default function LocationTab({ control }: LocationTabProps) {
   const { setValue } = useFormContext<CreateJourneyFormData>();
 
   const template = useWatch({
@@ -43,6 +43,7 @@ export default function LocationTab({ control, errors }: LocationTabProps) {
     setValue("nudgeSelection.actions.0.template", updatedTemplate);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tooltipProps = (template?.props || {}) as Record<string, any>;
 
   return (

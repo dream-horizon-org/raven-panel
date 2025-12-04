@@ -1,4 +1,4 @@
-import { OperatorType, PropertyType } from "../types/journeyTypes";
+import { OperatorType, PropertyType } from "../types/journey.interface";
 
 export type FilterOperator = "=" | ">" | "<" | ">=" | "<=";
 

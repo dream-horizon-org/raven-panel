@@ -31,8 +31,8 @@ import {
   NudgeType,
   NudgeSelectionTooltipMenu,
   ReactNativeJson,
-} from "../types/journeyTypes";
-import { engagementSelectorStyles } from "../styles/engagementSelectorStyles";
+} from "../types/journey.interface";
+import { engagementSelectorStyles } from "./content/styles/engagementSelectorStyles";
 import { generateTemplate } from "./content/TemplateTab";
 import { useState } from "react";
 

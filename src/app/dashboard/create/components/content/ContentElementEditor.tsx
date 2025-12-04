@@ -22,13 +22,12 @@ import {
   useWatch as useWatchHook,
   useFormContext,
 } from "react-hook-form";
-import ErrorIcon from "@mui/icons-material/Error";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
   DynamicTextValueType,
-} from "../../types/journeyTypes";
-import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
+} from "../../types/journey.interface";
+import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
 import {
   getComponentDefinition,
   getComponentDefinitionByDisplay,
@@ -202,15 +201,15 @@ export default function ContentElementEditor({
     });
   };
 
-  // Update margin/padding (now in styles)
-  const updateSpacing = (
-    type: "margin" | "padding",
-    side: "Top" | "Right" | "Bottom" | "Left",
-    value: number
-  ) => {
-    const styleKey = `${type}${side}`;
-    updateStyle(styleKey, value);
-  };
+  // Update margin/padding (now in styles) - unused but kept for potential future use
+  // const updateSpacing = (
+  //   type: "margin" | "padding",
+  //   side: "Top" | "Right" | "Bottom" | "Left",
+  //   value: number
+  // ) => {
+  //   const styleKey = `${type}${side}`;
+  //   updateStyle(styleKey, value);
+  // };
 
   const handleAddChildElement = (
     type: "View" | "Text" | "Image" | "Button"
@@ -285,23 +284,25 @@ export default function ContentElementEditor({
     updateElement({ children: currentChildren });
   };
 
-  const getElementLabel = () => {
-    if (!element) return "Element";
-
-    const displayName = componentDef?.display || element.type;
-
-    if (element.type === "Text") {
-      const textContent =
-        element.props?.title || element.props?.textContent || "Empty";
-      return `${displayName}: ${textContent}`;
-    }
-
-    return displayName;
-  };
+  // Unused function - kept for potential future use
+  // const getElementLabel = () => {
+  //   if (!element) return "Element";
+  //
+  //   const displayName = componentDef?.display || element.type;
+  //
+  //   if (element.type === "Text") {
+  //     const textContent =
+  //       element.props?.title || element.props?.textContent || "Empty";
+  //     return `${displayName}: ${textContent}`;
+  //   }
+  //
+  //   return displayName;
+  // };
 
   // Helper to check if a specific path has errors
   const checkPathForErrors = (path: string): boolean => {
     const pathParts = path.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = errors;
 
     for (const part of pathParts) {
@@ -397,6 +398,7 @@ export default function ContentElementEditor({
 
       // Navigate to the path in errors object
       const pathParts = path.split(".");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let current: any = errors;
       for (const part of pathParts) {
         if (!current || typeof current !== "object") return false;
@@ -435,6 +437,7 @@ export default function ContentElementEditor({
 
             const childActionsPath = `${childPath}.actions`;
             const childActionsParts = childActionsPath.split(".");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let childActionsCurrent: any = errors;
             for (const part of childActionsParts) {
               if (

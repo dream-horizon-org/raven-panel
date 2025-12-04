@@ -1,4 +1,8 @@
-import { FilterOperator } from "../constants/journeyConstants";
+import type { Node } from "@xyflow/react";
+import type {
+  JourneyNodeData,
+  Engagement,
+} from "./JourneyNode.interface";
 
 /**
  * Property type utilities for filter value inputs
@@ -169,6 +173,7 @@ export type DynamicTextValueType = (
 
 export type DynamicTextDataType = "string" | "number" | "boolean" | "url";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DynamicArrayValueType = any; // Define based on your needs
 
 export type ElementDataTypeValues = Record<
@@ -308,14 +313,14 @@ export type ContentElement = {
 };
 
 export type JourneyFrequency = {
-    enableTimesInSession?: boolean;
-    timesInSession: number;
-    enableMaxTimesInPeriod?: boolean;
-    maxTimesInPeriod: number;
-    periodValue: number;
-    periodUnit: string;
-    enableMaxTimesInLifetime?: boolean;
-    maxTimesInLifetime: number;
+  enableTimesInSession?: boolean;
+  timesInSession: number;
+  enableMaxTimesInPeriod?: boolean;
+  maxTimesInPeriod: number;
+  periodValue: number;
+  periodUnit: string;
+  enableMaxTimesInLifetime?: boolean;
+  maxTimesInLifetime: number;
 };
 
 export type CampaignFormType = {
@@ -332,3 +337,37 @@ export type CampaignFormType = {
 
 // Alias for backward compatibility
 export type CreateJourneyFormData = CampaignFormType;
+
+/**
+ * Type definition for syncEngagementToAction function
+ * Syncs engagement data from flow nodes to form actions
+ */
+export type SyncEngagementToActionType = (
+  node: Node<JourneyNodeData>,
+  engagement: Engagement,
+  stateNumber: string,
+  currentActions: CreateJourneyFormData["nudgeSelection"]["actions"]
+) => CreateJourneyFormData["nudgeSelection"]["actions"];
+
+
+export type NextStateTransition = {
+  transitionTo: string | number;
+  filters: {
+    operator: string;
+    filter: Array<{
+      propertyName: string;
+      propertyType: string;
+      comparisonType: string;
+      comparisonValue: string;
+    }>;
+  };
+};
+
+export  interface FilterInput {
+  propertyName?: { label: string; isLocal: boolean } | string;
+  propertyType?: string;
+  comparisonType?: string;
+  comparisonValue?: string | boolean | number;
+  operator?: string;
+  filter?: FilterInput[];
+};

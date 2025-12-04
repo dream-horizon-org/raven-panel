@@ -9,7 +9,7 @@ export const journeyTabsStyles = {
     mb: 3,
     width: "100%",
   },
-  customTab: (isActive: boolean, theme: Theme): SxProps<Theme> => ({
+  customTab: (_isActive: boolean, theme: Theme): SxProps<Theme> => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
@@ -18,7 +18,7 @@ export const journeyTabsStyles = {
     py: 1.25,
     borderRadius: "8px",
     cursor: "pointer",
-    bgcolor: isActive
+    bgcolor: _isActive
       ? theme.palette.mode === "light"
         ? THEME_COLORS.GRAY["100"]
         : THEME_COLORS.GRAY["700"]
@@ -27,7 +27,7 @@ export const journeyTabsStyles = {
     transition: "all 0.2s ease",
     flex: 1,
     "&:hover": {
-      bgcolor: isActive
+      bgcolor: _isActive
         ? theme.palette.mode === "light"
           ? THEME_COLORS.GRAY["200"]
           : THEME_COLORS.GRAY["600"]
@@ -36,7 +36,7 @@ export const journeyTabsStyles = {
         : THEME_COLORS.GRAY["800"],
     },
   }),
-  tabIcon: (isActive: boolean): SxProps<Theme> => ({
+  tabIcon: (): SxProps<Theme> => ({
     fontSize: "1.125rem",
     color: "text.primary",
   }),

@@ -1,6 +1,6 @@
 import { Node, Edge } from "@xyflow/react";
-import { JourneyNodeData, Branch } from "../../create-journey/components/types";
-import { EventInfo, Filter } from "../types/journeyTypes";
+import { JourneyNodeData, Branch } from "../types/JourneyNode.interface";
+import { EventInfo, Filter } from "../types/journey.interface";
 
 /**
  * Maps event names to their state numbers
@@ -20,8 +20,7 @@ export type NodeStateMap = Map<string, string>;
  * Other nodes get state numbers based on which transitionTo reaches them
  */
 export function buildEventStateMap(
-  nodes: Node<JourneyNodeData>[],
-  edges: Edge[]
+  nodes: Node<JourneyNodeData>[]
 ): EventStateMap {
   const eventStateMap: EventStateMap = new Map();
   const nodeStateMap: NodeStateMap = new Map();
@@ -41,11 +40,10 @@ export function buildEventStateMap(
 
   // Build a graph to traverse and assign states
   const visited = new Set<string>();
-  const queue: { nodeId: string; state: string }[] = [
-    { nodeId: entryNode.id, state: "0" },
-  ];
 
   visited.add(entryNode.id);
+
+  // Note: queue was removed as it was unused
 
   // Track all transitions to determine next state numbers
   const allTransitions: Array<{

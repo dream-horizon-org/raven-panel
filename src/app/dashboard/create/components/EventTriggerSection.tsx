@@ -6,7 +6,6 @@ import {
   Autocomplete,
   TextField,
   Tooltip,
-  Chip,
   Button,
   FormControl,
   InputLabel,
@@ -28,18 +27,13 @@ import {
 import { Control, FieldErrors } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
 import { useState, useMemo, useEffect } from "react";
-import { eventTriggerSectionStyles } from "../styles/eventTriggerSectionStyles";
+import { eventTriggerSectionStyles } from "./content/styles/eventTriggerSectionStyles";
 import {
   CreateJourneyFormData,
   Filter,
   EventInfo,
-  OperatorType,
-} from "../types/journeyTypes";
-import {
-  JOURNEY_TEXT,
-  OPERATOR_TYPES,
-  OPERATORS,
-} from "../constants/journeyConstants";
+} from "../types/journey.interface";
+import { JOURNEY_TEXT, OPERATOR_TYPES } from "../constants/journeyConstants";
 import FilterRow from "./FilterRow";
 
 interface EventTriggerSectionProps {
@@ -61,9 +55,7 @@ export default function EventTriggerSection({
   control,
   errors,
   events,
-  isLoadingEvents,
   isLoading,
-  availableProperties,
   isLoadingFilters,
   systemProperties,
   systemPropertyTypes,
@@ -177,7 +169,8 @@ export default function EventTriggerSection({
     name: `${filterPath}.filter` as FieldArrayPath<CreateJourneyFormData>,
   });
 
-  const conditionOperator = useWatch({
+  // Note: conditionOperator is watched but not directly used - triggers form validation
+  useWatch({
     control,
     name: `${filterPath}.operator` as Path<CreateJourneyFormData>,
   });

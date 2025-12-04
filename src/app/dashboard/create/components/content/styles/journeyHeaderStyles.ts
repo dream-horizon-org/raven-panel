@@ -1,5 +1,3 @@
-import { SxProps, Theme } from "@mui/material";
-
 export const journeyHeaderStyles = {
   header: {
     display: "flex",

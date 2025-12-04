@@ -7,8 +7,8 @@ import {
   CreateJourneyFormData,
   ReactNativeJson,
   NudgeType,
-} from "../../types/journeyTypes";
-import { previewPanelStyles } from "../../styles/previewPanelStyles";
+} from "../../types/journey.interface";
+import { previewPanelStyles } from "./styles/previewPanelStyles";
 import { useMemo, useEffect } from "react";
 import DeviceFrame from "./DeviceFrame";
 import { useElementLocator } from "../../contexts/ElementLocatorContext";
@@ -56,6 +56,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     if (!node) return null;
 
     const { type, props = {}, styles = {}, children: nodeChildren } = node;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodeProps = props as Record<string, any>;
     const nodeTestID = nodeProps.testID as string | undefined;
     const isHighlighted = nodeTestID && selectedTestID === nodeTestID;
@@ -120,6 +121,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           ? "500"
           : undefined;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ai = (styles as any)?.alignItems as
         | "center"
         | "flex-start"
@@ -127,6 +129,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
         | undefined;
 
       const mappedTextAlign =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any)?.textAlign ??
         (ai === "center"
           ? "center"
@@ -199,6 +202,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           ? "500"
           : undefined;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ai = (styles as any)?.alignItems as
         | "center"
         | "flex-start"
@@ -206,6 +210,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
         | undefined;
 
       const mappedTextAlign =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any)?.textAlign ??
         (ai === "center"
           ? "center"
@@ -269,19 +274,30 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     if (type === "View") {
       const hasFlexProps =
         (styles as any).flexDirection ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flex ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flexGrow ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flexShrink ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flexBasis ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).justifyContent ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).alignItems;
 
       // NEW: detect any radius
+
       const hasRadius =
         (styles as any).borderRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderTopLeftRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderTopRightRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderBottomLeftRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderBottomRightRadius != null;
 
       const viewStyles = {
@@ -407,6 +423,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     if (nudgeTypeStr === "TOOLTIP" || nudgeType === NudgeType.TOOLTIP) {
       if (!template) return null;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tooltipProps = (template.props || {}) as Record<string, any>;
       const tooltipStyles = template.styles || {};
 

@@ -11,17 +11,27 @@ import {
   Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Controller, FieldValues, useWatch, useFormContext, Path } from "react-hook-form";
+import {
+  Controller,
+  FieldValues,
+  useWatch,
+  useFormContext,
+  Path,
+} from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
 import { useState, useMemo, useEffect, useRef } from "react";
-import { filterRowStyles } from "../styles/filterRowStyles";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { filterRowStyles } from "./content/styles/filterRowStyles";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { OPERATORS, JOURNEY_TEXT } from "../constants/journeyConstants";
-import { getInputType, isNumericType, normalizePropertyType } from "../utils/propertyTypeUtils";
+import {
+  getInputType,
+  isNumericType,
+  normalizePropertyType,
+} from "../utils/propertyTypeUtils";
 
-// Helper type for accessing nested filter errors
-type FilterErrorPath = `ruleEngine.eventInfo.${number}.currentState.${number}.nextState.${number}.filters.filter.${number}`;
+// Helper type for accessing nested filter errors (unused but kept for future use)
+// type FilterErrorPath = `ruleEngine.eventInfo.${number}.currentState.${number}.nextState.${number}.filters.filter.${number}`;
 
 interface FilterRowProps {
   control: Control<CreateJourneyFormData>;
@@ -55,7 +65,9 @@ export default function FilterRow({
   // Get selected property name to determine input type
   const selectedPropertyObj = useWatch({
     control,
-    name: `${filterPath}.filter.${index}.propertyName` as Path<CreateJourneyFormData>,
+    name: `${filterPath}.filter.${index}.propertyName` as Path<
+      CreateJourneyFormData
+    >,
   }) as { label: string; isLocal: boolean } | undefined;
   const selectedProperty = selectedPropertyObj?.label || "";
 
@@ -68,7 +80,9 @@ export default function FilterRow({
   // Otherwise, use form value as fallback
   const formPropertyType = useWatch({
     control,
-    name: `${filterPath}.filter.${index}.propertyType` as Path<CreateJourneyFormData>,
+    name: `${filterPath}.filter.${index}.propertyType` as Path<
+      CreateJourneyFormData
+    >,
   }) as string | undefined;
 
   // Determine the actual property type to use for rendering
@@ -83,7 +97,9 @@ export default function FilterRow({
   // Get current comparison value to check if conversion is needed
   const currentComparisonValue = useWatch({
     control,
-    name: `${filterPath}.filter.${index}.comparisonValue` as Path<CreateJourneyFormData>,
+    name: `${filterPath}.filter.${index}.comparisonValue` as Path<
+      CreateJourneyFormData
+    >,
   }) as string | number | boolean | undefined;
 
   // Adjust width based on selected property name
@@ -129,7 +145,9 @@ export default function FilterRow({
       // Always set the propertyType from the map when property changes
       // This ensures the correct type is stored in the form
       setValue(
-        `${filterPath}.filter.${index}.propertyType` as Path<CreateJourneyFormData>,
+        `${filterPath}.filter.${index}.propertyType` as Path<
+          CreateJourneyFormData
+        >,
         normalizedType,
         {
           shouldValidate: false,
@@ -141,7 +159,9 @@ export default function FilterRow({
         const numValue = parseFloat(String(currentComparisonValue));
         if (!isNaN(numValue)) {
           setValue(
-            `${filterPath}.filter.${index}.comparisonValue` as Path<CreateJourneyFormData>,
+            `${filterPath}.filter.${index}.comparisonValue` as Path<
+              CreateJourneyFormData
+            >,
             numValue,
             {
               shouldValidate: false,
@@ -156,7 +176,7 @@ export default function FilterRow({
     index,
     setValue,
     currentComparisonValue,
-    filterPath
+    filterPath,
   ]);
 
   const filteredProperties = useMemo(() => {
@@ -168,17 +188,31 @@ export default function FilterRow({
   }, [availableProperties, searchTerm]);
 
   // Helper function to safely access nested filter errors
-  const getFilterError = (field: 'propertyName' | 'comparisonValue'): string | undefined => {
-    const errorPath = errors.ruleEngine?.eventInfo?.[0]?.currentState?.[0]?.nextState?.[0]?.filters?.filter?.[index];
+  const getFilterError = (
+    field: "propertyName" | "comparisonValue"
+  ): string | undefined => {
+    const errorPath =
+      errors.ruleEngine?.eventInfo?.[0]?.currentState?.[0]?.nextState?.[0]
+        ?.filters?.filter?.[index];
     if (!errorPath) return undefined;
-    const fieldError = (errorPath as { propertyName?: { message?: string }; comparisonValue?: { message?: string } })[field];
+    const fieldError = (errorPath as {
+      propertyName?: { message?: string };
+      comparisonValue?: { message?: string };
+    })[field];
     return fieldError?.message;
   };
 
-  const hasFilterError = (field: 'propertyName' | 'comparisonValue'): boolean => {
-    const errorPath = errors.ruleEngine?.eventInfo?.[0]?.currentState?.[0]?.nextState?.[0]?.filters?.filter?.[index];
+  const hasFilterError = (
+    field: "propertyName" | "comparisonValue"
+  ): boolean => {
+    const errorPath =
+      errors.ruleEngine?.eventInfo?.[0]?.currentState?.[0]?.nextState?.[0]
+        ?.filters?.filter?.[index];
     if (!errorPath) return false;
-    const fieldError = (errorPath as { propertyName?: unknown; comparisonValue?: unknown })[field];
+    const fieldError = (errorPath as {
+      propertyName?: unknown;
+      comparisonValue?: unknown;
+    })[field];
     return !!fieldError;
   };
 
@@ -186,7 +220,11 @@ export default function FilterRow({
     <Box sx={filterRowStyles.filterCard(theme)}>
       <Box sx={filterRowStyles.filterFields}>
         <Controller
-          name={`${filterPath}.filter.${index}.propertyName` as Path<CreateJourneyFormData>}
+          name={
+            `${filterPath}.filter.${index}.propertyName` as Path<
+              CreateJourneyFormData
+            >
+          }
           control={control}
           rules={{ required: JOURNEY_TEXT.VALIDATION.PROPERTY_REQUIRED }}
           render={({ field }: { field: FieldValues }) => (
@@ -210,8 +248,8 @@ export default function FilterRow({
                   {...params}
                   inputRef={propertyInputRef}
                   placeholder={JOURNEY_TEXT.FILTERS.PROPERTY}
-                  error={hasFilterError('propertyName')}
-                  helperText={getFilterError('propertyName')}
+                  error={hasFilterError("propertyName")}
+                  helperText={getFilterError("propertyName")}
                   size="small"
                   sx={{
                     ...filterRowStyles.filterField,
@@ -240,7 +278,11 @@ export default function FilterRow({
         />
 
         <Controller
-          name={`${filterPath}.filter.${index}.comparisonType` as Path<CreateJourneyFormData>}
+          name={
+            `${filterPath}.filter.${index}.comparisonType` as Path<
+              CreateJourneyFormData
+            >
+          }
           control={control}
           render={({ field }: { field: FieldValues }) => (
             <FormControl
@@ -256,12 +298,22 @@ export default function FilterRow({
                 renderValue={(selected) => {
                   if (!selected) {
                     return (
-                      <span style={{ color: theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.6)" }}>
+                      <span
+                        style={{
+                          color:
+                            theme.palette.mode === "light"
+                              ? "rgba(0, 0, 0, 0.6)"
+                              : "rgba(255, 255, 255, 0.6)",
+                        }}
+                      >
                         {JOURNEY_TEXT.FILTERS.OPERATOR}
                       </span>
                     );
                   }
-                  return OPERATORS.find((op) => op.value === selected)?.label || (selected as string);
+                  return (
+                    OPERATORS.find((op) => op.value === selected)?.label ||
+                    (selected as string)
+                  );
                 }}
               >
                 {OPERATORS.map((op) => (
@@ -275,14 +327,18 @@ export default function FilterRow({
         />
 
         <Controller
-          name={`${filterPath}.filter.${index}.comparisonValue` as Path<CreateJourneyFormData>}
+          name={
+            `${filterPath}.filter.${index}.comparisonValue` as Path<
+              CreateJourneyFormData
+            >
+          }
           control={control}
           rules={{ required: JOURNEY_TEXT.VALIDATION.VALUE_REQUIRED }}
           render={({ field }: { field: FieldValues }) => {
             if (inputType === "select") {
               return (
                 <FormControl
-                  error={hasFilterError('comparisonValue')}
+                  error={hasFilterError("comparisonValue")}
                   sx={{
                     ...filterRowStyles.filterField,
                     width: `${valueFieldWidth}px`,
@@ -295,7 +351,14 @@ export default function FilterRow({
                     renderValue={(selected) => {
                       if (!selected) {
                         return (
-                          <span style={{ color: theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.6)" }}>
+                          <span
+                            style={{
+                              color:
+                                theme.palette.mode === "light"
+                                  ? "rgba(0, 0, 0, 0.6)"
+                                  : "rgba(255, 255, 255, 0.6)",
+                            }}
+                          >
                             {JOURNEY_TEXT.FILTERS.VALUE}
                           </span>
                         );
@@ -306,13 +369,13 @@ export default function FilterRow({
                     <MenuItem value="true">True</MenuItem>
                     <MenuItem value="false">False</MenuItem>
                   </Select>
-                  {hasFilterError('comparisonValue') && (
+                  {hasFilterError("comparisonValue") && (
                     <Typography
                       variant="caption"
                       color="error"
                       sx={{ mt: 0.5, ml: 1.75 }}
                     >
-                      {getFilterError('comparisonValue')}
+                      {getFilterError("comparisonValue")}
                     </Typography>
                   )}
                 </FormControl>
@@ -327,8 +390,8 @@ export default function FilterRow({
                 inputRef={valueInputRef}
                 type={inputType}
                 placeholder={JOURNEY_TEXT.FILTERS.VALUE}
-                error={hasFilterError('comparisonValue')}
-                helperText={getFilterError('comparisonValue')}
+                error={hasFilterError("comparisonValue")}
+                helperText={getFilterError("comparisonValue")}
                 sx={{
                   ...filterRowStyles.filterField,
                   width: `${valueFieldWidth}px`,
@@ -361,15 +424,13 @@ export default function FilterRow({
           }}
         />
 
-       
-          <IconButton
-            onClick={onRemove}
-            sx={filterRowStyles.deleteButton}
-            size="small"
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        
+        <IconButton
+          onClick={onRemove}
+          sx={filterRowStyles.deleteButton}
+          size="small"
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
       </Box>
     </Box>
   );

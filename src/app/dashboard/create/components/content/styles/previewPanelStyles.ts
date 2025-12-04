@@ -1,5 +1,3 @@
-import { SxProps, Theme } from "@mui/material";
-
 export const previewPanelStyles = {
   container: {
     display: "flex",

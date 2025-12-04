@@ -20,7 +20,7 @@ export interface ComponentDefinition {
   actions?: Array<{
     name: string;
   }>;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface ClickActionDefinition {

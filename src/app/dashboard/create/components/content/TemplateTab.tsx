@@ -14,8 +14,8 @@ import {
   CreateJourneyFormData,
   NudgeType,
   ReactNativeJson,
-} from "../../types/journeyTypes";
-import { templateTabStyles } from "../../styles/templateTabStyles";
+} from "../../types/journey.interface";
+import { templateTabStyles } from "./styles/templateTabStyles";
 
 interface TemplateTabProps {
   control: Control<CreateJourneyFormData>;
@@ -898,6 +898,7 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                     // Also set the variant field on the action
                     setValue(
                       "nudgeSelection.actions.0.variant",
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       template.id as any
                     );
                   };
@@ -954,8 +955,10 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                               const currentTemplate = field.value as
                                 | ReactNativeJson
                                 | undefined;
+
                               const tooltipProps = (currentTemplate?.props ||
                                 {}) as Record<string, any>;
+
                               const tooltipStyles = (currentTemplate?.styles ||
                                 {}) as Record<string, any>;
 

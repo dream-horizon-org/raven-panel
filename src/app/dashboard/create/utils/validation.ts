@@ -1,5 +1,8 @@
 import { Path } from "react-hook-form";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import {
+  CreateJourneyFormData,
+  ReactNativeJson,
+} from "../types/journey.interface";
 import {
   ComponentDefinition,
   getComponentDefinition,
@@ -15,7 +18,7 @@ const getComponentTypeForValidation = (type: string): string => {
 };
 
 // Helper to check if a value is empty
-export const isEmptyValue = (value: any): boolean => {
+export const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
   if (typeof value === "string") return value.trim() === "";
   if (Array.isArray(value)) {
@@ -30,7 +33,7 @@ export const isEmptyValue = (value: any): boolean => {
 };
 
 // Helper to extract actual value from prop
-export const getPropValue = (propValue: any): any => {
+export const getPropValue = (propValue: unknown): unknown => {
   if (Array.isArray(propValue) && propValue.length > 0) {
     const firstItem = propValue[0];
     if (firstItem && typeof firstItem === "object" && "value" in firstItem) {
@@ -115,7 +118,7 @@ export const getStyleEnumValues = (styleName: string): string[] | undefined => {
 // Validate a single prop value
 export const validatePropValue = (
   prop: NonNullable<ComponentDefinition["props"]>[number],
-  propValue: any
+  propValue: unknown
 ): { isValid: boolean; message?: string } => {
   const actualValue = getPropValue(propValue);
 
@@ -181,7 +184,7 @@ export const validatePropValue = (
 // Validate a single style value
 export const validateStyleValue = (
   styleName: string,
-  styleValue: any
+  styleValue: unknown
 ): { isValid: boolean; message?: string } => {
   // Skip if null/undefined or empty string (styles are optional)
   if (styleValue === null || styleValue === undefined || styleValue === "") {
@@ -268,7 +271,7 @@ export const validateStyleValue = (
 
 // Validate props for an element
 export const validateElementProps = (
-  elementProps: Record<string, any> | undefined,
+  elementProps: Record<string, unknown> | undefined,
   componentDef: ComponentDefinition | undefined,
   basePath: string,
   setError: (
@@ -313,7 +316,7 @@ export const validateElementProps = (
 
 // Validate styles for an element
 export const validateElementStyles = (
-  elementStyles: Record<string, any> | undefined,
+  elementStyles: Record<string, unknown> | undefined,
   componentDef: ComponentDefinition | undefined,
   basePath: string,
   setError: (
@@ -368,7 +371,7 @@ export const validateElementStyles = (
 };
 
 export const validateElementActions = (
-  elementActions: any[] | undefined,
+  elementActions: Array<Record<string, unknown>> | undefined,
   basePath: string,
   setError: (
     path: Path<CreateJourneyFormData>,
@@ -382,13 +385,16 @@ export const validateElementActions = (
 
   let hasErrors = false;
 
-  elementActions.forEach((action: any, index: number) => {
+  elementActions.forEach((action, index: number) => {
     if (!action || typeof action !== "object") {
       return;
     }
 
     if (action.type === "deeplink" && action.params) {
-      const params = action.params;
+      const params = action.params as Record<string, unknown> & {
+        androidUrl?: string | unknown;
+        iosUrl?: string | unknown;
+      };
       const actionBasePath = `${basePath}.actions.${index}` as Path<
         CreateJourneyFormData
       >;
@@ -476,7 +482,7 @@ export const validateElementActions = (
 
 // Validate an element (props + styles) recursively
 export const validateElement = (
-  element: any,
+  element: ReactNativeJson | undefined,
   basePath: string,
   setError: (
     path: Path<CreateJourneyFormData>,
@@ -567,7 +573,7 @@ export const validateElement = (
     console.log(
       `[Validation] Validating ${element.children.length} children at ${basePath}`
     );
-    element.children.forEach((child: any, index: number) => {
+    element.children.forEach((child, index: number) => {
       const childBasePath = `${basePath}.children.${index}`;
       const childValid = validateElement(
         child,
@@ -593,7 +599,7 @@ export const validateElement = (
 
 // Validate entire template
 export const validateTemplate = (
-  template: any,
+  template: ReactNativeJson | undefined,
   basePath: string,
   setError: (
     path: Path<CreateJourneyFormData>,
@@ -601,10 +607,15 @@ export const validateTemplate = (
   ) => void,
   clearErrors: (path: Path<CreateJourneyFormData>) => void
 ): boolean => {
+  if (!template) {
+    console.log(`[Validation] Template is undefined at ${basePath}`);
+    return false;
+  }
+
   console.log(`[Validation] Starting template validation at ${basePath}:`, {
-    templateType: template?.type,
-    hasChildren: !!template?.children,
-    childrenCount: template?.children?.length || 0,
+    templateType: template.type,
+    hasChildren: !!template.children,
+    childrenCount: template.children?.length || 0,
   });
 
   const isValid = validateElement(template, basePath, setError, clearErrors);

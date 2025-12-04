@@ -1,14 +1,11 @@
 import { Node } from "@xyflow/react";
-import {
-  JourneyNodeData,
-  Engagement,
-} from "../../create-journey/components/types";
+import { JourneyNodeData, Engagement } from "../types/JourneyNode.interface";
 import {
   CreateJourneyFormData,
   NudgeType,
   ReactNativeJson,
-} from "../types/journeyTypes";
-import { EventStateMap, NodeStateMap } from "./stateMapping";
+  SyncEngagementToActionType,
+} from "../types/journey.interface";
 
 /**
  * Maps engagement type from flow to NudgeType
@@ -48,18 +45,16 @@ export function mapNudgeTypeToEngagementType(nudgeType: NudgeType): string {
  * Creates or updates an action in nudgeSelection.actions for a given engagement
  * The action is placed at index 0 temporarily for EngagementSidePanel to edit
  */
-export function syncEngagementToAction(
-  node: Node<JourneyNodeData>,
-  engagement: Engagement,
-  stateNumber: string,
-  currentActions: CreateJourneyFormData["nudgeSelection"]["actions"],
-  eventStateMap: EventStateMap,
-  nodeStateMap: NodeStateMap
-): CreateJourneyFormData["nudgeSelection"]["actions"] {
+export const syncEngagementToAction: SyncEngagementToActionType = (
+  node,
+  engagement,
+  stateNumber,
+  currentActions
+) => {
   const nudgeType = mapEngagementTypeToNudgeType(engagement.type);
 
   // Find existing action for this state, or create new one
-  let actionIndex = currentActions.findIndex(
+  const actionIndex = currentActions.findIndex(
     (action) => action.onState === stateNumber
   );
 
@@ -84,7 +79,8 @@ export function syncEngagementToAction(
   let template = defaultTemplate;
   if (engagement.config && typeof engagement.config === "object") {
     // Try to extract template from config if it exists
-    const configTemplate = (engagement.config as any).template;
+    const configTemplate = (engagement.config as Record<string, unknown>)
+      .template;
     if (configTemplate) {
       try {
         template =
@@ -120,7 +116,7 @@ export function syncEngagementToAction(
     // Add new action at index 0
     return [newAction, ...currentActions];
   }
-}
+};
 
 /**
  * Syncs actions back to flow engagements after template is saved

@@ -1,5 +1,5 @@
 import { NUMERIC_TYPES } from "../constants/journeyConstants";
-import { PropertyType } from "../types/journeyTypes";
+import { PropertyType } from "../types/journey.interface";
 
 /**
  * Boolean type that should render as dropdown

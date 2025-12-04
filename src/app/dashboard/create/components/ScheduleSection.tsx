@@ -17,9 +17,9 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
-import { scheduleSectionStyles } from "../styles/scheduleSectionStyles";
+import { scheduleSectionStyles } from "./content/styles/scheduleSectionStyles";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
 interface ScheduleSectionProps {
@@ -37,7 +37,8 @@ export default function ScheduleSection({
     CreateJourneyFormData
   >();
 
-  const enableImmediateStart = useWatch({
+  // Note: enableImmediateStart is watched but not directly used - triggers form validation
+  useWatch({
     control,
     name: "schedule.enableImmediateStart",
   });

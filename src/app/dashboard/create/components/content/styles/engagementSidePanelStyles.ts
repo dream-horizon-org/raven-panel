@@ -1,5 +1,3 @@
-import { SxProps, Theme } from "@mui/material";
-
 export const engagementSidePanelStyles = {
   drawerPaper: {
     width: "90%",

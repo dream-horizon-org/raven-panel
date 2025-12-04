@@ -7,20 +7,16 @@ import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
+import { createJourneyPageStyles } from "./content/styles/createJourneyPageStyles";
 import { generateRandomJourneyName } from "../utils/journeyUtils";
-import { CreateJourneyFormData } from "../types/journeyTypes";
-import {
-  JOURNEY_TEXT,
-  getJourneyFormDefaults,
-} from "../constants/journeyConstants";
+import { CreateJourneyFormData } from "../types/journey.interface";
+import { getJourneyFormDefaults } from "../constants/journeyConstants";
 import JourneyHeader from "./JourneyHeader";
 import JourneyTabs from "./JourneyTabs";
 import CohortSection from "./CohortSection";
 import ScheduleSection from "./ScheduleSection";
 import JourneyFrequencySection from "./JourneyFrequencySection";
 import JourneyActions from "./JourneyActions";
-import EngagementSelector from "./EngagementSelector";
 import EngagementSidePanel from "./EngagementSidePanel";
 import JourneyFlowBuilderIntegrated from "./JourneyFlowBuilderIntegrated";
 import { createJourney } from "@/api/services/createJourney.service";
@@ -47,11 +43,8 @@ export default function CreateJourneyPage({
   const searchParams = useSearchParams();
   const journeyIdFromQuery = searchParams?.get("id");
   const journeyId = journeyIdProp || journeyIdFromQuery || undefined;
-  const { hasEditAccess } = usePermissions();
 
-  // Redirect if user doesn't have edit access
-
-  const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
+  const { data: filtersData } = useFiltersList();
   const {
     data: eventsData,
     isLoading: isLoadingEvents,
@@ -59,10 +52,8 @@ export default function CreateJourneyPage({
   } = useEventsList();
   const {
     data: systemPropertiesData,
-    isLoading: isLoadingSystemProperties,
     isFetching: isFetchingSystemProperties,
   } = useSystemProperties();
-  const availableProperties = filtersData?.data?.names || [];
   const { systemPropertyNames, systemPropertyTypes } = useMemo(() => {
     if (!systemPropertiesData) {
       return {
@@ -143,15 +134,16 @@ export default function CreateJourneyPage({
   );
 
   // Watch journey frequency checkboxes to clear error when any is checked
-  const enableTimesInSession = useWatch({
+  // Note: These are watched but not directly used - they trigger form validation
+  useWatch({
     control: methods.control,
     name: "journeyFrequency.enableTimesInSession",
   });
-  const enableMaxTimesInPeriod = useWatch({
+  useWatch({
     control: methods.control,
     name: "journeyFrequency.enableMaxTimesInPeriod",
   });
-  const enableMaxTimesInLifetime = useWatch({
+  useWatch({
     control: methods.control,
     name: "journeyFrequency.enableMaxTimesInLifetime",
   });
@@ -451,10 +443,7 @@ export default function CreateJourneyPage({
       if (createdOrUpdatedJourneyId) {
         if (data.schedule?.enableImmediateStart === true) {
           try {
-            const statusResponse = await updateJourneyStatus(
-              createdOrUpdatedJourneyId,
-              "live"
-            );
+            await updateJourneyStatus(createdOrUpdatedJourneyId, "live");
             toast.success("Journey is now live!");
             statusUpdateSuccess = true;
           } catch (statusError) {
@@ -471,10 +460,7 @@ export default function CreateJourneyPage({
           }
         } else if (data.schedule?.enableScheduledStart === true) {
           try {
-            const statusResponse = await updateJourneyStatus(
-              createdOrUpdatedJourneyId,
-              "schedule"
-            );
+            await updateJourneyStatus(createdOrUpdatedJourneyId, "schedule");
 
             toast.success("Journey is now scheduled!");
             statusUpdateSuccess = true;
@@ -573,6 +559,8 @@ export default function CreateJourneyPage({
     null
   );
 
+  // Note: validationKey is used in hasTemplateErrors useMemo dependency
+
   // Callback to trigger re-validation when template is saved
   const handleTemplateSaved = () => {
     // Sync template back to engagement config first
@@ -649,9 +637,10 @@ export default function CreateJourneyPage({
 
     setActiveTab("setup");
   };
-  const isLoading =
-    (!eventsData && isFetchingEvents) ||
-    (!systemPropertiesData && isFetchingSystemProperties);
+  // Note: isLoading is computed but not used - kept for potential future use
+  // const isLoading =
+  //   (!eventsData && isFetchingEvents) ||
+  //   (!systemPropertiesData && isFetchingSystemProperties);
 
   if (journeyId && isLoadingJourney) {
     return (
@@ -696,7 +685,7 @@ export default function CreateJourneyPage({
                   isLoadingEvents={isLoadingEvents || isFetchingEvents}
                   systemPropertyNames={systemPropertyNames}
                   systemPropertyTypes={systemPropertyTypes}
-                  onEngagementSelect={(nodeId, engagementId, stateNumber) => {
+                  onEngagementSelect={() => {
                     // The integrated component handles the mapping to form actions
                     // Just open the side panel for template selection
                     setSidePanelOpen(true);

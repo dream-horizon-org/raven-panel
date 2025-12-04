@@ -14,9 +14,9 @@ import {
 import {
   ReactNativeJson,
   CreateJourneyFormData,
-} from "../../types/journeyTypes";
+} from "../../types/journey.interface";
 import { ComponentDefinition } from "../../utils/componentDefinitions";
-import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
+import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
 import { useFormContext, Path } from "react-hook-form";
 
 interface ElementStylesEditorProps {
@@ -64,15 +64,16 @@ const JUSTIFY_CONTENT_VALUES = [
   "space-around",
   "space-evenly",
 ];
-const ALIGN_ITEMS_VALUES = [
-  "flex-start",
-  "flex-end",
-  "center",
-  "stretch",
-  "baseline",
-];
+// Unused constants - kept for potential future use
+// const ALIGN_ITEMS_VALUES = [
+//   "flex-start",
+//   "flex-end",
+//   "center",
+//   "stretch",
+//   "baseline",
+// ];
 
-const TEXT_ALIGN_VALUES = ["left", "center", "right", "justify"];
+// const TEXT_ALIGN_VALUES = ["left", "center", "right", "justify"];
 
 export default function ElementStylesEditor({
   element,
@@ -368,10 +369,7 @@ export default function ElementStylesEditor({
       const currentAlign = (value as string) || "left";
       return (
         <Box key={styleName}>
-          <Typography
-            sx={contentElementEditorStyles.contentLabel}
-            gutterBottom
-          >
+          <Typography sx={contentElementEditorStyles.contentLabel} gutterBottom>
             Text Alignment
           </Typography>
           <ButtonGroup size="small">
@@ -481,10 +479,7 @@ export default function ElementStylesEditor({
     if (styleName === "backgroundColor") {
       return (
         <Box key={styleName}>
-          <Typography
-            sx={contentElementEditorStyles.contentLabel}
-            gutterBottom
-          >
+          <Typography sx={contentElementEditorStyles.contentLabel} gutterBottom>
             Background Color
           </Typography>
           <Box sx={{ display: "inline-flex", gap: 1, alignItems: "center" }}>
@@ -727,13 +722,12 @@ export default function ElementStylesEditor({
 
       {dimensionStyles.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography
-            sx={contentElementEditorStyles.contentLabel}
-            gutterBottom
-          >
+          <Typography sx={contentElementEditorStyles.contentLabel} gutterBottom>
             Dimensions
           </Typography>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mt: 2 }}>
+          <Box
+            sx={{ display: "flex", gap: 2, alignItems: "flex-start", mt: 2 }}
+          >
             {dimensionStyles.map((styleName) => renderStyleInput(styleName))}
           </Box>
         </Box>

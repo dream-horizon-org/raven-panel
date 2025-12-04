@@ -17,9 +17,9 @@ import { useTheme } from "@mui/material/styles";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
-import { journeyFrequencySectionStyles } from "../styles/journeyFrequencySectionStyles";
+import { journeyFrequencySectionStyles } from "./content/styles/journeyFrequencySectionStyles";
 
 interface JourneyFrequencySectionProps {
   control: Control<CreateJourneyFormData>;
