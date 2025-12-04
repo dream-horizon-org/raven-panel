@@ -1,6 +1,8 @@
 import {
   CreateJourneyFormData,
+  ElementDataTypeValues,
   NextStateTransition,
+  NudgeEvent,
   ReactNativeJson,
 } from "../types/journey.interface";
 import { NudgeType } from "../types/journey.interface";
@@ -8,6 +10,25 @@ import { GetJourneyResponse } from "@/api/services/types/getJourney.interface";
 
 // Helper type for template transformation (allows index signature for dynamic properties)
 type TemplateNode = ReactNativeJson & Record<string, unknown>;
+
+// Type for action in ReactNativeJson actions array
+type ReactNativeAction =
+  | {
+      type: string;
+      name: string;
+      params: ElementDataTypeValues;
+    }
+  | {
+      type: "analyticsEvent";
+      name: "analyticsEvent";
+      params: NudgeEvent;
+    };
+
+// Type for deeplink params (can have androidUrl and iosUrl as arrays or strings)
+type DeeplinkParams = ElementDataTypeValues & {
+  androidUrl?: string | Array<{ value?: string } | string>;
+  iosUrl?: string | Array<{ value?: string } | string>;
+};
 
 export const parseJourneyDataToFormData = (
   apiResponse: GetJourneyResponse
@@ -122,31 +143,46 @@ export const parseJourneyDataToFormData = (
       }
 
       if (Array.isArray(node.actions)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        node.actions = node.actions.map((action: any) => {
+        node.actions = node.actions.map((action: ReactNativeAction) => {
           if (
             action.type === "deeplink" &&
             action.params &&
             typeof action.params === "object"
           ) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const params: any = { ...action.params };
+            const params: DeeplinkParams = {
+              ...action.params,
+            } as DeeplinkParams;
 
             if (
               Array.isArray(params.androidUrl) &&
               params.androidUrl.length > 0
             ) {
+              const firstItem = params.androidUrl[0];
               params.androidUrl =
-                params.androidUrl[0]?.value || params.androidUrl[0] || "";
+                (typeof firstItem === "object" &&
+                firstItem !== null &&
+                "value" in firstItem
+                  ? firstItem.value
+                  : typeof firstItem === "string"
+                  ? firstItem
+                  : "") || "";
             }
 
             if (Array.isArray(params.iosUrl) && params.iosUrl.length > 0) {
-              params.iosUrl = params.iosUrl[0]?.value || params.iosUrl[0] || "";
+              const firstItem = params.iosUrl[0];
+              params.iosUrl =
+                (typeof firstItem === "object" &&
+                firstItem !== null &&
+                "value" in firstItem
+                  ? firstItem.value
+                  : typeof firstItem === "string"
+                  ? firstItem
+                  : "") || "";
             }
 
             return {
               ...action,
-              params,
+              params: params as ElementDataTypeValues,
             };
           }
           return action;
@@ -185,10 +221,8 @@ export const parseJourneyDataToFormData = (
       if (nudgeType === NudgeType.NUDGE_UI && template?.children) {
         const hasMultipleButtons = (template.children as ReactNativeJson[]).some(
           (child: ReactNativeJson) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const buttons = ((child as any).children?.filter(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (c: any) => c.type === "Button"
+            const buttons = (child.children?.filter(
+              (c: ReactNativeJson) => c.type === "Button"
             ) || []) as ReactNativeJson[];
             return buttons.length > 1;
           }
@@ -197,10 +231,8 @@ export const parseJourneyDataToFormData = (
       } else if (nudgeType === NudgeType.POPUP && template?.children) {
         const hasSingleButton = (template.children as ReactNativeJson[]).some(
           (child: ReactNativeJson) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const buttons = ((child as any).children?.filter(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (c: any) => c.type === "Button"
+            const buttons = (child.children?.filter(
+              (c: ReactNativeJson) => c.type === "Button"
             ) || []) as ReactNativeJson[];
             return buttons.length === 1;
           }
