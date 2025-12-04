@@ -212,7 +212,7 @@ export function convertFlowToEventInfo(
   nodeStateMap: NodeStateMap
 ): EventInfo[] {
   const eventInfoMap = new Map<string, EventInfo>();
-  
+
   // Track the highest state number to assign next incremental state for exit branches
   let maxStateNumber = 0;
   eventStateMap.forEach((state) => {
@@ -262,17 +262,24 @@ export function convertFlowToEventInfo(
         if (branch.targetNodeId === "exit") {
           // Check if this state already has a nextState entry for exit
           // We'll create one with the next incremental state number if not already present
-          const hasExitTransition = currentStateEntry.nextState.some(
-            (ns) => {
-              // Check if this transitionTo value is higher than max state (likely an exit transition)
-              const transitionToNum = Number(ns.transitionTo);
-              return !isNaN(transitionToNum) && transitionToNum >= nextIncrementalState;
-            }
-          );
+          const hasExitTransition = currentStateEntry.nextState.some((ns) => {
+            // Check if this transitionTo value is higher than max state (likely an exit transition)
+            const transitionToNum = Number(ns.transitionTo);
+            return (
+              !isNaN(transitionToNum) && transitionToNum >= nextIncrementalState
+            );
+          });
 
           if (!hasExitTransition) {
-            // Create nextState entry with next incremental state number
-            const exitStateNumber = nextIncrementalState;
+            // Check if the next incremental state already exists in event map
+            let exitStateNumber = nextIncrementalState;
+
+            // Keep incrementing until we find a state that doesn't exist in the event map
+            const eventMapStates = new Set(Array.from(eventStateMap.values()));
+            while (eventMapStates.has(String(exitStateNumber))) {
+              exitStateNumber++;
+            }
+
             const filters = {
               operator: "AND" as const,
               filter: branch.filters.map((condition) => ({
@@ -292,8 +299,8 @@ export function convertFlowToEventInfo(
               filters,
             });
 
-            // Increment for next exit branch
-            nextIncrementalState++;
+            // Increment for next exit branch (use the assigned state + 1)
+            nextIncrementalState = exitStateNumber + 1;
           }
           return;
         }

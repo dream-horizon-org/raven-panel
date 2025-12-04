@@ -363,7 +363,7 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
           props: { testID: "testID-12" },
           actions: [],
           styles: {
-            backgroundColor: "yellow",
+            backgroundColor: "#FFFF00",
             borderRadius: 8,
             marginTop: 8,
             marginBottom: 8,
@@ -377,7 +377,7 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
               props: { testID: "testID-13" },
               actions: [],
               styles: {
-                backgroundColor: "black",
+                backgroundColor: "#000000",
                 borderRadius: 8,
                 flexDirection: "row",
                 alignItems: "center",

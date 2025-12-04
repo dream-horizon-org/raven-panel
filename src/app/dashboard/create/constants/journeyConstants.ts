@@ -38,7 +38,7 @@ export const JOURNEY_TEXT = {
   },
   TABS: {
     SETUP: "Journey Setup",
-    UI_CONTENT: "Content",
+    UI_CONTENT: "UI & Content",
   },
   SECTIONS: {
     COHORT: {

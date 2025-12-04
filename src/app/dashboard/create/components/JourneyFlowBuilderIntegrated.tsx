@@ -421,23 +421,29 @@ export default function JourneyFlowBuilderIntegrated({
     );
     setValue("ruleEngine.eventInfo", newEventInfo);
 
-    // Handle resetStates - collect states that have "exit" branches
+    // Handle resetStates - collect the nextState values from exit branches
+    // Simply get the nextState value when user selects "exit" as target node
     const resetStates: string[] = [];
-    nodes.forEach((node) => {
-      if (node.type === "state") {
-        const nodeData = (node.data as unknown) as JourneyNodeData;
-        if (nodeData.branches && Array.isArray(nodeData.branches)) {
-          const hasExitBranch = nodeData.branches.some(
-            (b: Branch) => b.targetNodeId === "exit"
+    newEventInfo.forEach((eventInfo) => {
+      eventInfo.currentState?.forEach((currentState) => {
+        currentState.nextState?.forEach((nextState) => {
+          // Check if this nextState is an exit transition
+          // Exit transitions have state numbers that don't match any event's currentState
+          const transitionToState = String(nextState.transitionTo);
+          const stateExistsInEvents = newEventInfo.some((ei) =>
+            ei.currentState?.some(
+              (cs) => String(cs.currentState) === transitionToState
+            )
           );
-          if (hasExitBranch) {
-            const state = nsm.get(node.id) || esm.get(nodeData.eventName || "");
-            if (state) {
-              resetStates.push(state);
+
+          // If it doesn't exist in events, it's an exit transition - add nextState value to resetStates
+          if (!stateExistsInEvents) {
+            if (!resetStates.includes(transitionToState)) {
+              resetStates.push(transitionToState);
             }
           }
-        }
-      }
+        });
+      });
     });
     setValue("nudgeSelection.resetStates", resetStates);
   }, [nodes, edges, setValue]);
