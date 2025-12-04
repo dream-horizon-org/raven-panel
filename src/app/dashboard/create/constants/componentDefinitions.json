@@ -73,6 +73,11 @@
           "type": "enum",
           "default": "Roboto",
           "acceptedValues": ["Roboto", "Inter", "Trim"]
+        },
+        {
+          "name": "fontSize",
+          "display": "Font Size",
+          "type": "number"
         }
       ],
       "styles": [
