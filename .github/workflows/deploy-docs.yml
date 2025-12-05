@@ -42,13 +42,19 @@ jobs:
       - name: Build website
         run: yarn build
 
+      # Move build into "raven" so Pages serves at /raven/
+      - name: Prepare artifact folder
+        run: |
+          mkdir -p ../artifact/raven
+          cp -r build/* ../artifact/raven/
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/build
+          path: artifact
 
   deploy:
     environment:
