@@ -7,10 +7,10 @@ const config: Config = {
   tagline: 'Customer Journey Management Platform',
   favicon: 'img/favicon.ico',
 
-  url: 'https://raven-panel.github.io',
-  baseUrl: '/',
+  url: 'https://dream-horizon-org.github.io',
+  baseUrl: '/raven-panel/',
 
-  organizationName: 'raven-panel',
+  organizationName: 'dream-horizon-org',
   projectName: 'raven-panel',
 
   onBrokenLinks: 'throw',
@@ -27,7 +27,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/your-org/raven-panel/tree/main/docs/',
+          editUrl: 'https://github.com/dream-horizon-org/raven-panel/tree/main/docs/',
         },
         blog: false,
         theme: {
@@ -53,7 +53,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/your-org/raven-panel',
+          href: 'https://github.com/dream-horizon-org/raven-panel',
           label: 'GitHub',
           position: 'right',
         },
@@ -97,7 +97,7 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/your-org/raven-panel',
+              href: 'https://github.com/dream-horizon-org/raven-panel',
             },
           ],
         },
