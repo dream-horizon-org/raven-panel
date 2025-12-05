@@ -16,7 +16,7 @@ import {
   searchContainerWrapperStyles,
 } from "./styles/bodyStyles";
 import { BUTTON_TEXT, PAGE_TITLES } from "@/config/constants";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useJourneysList } from "@/hooks/useJourneysList";
 import { usePermissions } from "@/app/providers/PermissionProvider";
@@ -31,8 +31,6 @@ export default function JourneyListingPage() {
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => setPageNumber(0), [searchTerm, status]);
-
-  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
 
   const {
     data: journeys,
@@ -70,14 +68,22 @@ export default function JourneyListingPage() {
     return mappedCounts ?? lastCountsRef.current;
   }, [mappedCounts]);
 
-  const handlePreviousPage = () =>
-    setPageNumber((prev) => Math.max(prev - 1, 0));
-  const handleNextPage = () => setPageNumber((prev) => prev + 1);
-  const handlePageChange = (newPage: number) => setPageNumber(newPage);
-  const handlePageSizeChange = (newPageSize: number) => {
+  const handlePreviousPage = useCallback(
+    () => setPageNumber((prev) => Math.max(prev - 1, 0)),
+    []
+  );
+  const handleNextPage = useCallback(
+    () => setPageNumber((prev) => prev + 1),
+    []
+  );
+  const handlePageChange = useCallback(
+    (newPage: number) => setPageNumber(newPage),
+    []
+  );
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
     setPageSize(newPageSize);
     setPageNumber(0);
-  };
+  }, []);
 
   return (
     <Box sx={bodyContainerStyles}>
@@ -100,7 +106,6 @@ export default function JourneyListingPage() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
-                // onClick={() => router.push("/dashboard/create-journey")}
                 onClick={() => router.push("/dashboard/create")}
                 disabled={!hasEditAccess || isPermissionsLoading}
               >
