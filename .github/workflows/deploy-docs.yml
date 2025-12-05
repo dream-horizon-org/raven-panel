@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - docs/documentation
+
+    paths:
+      - 'docs/**'
+      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -39,7 +43,7 @@ jobs:
       - name: Build website
         run: yarn build
 
-      - name: Create artifact folder
+      - name: Prepare artifact folder
         run: |
           mkdir -p ../artifact/raven
           cp -r build/* ../artifact/raven/
