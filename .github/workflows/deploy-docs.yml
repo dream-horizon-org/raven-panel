@@ -43,10 +43,10 @@ jobs:
       - name: Build website
         run: yarn build
 
-      - name: Prepare artifact folder
-        run: |
-          mkdir -p ../artifact/raven
-          cp -r build/* ../artifact/raven/
+      # - name: Prepare artifact folder
+      #   run: |
+      #     mkdir -p ../artifact/raven
+      #     cp -r build/* ../artifact/raven/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -54,7 +54,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: artifact
+          path: docs/build
 
   deploy:
     environment:

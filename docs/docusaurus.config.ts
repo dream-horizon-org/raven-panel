@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Raven',
+  title: 'Raven Panel',
   tagline: 'Customer Journey Management Platform',
   favicon: 'img/favicon.ico',
 
@@ -40,9 +40,9 @@ const config: Config = {
   themeConfig: {
     image: 'img/raven-social-card.png',
     navbar: {
-      title: 'Raven',
+      title: 'Raven Panel',
       logo: {
-        alt: 'Raven Logo',
+        alt: 'Raven Panel Logo',
         src: 'img/logo.svg',
       },
       items: [
