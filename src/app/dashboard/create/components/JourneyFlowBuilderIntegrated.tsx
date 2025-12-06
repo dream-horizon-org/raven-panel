@@ -583,7 +583,66 @@ export default function JourneyFlowBuilderIntegrated({
       });
     });
     setValue("nudgeSelection.resetStates", resetStates);
-  }, [nodes, edges, setValue]);
+
+    // Sync all engagements from all nodes to nudgeSelection.actions
+    const currentActions = watch("nudgeSelection.actions") || [];
+    let updatedActions = [...currentActions];
+
+    // Collect all engagements from all nodes with their state numbers
+    const engagementStateMap = new Map<
+      string,
+      {
+        engagement: Engagement;
+        node: Node<JourneyNodeData>;
+        stateNumber: string;
+      }
+    >();
+
+    nodes.forEach((node) => {
+      if (node.type !== "state") return;
+
+      const nodeData = (node.data as unknown) as JourneyNodeData;
+      if (!nodeData.engagements || !Array.isArray(nodeData.engagements)) return;
+
+      // Get the state number for this node
+      const stateNumber = nsm.get(node.id) || esm.get(nodeData.eventName || "");
+      if (!stateNumber) return;
+
+      // Collect all engagements for this node
+      nodeData.engagements.forEach((engagement) => {
+        if (engagement.id) {
+          engagementStateMap.set(engagement.id, {
+            engagement,
+            node: node as Node<JourneyNodeData>,
+            stateNumber,
+          });
+        }
+      });
+    });
+
+    // Sync each engagement to an action (only once per engagement ID)
+    engagementStateMap.forEach(({ engagement, node, stateNumber }) => {
+      updatedActions = syncEngagementToAction(
+        node,
+        engagement,
+        stateNumber,
+        updatedActions
+      );
+    });
+
+    // Remove actions that no longer have corresponding engagements
+    const engagementIds = new Set(engagementStateMap.keys());
+    updatedActions = updatedActions.filter((action) => {
+      // Keep action if it matches an engagement ID
+      const actionEngagementId = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+      return engagementIds.has(actionEngagementId);
+    });
+
+    // Update the form with synced actions
+    setValue("nudgeSelection.actions", updatedActions);
+  }, [nodes, edges, setValue, watch]);
 
   // Sync on node/edge changes
   useEffect(() => {
@@ -1045,10 +1104,31 @@ export default function JourneyFlowBuilderIntegrated({
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
-      setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
-      );
+      setEdges((eds) => {
+        // Find engagement node IDs connected to the deleted node
+        const engagementNodeIds = new Set<string>();
+        eds.forEach((edge) => {
+          if (edge.source === nodeId && edge.target.startsWith("engagement-")) {
+            engagementNodeIds.add(edge.target);
+          }
+        });
+
+        // Update nodes to remove the deleted node and its engagement nodes
+        setNodes((nds) => {
+          return nds.filter(
+            (node) => node.id !== nodeId && !engagementNodeIds.has(node.id)
+          );
+        });
+
+        // Remove edges connected to the deleted node and its engagement nodes
+        return eds.filter(
+          (edge) =>
+            edge.source !== nodeId &&
+            edge.target !== nodeId &&
+            !engagementNodeIds.has(edge.source) &&
+            !engagementNodeIds.has(edge.target)
+        );
+      });
     },
     [setNodes, setEdges]
   );
@@ -1226,43 +1306,205 @@ export default function JourneyFlowBuilderIntegrated({
       return;
     }
 
-    const allNodeIdsToRemove = [...nodeIds, ...engagementNodeIds];
-
+    // Use functional updates to compute and update nodes and edges
     setNodes((nds) => {
-      const remainingNodes = nds.filter(
-        (node) => !allNodeIdsToRemove.includes(node.id)
-      );
+      setEdges((eds) => {
+        // Collect all engagement node IDs that are connected to nodes being removed
+        const engagementNodesToRemove = new Set<string>(engagementNodeIds);
 
-      // If no state nodes remain, add initial node
-      const stateNodes = remainingNodes.filter((n) => n.type === "state");
-      if (stateNodes.length === 0) {
-        const initialNodeId = `state-${Date.now()}`;
-        const initialNode: Node<JourneyNodeData> = {
-          id: initialNodeId,
-          type: "state",
-          position: { x: 250, y: 100 },
-          data: {
-            label: "Initial Node",
-            nodeType: "state",
-            eventName: "",
-            engagements: [],
-            branches: [],
-            isEntry: true,
-          },
+        // Find engagement nodes connected to state nodes being removed
+        nodeIds.forEach((nodeId) => {
+          eds.forEach((edge) => {
+            if (
+              edge.source === nodeId &&
+              edge.target.startsWith("engagement-")
+            ) {
+              engagementNodesToRemove.add(edge.target);
+            }
+          });
+        });
+
+        // First pass: remove the explicitly identified unconnected nodes and their connected engagements
+        let tempRemainingNodes = nds.filter(
+          (node) =>
+            !nodeIds.includes(node.id) && !engagementNodesToRemove.has(node.id)
+        );
+
+        // Remove edges connected to removed nodes
+        let tempRemainingEdges = eds.filter(
+          (edge) =>
+            !nodeIds.includes(edge.source) &&
+            !nodeIds.includes(edge.target) &&
+            !engagementNodesToRemove.has(edge.source) &&
+            !engagementNodesToRemove.has(edge.target)
+        );
+
+        // Helper function to find all reachable state nodes from entry node using BFS
+        const findReachableStateNodes = (
+          entryNodeId: string,
+          nodes: Node<Record<string, unknown>>[],
+          edges: Edge[]
+        ): Set<string> => {
+          const reachableNodes = new Set<string>();
+          const queue: string[] = [entryNodeId];
+          reachableNodes.add(entryNodeId);
+
+          while (queue.length > 0) {
+            const currentNodeId = queue.shift();
+            if (!currentNodeId) continue;
+
+            // Find all state nodes reachable from current node
+            edges.forEach((edge) => {
+              if (edge.source === currentNodeId) {
+                const targetId = edge.target;
+                const targetNode = nodes.find(
+                  (n) => n.id === targetId && n.type === "state"
+                );
+                if (targetNode && !reachableNodes.has(targetId)) {
+                  reachableNodes.add(targetId);
+                  queue.push(targetId);
+                }
+              }
+            });
+          }
+
+          return reachableNodes;
         };
-        return [...remainingNodes, initialNode];
-      }
 
-      return remainingNodes;
+        // Second pass: after removing nodes, check if any remaining nodes become unconnected
+        // Keep checking until no more unconnected nodes are found
+        let hasMoreUnconnected = true;
+        while (hasMoreUnconnected) {
+          const stateNodes = tempRemainingNodes.filter(
+            (n) => n.type === "state"
+          ) as Node<JourneyNodeData>[];
+
+          // Check if there's an entry node in the remaining nodes
+          const entryNode = stateNodes.find((n) => n.data.isEntry);
+
+          // If no entry node exists, all remaining state nodes are unconnected
+          let newlyUnconnectedStateNodes: string[] = [];
+          let reachableStateNodes: Set<string> = new Set();
+
+          if (!entryNode) {
+            // All state nodes are unconnected if there's no entry node
+            newlyUnconnectedStateNodes = stateNodes.map((n) => n.id);
+          } else {
+            // Find all state nodes reachable from entry node
+            reachableStateNodes = findReachableStateNodes(
+              entryNode.id,
+              tempRemainingNodes,
+              tempRemainingEdges
+            );
+
+            // Nodes not in reachableStateNodes are unconnected
+            newlyUnconnectedStateNodes = stateNodes
+              .filter((n) => !reachableStateNodes.has(n.id))
+              .map((n) => n.id);
+          }
+
+          // Find all engagement nodes connected to newly unconnected state nodes
+          const newlyUnconnectedEngagements: string[] = [];
+
+          // Collect engagement nodes connected to unconnected state nodes
+          newlyUnconnectedStateNodes.forEach((nodeId) => {
+            tempRemainingEdges.forEach((edge) => {
+              if (
+                edge.source === nodeId &&
+                edge.target.startsWith("engagement-")
+              ) {
+                newlyUnconnectedEngagements.push(edge.target);
+              }
+            });
+          });
+
+          // Also find engagement nodes that are not connected to any reachable state node
+          const engagementNodes = tempRemainingNodes.filter(
+            (n) => n.type === "engagement"
+          );
+
+          engagementNodes.forEach((engagementNode) => {
+            // Check if this engagement has an incoming edge from a reachable state node
+            const hasReachableSource = tempRemainingEdges.some((edge) => {
+              if (edge.target === engagementNode.id) {
+                // If there's an entry node, check if source is reachable
+                if (entryNode) {
+                  return reachableStateNodes.has(edge.source);
+                }
+                // If no entry node, no state nodes are reachable
+                return false;
+              }
+              return false;
+            });
+
+            if (!hasReachableSource) {
+              newlyUnconnectedEngagements.push(engagementNode.id);
+            }
+          });
+
+          // Remove duplicates
+          const uniqueUnconnectedEngagements = Array.from(
+            new Set(newlyUnconnectedEngagements)
+          );
+
+          // If no new unconnected nodes found, stop
+          if (
+            newlyUnconnectedStateNodes.length === 0 &&
+            uniqueUnconnectedEngagements.length === 0
+          ) {
+            hasMoreUnconnected = false;
+          } else {
+            // Remove newly unconnected nodes (both state and engagement nodes)
+            tempRemainingNodes = tempRemainingNodes.filter(
+              (node) =>
+                !newlyUnconnectedStateNodes.includes(node.id) &&
+                !uniqueUnconnectedEngagements.includes(node.id)
+            );
+
+            // Remove edges connected to newly removed nodes
+            tempRemainingEdges = tempRemainingEdges.filter(
+              (edge) =>
+                !newlyUnconnectedStateNodes.includes(edge.source) &&
+                !newlyUnconnectedStateNodes.includes(edge.target) &&
+                !uniqueUnconnectedEngagements.includes(edge.source) &&
+                !uniqueUnconnectedEngagements.includes(edge.target)
+            );
+          }
+        }
+
+        // If no state nodes remain, add initial node
+        const finalStateNodes = tempRemainingNodes.filter(
+          (n) => n.type === "state"
+        );
+        if (finalStateNodes.length === 0) {
+          const initialNodeId = `state-${Date.now()}`;
+          const initialNode: Node<JourneyNodeData> = {
+            id: initialNodeId,
+            type: "state",
+            position: { x: 250, y: 100 },
+            data: {
+              label: "Initial Node",
+              nodeType: "state",
+              eventName: "",
+              engagements: [],
+              branches: [],
+              isEntry: true,
+            },
+          };
+          tempRemainingNodes = [...tempRemainingNodes, initialNode];
+        }
+
+        // Update nodes (this will be called after setEdges completes)
+        setTimeout(() => {
+          setNodes(tempRemainingNodes);
+        }, 0);
+
+        // Return updated edges
+        return tempRemainingEdges;
+      });
+
+      return nds;
     });
-
-    setEdges((eds) =>
-      eds.filter(
-        (edge) =>
-          !allNodeIdsToRemove.includes(edge.source) &&
-          !allNodeIdsToRemove.includes(edge.target)
-      )
-    );
 
     setUnconnectedNodesDialog({
       open: false,
@@ -1285,6 +1527,38 @@ export default function JourneyFlowBuilderIntegrated({
     });
     // Do nothing on cancel - just close the dialog
   }, []);
+
+  // Helper function to find all reachable state nodes from entry node using BFS
+  const findReachableStateNodesForCheck = (
+    entryNodeId: string,
+    nodes: Node<Record<string, unknown>>[],
+    edges: Edge[]
+  ): Set<string> => {
+    const reachableNodes = new Set<string>();
+    const queue: string[] = [entryNodeId];
+    reachableNodes.add(entryNodeId);
+
+    while (queue.length > 0) {
+      const currentNodeId = queue.shift();
+      if (!currentNodeId) continue;
+
+      // Find all state nodes reachable from current node
+      edges.forEach((edge) => {
+        if (edge.source === currentNodeId) {
+          const targetId = edge.target;
+          const targetNode = nodes.find(
+            (n) => n.id === targetId && n.type === "state"
+          );
+          if (targetNode && !reachableNodes.has(targetId)) {
+            reachableNodes.add(targetId);
+            queue.push(targetId);
+          }
+        }
+      });
+    }
+
+    return reachableNodes;
+  };
 
   // Function to check for unconnected nodes/engagements (exposed via ref)
   const checkUnconnectedNodes = useCallback((): boolean => {
@@ -1341,14 +1615,164 @@ export default function JourneyFlowBuilderIntegrated({
       }
     }
 
-    const unconnectedStateNodes = findUnconnectedNodes(stateNodes, edges);
-    const unconnectedEngagements = findUnconnectedEngagementNodes(nodes, edges);
+    // Check if nodes form a connected graph (even without explicit entry node)
+    const findConnectedComponent = (startNodeId: string): Set<string> => {
+      const connected = new Set<string>();
+      const queue: string[] = [startNodeId];
+      connected.add(startNodeId);
 
-    if (unconnectedStateNodes.length > 0 || unconnectedEngagements.length > 0) {
+      // BFS to find all connected nodes (both directions - undirected graph)
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (!currentId) continue;
+
+        // Find nodes reachable FROM this node
+        edges.forEach((edge) => {
+          if (edge.source === currentId) {
+            const targetId = edge.target;
+            const targetNode = nodes.find(
+              (n) => n.id === targetId && n.type === "state"
+            );
+            if (targetNode && !connected.has(targetId)) {
+              connected.add(targetId);
+              queue.push(targetId);
+            }
+          }
+        });
+
+        // Find nodes that reach TO this node (bidirectional check)
+        edges.forEach((edge) => {
+          if (edge.target === currentId) {
+            const sourceId = edge.source;
+            const sourceNode = nodes.find(
+              (n) => n.id === sourceId && n.type === "state"
+            );
+            if (sourceNode && !connected.has(sourceId)) {
+              connected.add(sourceId);
+              queue.push(sourceId);
+            }
+          }
+        });
+      }
+
+      return connected;
+    };
+
+    // Check if all state nodes are in one connected component
+    let allNodesConnected = false;
+    if (stateNodes.length > 0) {
+      const firstNodeId = stateNodes[0].id;
+      const connectedComponent = findConnectedComponent(firstNodeId);
+      allNodesConnected = stateNodes.every((node) =>
+        connectedComponent.has(node.id)
+      );
+    }
+
+    // Check for unconnected nodes using reachability from entry node
+    const entryNode = stateNodes.find((n) => n.data.isEntry);
+    let unconnectedStateNodes: string[] = [];
+    let reachableStateNodes: Set<string> = new Set();
+
+    if (!entryNode) {
+      // If no entry node, check if nodes form a connected component
+      if (allNodesConnected && stateNodes.length > 0) {
+        // All nodes are connected - valid flow, no unconnected nodes
+        unconnectedStateNodes = [];
+      } else {
+        // Check if any node can serve as entry (no incoming edges)
+        const potentialEntryNodes = stateNodes.filter((node) => {
+          const hasIncoming = edges.some((edge) => edge.target === node.id);
+          return !hasIncoming;
+        });
+
+        if (potentialEntryNodes.length > 0) {
+          // Use the first potential entry node to check reachability
+          reachableStateNodes = findReachableStateNodesForCheck(
+            potentialEntryNodes[0].id,
+            nodes,
+            edges
+          );
+
+          // Nodes not in reachableStateNodes are unconnected
+          unconnectedStateNodes = stateNodes
+            .filter((n) => !reachableStateNodes.has(n.id))
+            .map((n) => n.id);
+        } else {
+          // No potential entry node and not all connected - all nodes are unconnected
+          unconnectedStateNodes = stateNodes.map((n) => n.id);
+        }
+      }
+    } else {
+      // Find all state nodes reachable from entry node
+      reachableStateNodes = findReachableStateNodesForCheck(
+        entryNode.id,
+        nodes,
+        edges
+      );
+
+      // Nodes not in reachableStateNodes are unconnected
+      unconnectedStateNodes = stateNodes
+        .filter((n) => !reachableStateNodes.has(n.id))
+        .map((n) => n.id);
+    }
+
+    // Find unconnected engagement nodes
+    const unconnectedEngagements: string[] = [];
+
+    // Collect engagement nodes connected to unconnected state nodes
+    unconnectedStateNodes.forEach((nodeId) => {
+      edges.forEach((edge) => {
+        if (edge.source === nodeId && edge.target.startsWith("engagement-")) {
+          unconnectedEngagements.push(edge.target);
+        }
+      });
+    });
+
+    // Also find engagement nodes that are not connected to any reachable state node
+    const engagementNodes = nodes.filter((n) => n.type === "engagement");
+
+    engagementNodes.forEach((engagementNode) => {
+      // Check if this engagement has an incoming edge from a reachable state node
+      const hasReachableSource = edges.some((edge) => {
+        if (edge.target === engagementNode.id) {
+          const sourceNode = nodes.find(
+            (n) => n.id === edge.source && n.type === "state"
+          );
+          if (sourceNode) {
+            // If there's an entry node, check if source is reachable
+            if (entryNode) {
+              return reachableStateNodes.has(edge.source);
+            }
+            // If no entry node, check if source is in the connected component
+            if (stateNodes.length > 0) {
+              const connectedComponent = findConnectedComponent(
+                stateNodes[0].id
+              );
+              return connectedComponent.has(edge.source);
+            }
+          }
+        }
+        return false;
+      });
+
+      if (!hasReachableSource) {
+        unconnectedEngagements.push(engagementNode.id);
+      }
+    });
+
+    // Remove duplicates
+    const uniqueUnconnectedEngagements = Array.from(
+      new Set(unconnectedEngagements)
+    );
+
+    if (
+      unconnectedStateNodes.length > 0 ||
+      uniqueUnconnectedEngagements.length > 0
+    ) {
       setUnconnectedNodesDialog({
         open: true,
         nodeIds: unconnectedStateNodes,
-        engagementNodeIds: unconnectedEngagements,
+        engagementNodeIds: uniqueUnconnectedEngagements,
         isInitialNodeOnly: false,
       });
       return true;
@@ -1504,10 +1928,10 @@ export default function JourneyFlowBuilderIntegrated({
               ? "Please fill the initial journey and engagement. Select an event for the initial node and add engagements to configure your journey."
               : unconnectedNodesDialog.nodeIds.length > 0 &&
                 unconnectedNodesDialog.engagementNodeIds.length > 0
-              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) and ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Do you want to remove them?`
+              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) and ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Please remove them manually.`
               : unconnectedNodesDialog.nodeIds.length > 0
-              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) that are not connected. Do you want to remove them?`
-              : `There are ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Do you want to remove them?`}
+              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) that are not connected. Please remove them manually.`
+              : `There are ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Please remove them manually.`}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -1521,13 +1945,8 @@ export default function JourneyFlowBuilderIntegrated({
               })
             }
           >
-            Cancel
+            OK
           </Button>
-          {!unconnectedNodesDialog.isInitialNodeOnly && (
-            <Button onClick={handleRemoveUnconnectedNodes} color="error">
-              Remove
-            </Button>
-          )}
         </DialogActions>
       </Dialog>
     </Box>

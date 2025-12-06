@@ -260,45 +260,55 @@ export function convertFlowToEventInfo(
         if (branch.targetNodeId === "exit") {
           // Check if this state already has a nextState entry for exit
           // We'll create one with the next incremental state number if not already present
-          const hasExitTransition = currentStateEntry.nextState.some((ns) => {
-            // Check if this transitionTo value is higher than max state (likely an exit transition)
-            const transitionToNum = Number(ns.transitionTo);
-            return (
-              !isNaN(transitionToNum) && transitionToNum >= nextIncrementalState
-            );
-          });
-
-          if (!hasExitTransition) {
-            // Check if the next incremental state already exists in event map
-            let exitStateNumber = nextIncrementalState;
-
-            // Keep incrementing until we find a state that doesn't exist in the event map
-            const eventMapStates = new Set(Array.from(eventStateMap.values()));
-            while (eventMapStates.has(String(exitStateNumber))) {
-              exitStateNumber++;
+          const exitTransitionIndex = currentStateEntry.nextState.findIndex(
+            (ns) => {
+              // Check if this transitionTo value is higher than max state (likely an exit transition)
+              const transitionToNum = Number(ns.transitionTo);
+              return (
+                !isNaN(transitionToNum) &&
+                transitionToNum >= nextIncrementalState
+              );
             }
+          );
 
-            const filters = {
-              operator: "AND" as const,
-              filter: branch.filters.map((condition) => ({
-                propertyName: {
-                  label: condition.property,
-                  isLocal: false,
-                },
-                propertyType: "string",
-                comparisonType: condition.operator,
-                comparisonValue: String(condition.value),
-                componentType: "Filter" as const,
-              })),
-            };
+          // Check if the next incremental state already exists in event map
+          let exitStateNumber = nextIncrementalState;
 
+          // Keep incrementing until we find a state that doesn't exist in the event map
+          const eventMapStates = new Set(Array.from(eventStateMap.values()));
+          while (eventMapStates.has(String(exitStateNumber))) {
+            exitStateNumber++;
+          }
+
+          const filters = {
+            operator: "AND" as const,
+            filter: branch.filters.map((condition) => ({
+              propertyName: {
+                label: condition.property,
+                isLocal: false,
+              },
+              propertyType: "string",
+              comparisonType: condition.operator,
+              comparisonValue: String(condition.value),
+              componentType: "Filter" as const,
+            })),
+          };
+
+          if (exitTransitionIndex === -1) {
+            // Add new exit transition
             currentStateEntry.nextState.push({
               transitionTo: exitStateNumber,
               filters,
             });
-
             // Increment for next exit branch (use the assigned state + 1)
             nextIncrementalState = exitStateNumber + 1;
+          } else {
+            // Update existing exit transition with new filters
+            currentStateEntry.nextState[exitTransitionIndex] = {
+              transitionTo:
+                currentStateEntry.nextState[exitTransitionIndex].transitionTo,
+              filters,
+            };
           }
           return;
         }
@@ -329,15 +339,22 @@ export function convertFlowToEventInfo(
               })),
             };
 
-            const existingTransition = currentStateEntry.nextState.find(
+            const existingTransitionIndex = currentStateEntry.nextState.findIndex(
               (ns) => String(ns.transitionTo) === targetStateFromMap
             );
 
-            if (!existingTransition) {
+            if (existingTransitionIndex === -1) {
+              // Add new transition
               currentStateEntry.nextState.push({
                 transitionTo: Number(targetStateFromMap),
                 filters,
               });
+            } else {
+              // Update existing transition with new filters
+              currentStateEntry.nextState[existingTransitionIndex] = {
+                transitionTo: Number(targetStateFromMap),
+                filters,
+              };
             }
           }
           return;
@@ -369,15 +386,22 @@ export function convertFlowToEventInfo(
               })),
             };
 
-            const existingTransition = currentStateEntry.nextState.find(
+            const existingTransitionIndex = currentStateEntry.nextState.findIndex(
               (ns) => String(ns.transitionTo) === targetStateFromEventName
             );
 
-            if (!existingTransition) {
+            if (existingTransitionIndex === -1) {
+              // Add new transition
               currentStateEntry.nextState.push({
                 transitionTo: Number(targetStateFromEventName),
                 filters,
               });
+            } else {
+              // Update existing transition with new filters
+              currentStateEntry.nextState[existingTransitionIndex] = {
+                transitionTo: Number(targetStateFromEventName),
+                filters,
+              };
             }
           }
           return;
@@ -399,15 +423,22 @@ export function convertFlowToEventInfo(
         };
 
         // Check if this transition already exists
-        const existingTransition = currentStateEntry.nextState.find(
+        const existingTransitionIndex = currentStateEntry.nextState.findIndex(
           (ns) => String(ns.transitionTo) === targetState
         );
 
-        if (!existingTransition) {
+        if (existingTransitionIndex === -1) {
+          // Add new transition
           currentStateEntry.nextState.push({
             transitionTo: Number(targetState),
             filters,
           });
+        } else {
+          // Update existing transition with new filters
+          currentStateEntry.nextState[existingTransitionIndex] = {
+            transitionTo: Number(targetState),
+            filters,
+          };
         }
       });
     }
