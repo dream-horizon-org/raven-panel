@@ -191,6 +191,7 @@ export default function JourneyFlowBuilderIntegrated({
     string | null
   >(null);
   const panelCloseHandlerRef = useRef<(() => void) | null>(null);
+  const hasOpenedInitialNodeRef = useRef(false);
   const [eventStateMap, setEventStateMap] = useState<EventStateMap>(new Map());
   const [nodeStateMap, setNodeStateMap] = useState<NodeStateMap>(new Map());
   const [unconnectedNodesDialog, setUnconnectedNodesDialog] = useState<{
@@ -542,6 +543,28 @@ export default function JourneyFlowBuilderIntegrated({
       setNodes([initialNode]);
     }
   }, [eventInfo, nudgeActions, nodes.length]); // Re-run when eventInfo or nudgeActions change, but only if nodes are empty
+
+  // Auto-open configuration panel for initial node
+  useEffect(() => {
+    // Only open once, if panel is not already open, and we have nodes
+    if (hasOpenedInitialNodeRef.current || configPanelOpen || nodes.length === 0) {
+      return;
+    }
+
+    // Find the initial/entry node
+    const initialNode = nodes.find((node) => {
+      if (node.type !== "state") return false;
+      const nodeData = node.data as JourneyNodeData;
+      return nodeData.isEntry === true || nodeData.label === "Initial Node";
+    });
+
+    // If we found an initial node and panel is closed, open it
+    if (initialNode && !selectedNode) {
+      setSelectedNode(initialNode as Node<JourneyNodeData>);
+      setConfigPanelOpen(true);
+      hasOpenedInitialNodeRef.current = true;
+    }
+  }, [nodes, configPanelOpen, selectedNode]);
 
   // Sync flow changes back to form
   const syncFlowToForm = useCallback(() => {
