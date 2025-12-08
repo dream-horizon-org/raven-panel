@@ -66,6 +66,18 @@
           "type": "enum",
           "default": "regular",
           "acceptedValues": ["regular", "medium", "bold"]
+        },
+        {
+          "name": "fontFamily",
+          "display": "Font Family",
+          "type": "enum",
+          "default": "Roboto",
+          "acceptedValues": ["Roboto", "Inter", "Trim"]
+        },
+        {
+          "name": "fontSize",
+          "display": "Font Size",
+          "type": "number"
         }
       ],
       "styles": [
