@@ -78,15 +78,6 @@ export const eventNameInputStyles = (
           borderColor: "primary.main",
           borderWidth: 2,
         },
-        animation: "pulse 2s ease-in-out infinite",
-        "@keyframes pulse": {
-          "0%, 100%": {
-            boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
-          },
-          "50%": {
-            boxShadow: "0 0 0 4px rgba(25, 118, 210, 0.1)",
-          },
-        },
       }),
   },
 });
