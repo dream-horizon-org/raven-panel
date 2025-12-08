@@ -26,9 +26,15 @@ export function buildEventStateMap(
   const nodeStateMap: NodeStateMap = new Map();
 
   // Find entry node
-  const entryNode = nodes.find(
+  let entryNode = nodes.find(
     (n) => n.type === "state" && n.data.isEntry && n.data.eventName
   );
+
+  // If no entry node found, use the first node with an eventName as entry
+  // This handles cases where entry node was deleted but other nodes remain
+  if (!entryNode) {
+    entryNode = nodes.find((n) => n.type === "state" && n.data.eventName);
+  }
 
   if (!entryNode || !entryNode.data.eventName) {
     return eventStateMap;
@@ -211,6 +217,11 @@ export function convertFlowToEventInfo(
 ): EventInfo[] {
   const eventInfoMap = new Map<string, EventInfo>();
 
+  // Find entry node to determine which node should be state "0"
+  const entryNode = nodes.find(
+    (n) => n.type === "state" && n.data.isEntry && n.data.eventName
+  );
+
   // Track the highest state number to assign next incremental state for exit branches
   let maxStateNumber = 0;
   eventStateMap.forEach((state) => {
@@ -221,6 +232,40 @@ export function convertFlowToEventInfo(
   });
   let nextIncrementalState = maxStateNumber + 1;
 
+  // First, assign state numbers to all nodes with eventNames that don't have one yet
+  // This ensures we can process all nodes even if entry node is missing
+  nodes.forEach((node) => {
+    if (node.type !== "state" || !node.data.eventName) return;
+
+    const eventName = node.data.eventName;
+    // If node doesn't have a state yet, assign one
+    if (!eventStateMap.has(eventName)) {
+      // Check if it's the entry node (or first node if no entry exists)
+      const isEntry =
+        node.data.isEntry ||
+        (!entryNode &&
+          nodes.indexOf(node) ===
+            nodes.findIndex((n) => n.type === "state" && n.data.eventName));
+      if (isEntry) {
+        eventStateMap.set(eventName, "0");
+        nodeStateMap.set(node.id, "0");
+      } else {
+        // Assign next available state number
+        let maxState = 0;
+        eventStateMap.forEach((state) => {
+          const stateNum = Number(state);
+          if (!isNaN(stateNum) && stateNum > maxState) {
+            maxState = stateNum;
+          }
+        });
+        const nextState = String(maxState + 1);
+        eventStateMap.set(eventName, nextState);
+        nodeStateMap.set(node.id, nextState);
+      }
+    }
+  });
+
+  // Now process all nodes to create transitions
   nodes.forEach((node) => {
     if (node.type !== "state" || !node.data.eventName) return;
 
@@ -228,7 +273,13 @@ export function convertFlowToEventInfo(
     const currentStateNumber =
       nodeStateMap.get(node.id) || eventStateMap.get(eventName);
 
-    if (!currentStateNumber) return;
+    if (!currentStateNumber) {
+      // If still no state number, skip this node but log a warning
+      console.warn(
+        `[convertFlowToEventInfo] Node ${node.id} with event ${eventName} has no state number, skipping`
+      );
+      return;
+    }
 
     // Get or create EventInfo for this event
     let eventInfo = eventInfoMap.get(eventName);
@@ -319,12 +370,12 @@ export function convertFlowToEventInfo(
         );
 
         if (!targetNode) {
-          // If target node doesn't exist, try to find it by eventName in eventStateMap
-          // This handles cases where the node exists but hasn't been processed yet
+          // If target node doesn't exist (was deleted), try to find its state in eventStateMap
+          // This preserves transitions even when target nodes are deleted
           const targetStateFromMap = eventStateMap.get(branch.targetNodeId);
           if (targetStateFromMap) {
-            // Create a transition even if the node doesn't exist in the nodes array yet
-            // This ensures the transition is preserved in the form data
+            // Create a transition even if the node doesn't exist in the nodes array
+            // This ensures the transition is preserved in the form data when nodes are deleted
             const filters = {
               operator: "AND" as const,
               filter: branch.filters.map((condition) => ({
@@ -356,6 +407,13 @@ export function convertFlowToEventInfo(
                 filters,
               };
             }
+          } else {
+            // Target node was deleted and its state is not in the map
+            // This means it was likely the entry node or a node that was never assigned a state
+            // Skip this transition to avoid creating invalid state references
+            console.warn(
+              `[convertFlowToEventInfo] Target node ${branch.targetNodeId} not found and has no state mapping. Skipping transition from ${eventName} state ${currentStateNumber}.`
+            );
           }
           return;
         }
