@@ -32,6 +32,7 @@ import {
   FieldErrors,
   useFormContext,
   useWatch,
+  useFieldArray,
 } from "react-hook-form";
 import { CreateJourneyFormData, EventInfo } from "../types/journey.interface";
 import { StateNode, EngagementNode } from "./content/FlowNodes";
@@ -47,8 +48,6 @@ import {
   buildNodeStateMap,
   convertFlowToEventInfo,
   convertEventInfoToFlow,
-  findUnconnectedNodes,
-  findUnconnectedEngagementNodes,
   EventStateMap,
   NodeStateMap,
 } from "../utils/stateMapping";
@@ -69,11 +68,9 @@ function calculateNonOverlappingPosition(
     return { x: 250, y: 100 };
   }
 
-  // Start position: to the right and slightly below the source node
   let x = sourceNode.position.x + horizontalSpacing;
   let y = sourceNode.position.y + verticalSpacing;
 
-  // Check for overlaps and adjust
   let attempts = 0;
   const maxAttempts = 100;
 
@@ -81,34 +78,29 @@ function calculateNonOverlappingPosition(
     const hasOverlap = existingNodes.some((node) => {
       const dx = Math.abs(node.position.x - x);
       const dy = Math.abs(node.position.y - y);
-      return dx < 200 && dy < 100; // Overlap threshold
+      return dx < 200 && dy < 100;
     });
 
     if (!hasOverlap) {
       break;
     }
 
-    // Try next position: move down first, then right
     if (attempts % 2 === 0) {
       y += verticalSpacing;
     } else {
       x += horizontalSpacing;
-      y = sourceNode.position.y + verticalSpacing; // Reset Y
+      y = sourceNode.position.y + verticalSpacing;
     }
 
     attempts++;
   }
 
-  // Clamp to reasonable bounds
   return {
     x: Math.max(50, Math.min(x, 2000)),
     y: Math.max(50, Math.min(y, 2000)),
   };
 }
 
-// Type-safe conversion: React Flow's NodeTypes expects a specific structure,
-// but our components work correctly at runtime. Using unknown as intermediate type
-// is safer than 'any' and allows the type conversion.
 const nodeTypes: NodeTypes = {
   state: (StateNode as unknown) as NodeTypes["state"],
   engagement: (EngagementNode as unknown) as NodeTypes["engagement"],
@@ -151,30 +143,40 @@ export default function JourneyFlowBuilderIntegrated({
   checkUnconnectedNodesRef,
 }: JourneyFlowBuilderIntegratedProps) {
   const theme = useTheme();
-  const { setValue, watch, getValues } = useFormContext<
-    CreateJourneyFormData
-  >();
+  const { setValue, getValues } = useFormContext<CreateJourneyFormData>();
 
-  // Store current engagement context for syncing template back
+  // Use useFieldArray for proper array management - this ensures React Hook Form tracks changes correctly
+  const {
+    fields: actionFields,
+    remove: removeAction,
+    replace: replaceActions,
+  } = useFieldArray({
+    control,
+    name: "nudgeSelection.actions",
+  });
+
   const currentEngagementContextRef = useRef<{
     nodeId: string;
     engagementId: string;
-  } | null>(null);
+  } | null>(null); // Ref to prevent syncFlowToForm from running during node save
 
-  // Ref to prevent syncFlowToForm from running during node save
-  const isSavingNodeRef = useRef(false);
+  const isSavingNodeRef = useRef(false); // Ref to track if the initial flow structure has been set
+  const isInitializedRef = useRef(false); // Watch ruleEngine.eventInfo from form
 
-  // Watch ruleEngine.eventInfo from form
   const eventInfo = useWatch({
     control,
     name: "ruleEngine.eventInfo",
-  }) as EventInfo[] | undefined;
+  }) as EventInfo[] | undefined; // Watch nudgeSelection.actions to restore engagements
 
-  // Watch nudgeSelection.actions to restore engagements
   const nudgeActions = useWatch({
     control,
     name: "nudgeSelection.actions",
   }) as CreateJourneyFormData["nudgeSelection"]["actions"] | undefined;
+
+  const resetStates = useWatch({
+    control,
+    name: "nudgeSelection.resetStates",
+  }) as string[] | undefined;
 
   const [nodes, setNodes, onNodesChange] = useNodesState<
     Node<Record<string, unknown>>
@@ -205,19 +207,35 @@ export default function JourneyFlowBuilderIntegrated({
     isInitialNodeOnly: false,
   });
 
-  // Initialize flow from form data
   useEffect(() => {
-    // Skip initialization if we're currently saving a node (to prevent infinite loop)
-    if (isSavingNodeRef.current) {
+    if (isInitializedRef.current) {
       return;
     }
 
-    // Don't re-initialize if nodes already exist (preserve state on tab change)
-    // This prevents nodes from being reset when component remounts
-    if (nodes.length > 0) {
+    // Check if we have data to process or if we need to set the initial blank state
+    if (!eventInfo || eventInfo.length === 0) {
+      if (nodes.length === 0) {
+        const initialNodeId = `state-${Date.now()}`;
+        const initialNode: Node<JourneyNodeData> = {
+          id: initialNodeId,
+          type: "state",
+          position: { x: 250, y: 100 },
+          data: {
+            label: "Initial Node",
+            nodeType: "state",
+            eventName: "",
+            engagements: [],
+            branches: [],
+            isEntry: true,
+          },
+        };
+        setNodes([initialNode]);
+        isInitializedRef.current = true;
+      }
       return;
     }
 
+    // Proceed with restoration only if eventInfo exists and we haven't initialized yet
     if (eventInfo && eventInfo.length > 0) {
       const {
         nodes: initialNodes,
@@ -230,10 +248,79 @@ export default function JourneyFlowBuilderIntegrated({
         edges
       );
 
+      let updatedNodes = ([...initialNodes] as unknown) as Node<
+        JourneyNodeData | EngagementNodeData
+      >[];
+      let updatedEdges = initialEdges;
+
       // Restore engagements from nudgeSelection.actions
       if (nudgeActions && nudgeActions.length > 0) {
-        // First pass: attach engagements to nodes that match the state directly
-        const updatedNodes = initialNodes.map((node) => {
+        // CRITICAL FIX: Check for orphaned actions BEFORE restoring
+        const stateNumberToNodeIdMap = new Map<string, string>();
+        initialNodes.forEach((node) => {
+          if (node.type === "state") {
+            const nodeData = node.data as JourneyNodeData;
+            const nodeState =
+              nsm.get(node.id) || esm.get(nodeData.eventName || "");
+            if (nodeState) {
+              stateNumberToNodeIdMap.set(nodeState, node.id);
+            }
+          }
+        });
+
+        // First, build a map of which nodes transition to which reset states
+        // This helps us determine if a reset state action should be restored to a node
+        const nodeToResetStateMap = new Map<string, Set<string>>();
+        initialNodes.forEach((node) => {
+          if (node.type !== "state") return;
+          const nodeData = node.data as JourneyNodeData;
+          const nodeState =
+            nsm.get(node.id) || esm.get(nodeData.eventName || "");
+          if (!nodeState) return;
+
+          // Check if this node transitions to any reset states
+          const resetStatesForNode = new Set<string>();
+          nodeData.branches?.forEach((branch) => {
+            if (branch.targetNodeId === "exit") {
+              // Exit branches transition to reset states - we need to find which one
+              // Check eventInfo to see what state this exit branch maps to
+              const eventInfoEntry = eventInfo?.find(
+                (ei) => ei.eventname === nodeData.eventName
+              );
+              if (eventInfoEntry) {
+                eventInfoEntry.currentState?.forEach((cs) => {
+                  if (String(cs.currentState) === nodeState) {
+                    cs.nextState?.forEach((ns) => {
+                      const transitionToState = String(ns.transitionTo);
+                      if (resetStates?.includes(transitionToState)) {
+                        resetStatesForNode.add(transitionToState);
+                      }
+                    });
+                  }
+                });
+              }
+            } else {
+              // Regular branch - check if target node has a reset state
+              const targetNode = initialNodes.find(
+                (n) => n.id === branch.targetNodeId
+              );
+              if (targetNode && targetNode.type === "state") {
+                const targetNodeData = targetNode.data as JourneyNodeData;
+                const targetNodeState =
+                  nsm.get(targetNode.id) ||
+                  esm.get(targetNodeData.eventName || "");
+                if (targetNodeState && resetStates?.includes(targetNodeState)) {
+                  resetStatesForNode.add(targetNodeState);
+                }
+              }
+            }
+          });
+          if (resetStatesForNode.size > 0) {
+            nodeToResetStateMap.set(node.id, resetStatesForNode);
+          }
+        });
+
+        updatedNodes = initialNodes.map((node) => {
           if (node.type !== "state" || !node.data.eventName) return node;
 
           const nodeData = (node.data as unknown) as JourneyNodeData;
@@ -243,15 +330,109 @@ export default function JourneyFlowBuilderIntegrated({
           if (!nodeState) return node;
 
           // Find actions for this state
-          const stateActions = nudgeActions.filter(
-            (action) => action.onState === nodeState
-          );
+          // CRITICAL: Only restore engagements that belong to THIS specific node
+          // Check if action has originalNodeId stored - if it does, verify it matches this node's ID
+          // This is the PRIMARY check to prevent restoring engagements from deleted nodes
+          const stateActions = nudgeActions.filter((action) => {
+            const actionConfig = action.config as
+              | Record<string, unknown>
+              | undefined;
+            const actionOriginalNodeId = actionConfig?.originalNodeId as
+              | string
+              | undefined;
+
+            // CRITICAL: If action has originalNodeId, it MUST match this node's ID
+            // This is the most reliable check because node IDs are unique and don't change
+            // State numbers can shift after deletion, so matching by state alone is unreliable
+            if (actionOriginalNodeId) {
+              if (actionOriginalNodeId !== node.id) {
+                console.log(
+                  `[JourneyFlowBuilderIntegrated] Skipping action ${action.actionId} - originalNodeId (${actionOriginalNodeId}) doesn't match node ID (${node.id})`
+                );
+                return false; // Don't restore - engagement was from a different node
+              }
+              // originalNodeId matches - this action belongs to this node
+              return true;
+            }
+
+            // If action doesn't have originalNodeId, check originalEventName FIRST (before state)
+            // CRITICAL: originalEventName is more reliable than state after deletions because
+            // event names don't change, but state numbers shift when nodes are deleted
+            const originalEventName = actionConfig?.originalEventName as
+              | string
+              | undefined;
+
+            if (originalEventName) {
+              // If originalEventName is stored, it must match this node's eventName
+              // This is the PRIMARY check when originalNodeId is not available
+              if (originalEventName !== nodeData.eventName) {
+                console.log(
+                  `[JourneyFlowBuilderIntegrated] Skipping action ${action.actionId} - originalEventName (${originalEventName}) doesn't match node eventName (${nodeData.eventName})`
+                );
+                return false; // Don't restore - engagement was from a different node
+              }
+
+              // CRITICAL: originalEventName matches, but we need to verify state compatibility
+              // If action's onState is a reset state and doesn't match node's state,
+              // verify that this node actually transitions to that reset state
+              if (action.onState !== nodeState) {
+                const isActionStateResetState =
+                  resetStates?.includes(action.onState) || false;
+                const isNodeStateResetState =
+                  resetStates?.includes(nodeState) || false;
+
+                if (isActionStateResetState && !isNodeStateResetState) {
+                  // Action is mapped to a reset state, but node is not
+                  // Check if this node transitions to that reset state using the pre-built map
+                  const nodeResetStates = nodeToResetStateMap.get(node.id);
+                  if (
+                    !nodeResetStates ||
+                    !nodeResetStates.has(action.onState)
+                  ) {
+                    // Node doesn't transition to the reset state - don't restore
+                    console.log(
+                      `[JourneyFlowBuilderIntegrated] Skipping action ${action.actionId} - action is mapped to reset state ${action.onState} but node ${nodeData.eventName} (state ${nodeState}) doesn't transition to it`
+                    );
+                    return false;
+                  }
+                  // Node transitions to this reset state - allow restoration
+                  console.log(
+                    `[JourneyFlowBuilderIntegrated] Restoring reset state action ${action.actionId} (state ${action.onState}) to node ${nodeData.eventName} (state ${nodeState}) because node transitions to reset state`
+                  );
+                } else if (!isActionStateResetState && !isNodeStateResetState) {
+                  // Both are regular states but don't match - this might be due to state shifts after deletions
+                  // Allow restoration but log a warning
+                  console.warn(
+                    `[JourneyFlowBuilderIntegrated] Restoring action ${action.actionId} with originalEventName ${originalEventName} but state mismatch: action.onState=${action.onState}, nodeState=${nodeState}. This is expected after deletions.`
+                  );
+                }
+              }
+
+              // CRITICAL: Verify that this action's engagement ID doesn't already exist on a different node
+              // This prevents duplicate restorations if metadata is stale
+              const actionEngagementId = action.actionId.includes("_")
+                ? action.actionId.split("_")[0]
+                : action.actionId;
+
+              // Check if this engagement ID is already restored to a different node
+              // We'll do this check after all nodes are processed, but for now, trust the originalEventName match
+              return true;
+            }
+
+            if (action.onState !== nodeState) {
+              // State doesn't match - don't restore
+              return false;
+            }
+
+            console.warn(
+              `[JourneyFlowBuilderIntegrated] Restoring legacy action ${action.actionId} by state matching (state ${nodeState}). This is unreliable after deletions. Consider re-saving to update metadata.`
+            );
+            return true;
+          });
 
           if (stateActions.length > 0) {
-            // Restore engagements from actions
             const restoredEngagements: Engagement[] = stateActions.map(
               (action) => {
-                // Extract engagement ID from actionId (format: engagement-{timestamp}_{timestamp})
                 const engagementId = action.actionId.includes("_")
                   ? action.actionId.split("_")[0]
                   : action.actionId;
@@ -260,14 +441,26 @@ export default function JourneyFlowBuilderIntegrated({
                   action.type
                 );
 
+                // Get originalNodeId from action config, or use current node's ID
+                const actionConfig = action.config as
+                  | Record<string, unknown>
+                  | undefined;
+                const actionOriginalNodeId = actionConfig?.originalNodeId as
+                  | string
+                  | undefined;
+
                 return {
                   id: engagementId,
                   type: engagementType as "tooltip" | "popup" | "bottomsheet",
                   config: {
                     template: action.template,
                     variant: action.variant,
-                    originalOnState: action.onState, // Store original onState to preserve it when syncing
-                    originalActionId: action.actionId, // Store original actionId for exact matching
+                    originalOnState: action.onState,
+                    originalActionId: action.actionId,
+                    // CRITICAL: Always use current node's ID and event name, not stored values
+                    // Stored values might be from a previous incorrect match after deletions
+                    originalEventName: nodeData.eventName, // Always use current node's event name
+                    originalNodeId: node.id, // Always use current node's ID
                   },
                 };
               }
@@ -283,136 +476,106 @@ export default function JourneyFlowBuilderIntegrated({
           }
 
           return node;
+        }) as Node<JourneyNodeData | EngagementNodeData>[];
+
+        // CRITICAL: Deduplicate engagements across nodes - each engagement ID should only exist on one node
+        // This prevents the same engagement from being restored to multiple nodes due to stale metadata
+        const engagementIdToRestoredNodeMap = new Map<
+          string,
+          { nodeId: string; engagement: Engagement }
+        >();
+        const nodesWithEngagements = updatedNodes.filter((node) => {
+          if (node.type !== "state") return false;
+          const nodeData = node.data as JourneyNodeData;
+          return nodeData.engagements && nodeData.engagements.length > 0;
         });
 
-        // Second pass: handle engagements on states that don't have event nodes
-        // Find actions whose onState doesn't match any existing node's state
-        const unassignedActions = nudgeActions.filter((action) => {
-          const actionState = action.onState;
-          // Check if any node has this state
-          return !updatedNodes.some((node) => {
-            if (node.type !== "state") return false;
-            const nodeData = node.data as JourneyNodeData;
-            if (!nodeData.eventName) return false;
-            const nodeState =
-              nsm.get(node.id) || esm.get(nodeData.eventName || "");
-            return nodeState === actionState;
+        // First pass: collect all engagements and their nodes
+        nodesWithEngagements.forEach((node) => {
+          const nodeData = node.data as JourneyNodeData;
+          nodeData.engagements?.forEach((engagement) => {
+            if (engagement.id) {
+              const existing = engagementIdToRestoredNodeMap.get(engagement.id);
+              if (!existing) {
+                engagementIdToRestoredNodeMap.set(engagement.id, {
+                  nodeId: node.id,
+                  engagement,
+                });
+              } else {
+                // Duplicate found - keep the one with originalNodeId matching the node, or the first one
+                const engagementConfig = engagement.config as
+                  | Record<string, unknown>
+                  | undefined;
+                const engagementOriginalNodeId = engagementConfig?.originalNodeId as
+                  | string
+                  | undefined;
+                const existingConfig = existing.engagement.config as
+                  | Record<string, unknown>
+                  | undefined;
+                const existingOriginalNodeId = existingConfig?.originalNodeId as
+                  | string
+                  | undefined;
+
+                // Prefer the one where originalNodeId matches the node ID
+                if (
+                  engagementOriginalNodeId === node.id &&
+                  existingOriginalNodeId !== existing.nodeId
+                ) {
+                  engagementIdToRestoredNodeMap.set(engagement.id, {
+                    nodeId: node.id,
+                    engagement,
+                  });
+                  console.warn(
+                    `[JourneyFlowBuilderIntegrated] Duplicate engagement ${engagement.id} found. Keeping on node ${node.id} (originalNodeId matches). Removing from node ${existing.nodeId}.`
+                  );
+                } else if (
+                  existingOriginalNodeId === existing.nodeId &&
+                  engagementOriginalNodeId !== node.id
+                ) {
+                  // Keep existing one
+                  console.warn(
+                    `[JourneyFlowBuilderIntegrated] Duplicate engagement ${engagement.id} found. Keeping on node ${existing.nodeId} (originalNodeId matches). Removing from node ${node.id}.`
+                  );
+                } else {
+                  // Neither matches - keep the first one encountered
+                  console.warn(
+                    `[JourneyFlowBuilderIntegrated] Duplicate engagement ${engagement.id} found on nodes ${existing.nodeId} and ${node.id}. Keeping first occurrence on node ${existing.nodeId}.`
+                  );
+                }
+              }
+            }
           });
         });
 
-        // For each unassigned action, find the node that transitions to that state
-        // Use eventInfo to find which node has a nextState that transitions to the target state
-        unassignedActions.forEach((action) => {
-          const targetState = action.onState;
+        // Second pass: remove duplicate engagements from nodes
+        updatedNodes = updatedNodes.map((node) => {
+          if (node.type !== "state") return node;
+          const nodeData = node.data as JourneyNodeData;
+          if (!nodeData.engagements || nodeData.engagements.length === 0)
+            return node;
 
-          // Find node that has a branch transitioning to this state by checking eventInfo
-          let sourceNode: Node<Record<string, unknown>> | undefined;
-
-          if (eventInfo && eventInfo.length > 0) {
-            // Find which eventInfo entry has a nextState that transitions to targetState
-            for (const info of eventInfo) {
-              for (const cs of info.currentState) {
-                if (cs.nextState && Array.isArray(cs.nextState)) {
-                  const hasTransitionToTarget = cs.nextState.some(
-                    (ns) => String(ns.transitionTo) === targetState
-                  );
-
-                  if (hasTransitionToTarget) {
-                    // Found the event that transitions to targetState
-                    // Now find the corresponding node
-                    sourceNode = updatedNodes.find(
-                      (node) =>
-                        node.type === "state" &&
-                        (node.data as JourneyNodeData).eventName ===
-                          info.eventname
-                    );
-                    if (sourceNode) break;
-                  }
-                }
-              }
-              if (sourceNode) break;
+          const filteredEngagements = nodeData.engagements.filter(
+            (engagement) => {
+              if (!engagement.id) return true;
+              const mapped = engagementIdToRestoredNodeMap.get(engagement.id);
+              return mapped?.nodeId === node.id;
             }
+          );
+
+          if (filteredEngagements.length !== nodeData.engagements.length) {
+            return {
+              ...node,
+              data: ({
+                ...nodeData,
+                engagements: filteredEngagements,
+              } as unknown) as Record<string, unknown>,
+            };
           }
 
-          // Fallback: if not found in eventInfo, check branches directly
-          if (!sourceNode) {
-            sourceNode = updatedNodes.find((node) => {
-              if (node.type !== "state") return false;
-              const nodeData = node.data as JourneyNodeData;
-              if (!nodeData.eventName) return false;
-              if (!nodeData.branches || !Array.isArray(nodeData.branches))
-                return false;
+          return node;
+        }) as Node<JourneyNodeData | EngagementNodeData>[];
 
-              // Check if any branch transitions to a state that matches targetState
-              return nodeData.branches.some((branch) => {
-                // If branch targets an event, check if that event's state matches
-                if (branch.targetNodeId !== "exit") {
-                  const targetNode = updatedNodes.find(
-                    (n) =>
-                      n.type === "state" &&
-                      (n.data as JourneyNodeData).eventName ===
-                        branch.targetNodeId
-                  );
-                  if (targetNode) {
-                    const targetNodeData = targetNode.data as JourneyNodeData;
-                    const targetNodeState =
-                      nsm.get(targetNode.id) ||
-                      esm.get(targetNodeData.eventName || "");
-                    return targetNodeState === targetState;
-                  }
-                }
-                return false;
-              });
-            });
-          }
-
-          // If we found a source node, attach the engagement to it
-          if (sourceNode) {
-            const sourceNodeIndex = updatedNodes.findIndex(
-              (n) => n.id === sourceNode.id
-            );
-            if (sourceNodeIndex >= 0) {
-              const sourceNodeData = updatedNodes[sourceNodeIndex]
-                .data as JourneyNodeData;
-              const existingEngagements = sourceNodeData.engagements || [];
-
-              // Extract engagement ID from actionId
-              const engagementId = action.actionId.includes("_")
-                ? action.actionId.split("_")[0]
-                : action.actionId;
-
-              const engagementType = mapNudgeTypeToEngagementType(action.type);
-
-              const newEngagement: Engagement = {
-                id: engagementId,
-                type: engagementType as "tooltip" | "popup" | "bottomsheet",
-                config: {
-                  template: action.template,
-                  variant: action.variant,
-                  originalOnState: action.onState, // Store original onState to preserve it when syncing
-                  originalActionId: action.actionId, // Store original actionId for exact matching
-                },
-              };
-
-              // Check if engagement already exists
-              const engagementExists = existingEngagements.some(
-                (e) => e.id === engagementId
-              );
-
-              if (!engagementExists) {
-                updatedNodes[sourceNodeIndex] = {
-                  ...updatedNodes[sourceNodeIndex],
-                  data: ({
-                    ...sourceNodeData,
-                    engagements: [...existingEngagements, newEngagement],
-                  } as unknown) as Record<string, unknown>,
-                };
-              }
-            }
-          }
-        });
-
-        // Create engagement nodes and edges for restored engagements
+        // --- FINAL ENGAGEMENT NODE/EDGE CREATION (from updatedNodes) ---
         const engagementEdges: Edge[] = [];
         updatedNodes.forEach((node) => {
           if (node.type !== "state") return;
@@ -426,22 +589,20 @@ export default function JourneyFlowBuilderIntegrated({
                 (n) => n.id === engagementNodeId
               );
 
-              if (!existingEngagementNode) {
-                // Helper function to get proper label for engagement type
-                const getEngagementLabel = (type: string): string => {
-                  switch (type) {
-                    case "tooltip":
-                      return "Tooltip";
-                    case "popup":
-                      return "Popup";
-                    case "bottomsheet":
-                      return "Bottom Sheet";
-                    default:
-                      return type;
-                  }
-                };
+              const getEngagementLabel = (type: string): string => {
+                switch (type) {
+                  case "tooltip":
+                    return "Tooltip";
+                  case "popup":
+                    return "Popup";
+                  case "bottomsheet":
+                    return "Bottom Sheet";
+                  default:
+                    return type;
+                }
+              };
 
-                // Calculate position to the right of the source node
+              if (!existingEngagementNode) {
                 const baseX = node.position.x + 300;
                 const baseY = node.position.y;
                 const verticalOffset = engagementIndex * 120;
@@ -463,88 +624,170 @@ export default function JourneyFlowBuilderIntegrated({
                       | "bottomsheet",
                   },
                 };
-                updatedNodes.push(
-                  (engagementNode as unknown) as Node<Record<string, unknown>>
-                );
-
-                // Create edge from state node to engagement node
-                const engagementEdge: Edge = {
-                  id: `edge-${node.id}-${engagementNodeId}`,
-                  source: node.id,
-                  target: engagementNodeId,
-                  type: "smoothstep",
-                  animated: false,
-                  style: {
-                    stroke: theme.palette.warning.main,
-                    strokeWidth: 2,
-                    strokeDasharray: "5,5",
-                  },
-                  data: {
-                    engagementId: engagement.id,
-                  },
-                };
-                engagementEdges.push(engagementEdge);
-              } else {
-                // Edge might already exist, but ensure it's in the edges array
-                const existingEdge = initialEdges.find(
-                  (e) => e.source === node.id && e.target === engagementNodeId
-                );
-                if (!existingEdge) {
-                  const engagementEdge: Edge = {
-                    id: `edge-${node.id}-${engagementNodeId}`,
-                    source: node.id,
-                    target: engagementNodeId,
-                    type: "smoothstep",
-                    animated: false,
-                    style: {
-                      stroke: "#ff9800",
-                      strokeWidth: 2,
-                      strokeDasharray: "5,5",
-                    },
-                    data: {
-                      engagementId: engagement.id,
-                    },
-                  };
-                  engagementEdges.push(engagementEdge);
-                }
+                updatedNodes.push(engagementNode);
               }
+
+              // Always ensure the edge exists
+              const engagementEdge: Edge = {
+                id: `edge-${node.id}-${engagementNodeId}`,
+                source: node.id,
+                target: engagementNodeId,
+                type: "smoothstep",
+                animated: false,
+                style: {
+                  stroke: theme.palette.warning.main,
+                  strokeWidth: 2,
+                  strokeDasharray: "5,5",
+                },
+                data: {
+                  engagementId: engagement.id,
+                },
+              };
+              engagementEdges.push(engagementEdge);
             });
           }
         });
 
-        setNodes(updatedNodes);
-        setEdges([...initialEdges, ...engagementEdges]);
-        setEventStateMap(esm);
-        setNodeStateMap(nsm);
-      } else if (initialNodes.length > 0) {
-        setNodes(initialNodes);
-        setEdges(initialEdges);
-        setEventStateMap(esm);
-        setNodeStateMap(nsm);
-      }
-    } else if (nodes.length === 0 && (!eventInfo || eventInfo.length === 0)) {
-      // Only create initial entry node if no data exists AND no eventInfo
-      // This prevents creating "Initial Node" when eventInfo exists but hasn't been processed yet
-      const initialNodeId = `state-${Date.now()}`;
-      const initialNode: Node<JourneyNodeData> = {
-        id: initialNodeId,
-        type: "state",
-        position: { x: 250, y: 100 },
-        data: {
-          label: "Initial Node",
-          nodeType: "state",
-          eventName: "",
-          engagements: [],
-          branches: [],
-          isEntry: true,
-        },
-      };
-      setNodes([initialNode]);
-    }
-  }, [eventInfo, nudgeActions, nodes.length]); // Re-run when eventInfo or nudgeActions change, but only if nodes are empty
+        updatedEdges = [...initialEdges, ...engagementEdges];
+        // --- END ENGAGEMENT NODE/EDGE CREATION ---
 
-  // Sync flow changes back to form
+        // CRITICAL: Update actions' onState to match current node states after restoration
+        // This ensures stateToAction mapping is correct even after multiple deletions
+        const currentActions = getValues("nudgeSelection.actions") || [];
+
+        // Build a map of engagement IDs to nodes for quick lookup
+        const engagementIdToNodeMap = new Map<string, Node<JourneyNodeData>>();
+        updatedNodes.forEach((node) => {
+          if (node.type === "state") {
+            const nodeData = node.data as JourneyNodeData;
+            if (nodeData.engagements) {
+              nodeData.engagements.forEach((engagement) => {
+                if (engagement.id) {
+                  engagementIdToNodeMap.set(
+                    engagement.id,
+                    node as Node<JourneyNodeData>
+                  );
+                }
+              });
+            }
+          }
+        });
+
+        const updatedActions = currentActions.map((action) => {
+          const actionConfig = action.config as
+            | Record<string, unknown>
+            | undefined;
+          const actionOriginalNodeId = actionConfig?.originalNodeId as
+            | string
+            | undefined;
+          const actionOriginalEventName = actionConfig?.originalEventName as
+            | string
+            | undefined;
+
+          // Extract engagement ID from actionId
+          const actionEngagementId = action.actionId.includes("_")
+            ? action.actionId.split("_")[0]
+            : action.actionId;
+
+          // Find the node this action belongs to
+          let matchingNode: Node<JourneyNodeData> | undefined;
+
+          // First, try to find by originalNodeId
+          if (actionOriginalNodeId) {
+            matchingNode = updatedNodes.find(
+              (n) => n.id === actionOriginalNodeId && n.type === "state"
+            ) as Node<JourneyNodeData> | undefined;
+
+            // Verify the engagement actually exists on this node
+            if (matchingNode) {
+              const nodeData = matchingNode.data as JourneyNodeData;
+              const hasEngagement = nodeData.engagements?.some(
+                (e) => e.id === actionEngagementId
+              );
+              if (!hasEngagement) {
+                // Engagement doesn't exist on this node - clear matchingNode to try other methods
+                matchingNode = undefined;
+              }
+            }
+          }
+
+          // If not found by originalNodeId, try by originalEventName
+          if (!matchingNode && actionOriginalEventName) {
+            matchingNode = updatedNodes.find(
+              (n) =>
+                n.type === "state" &&
+                (n.data as JourneyNodeData).eventName ===
+                  actionOriginalEventName
+            ) as Node<JourneyNodeData> | undefined;
+
+            // Verify the engagement actually exists on this node
+            if (matchingNode) {
+              const nodeData = matchingNode.data as JourneyNodeData;
+              const hasEngagement = nodeData.engagements?.some(
+                (e) => e.id === actionEngagementId
+              );
+              if (!hasEngagement) {
+                // Engagement doesn't exist on this node - clear matchingNode
+                matchingNode = undefined;
+              }
+            }
+          }
+
+          // If still not found, try to find by engagement ID (last resort)
+          if (!matchingNode) {
+            matchingNode = engagementIdToNodeMap.get(actionEngagementId);
+          }
+
+          if (matchingNode) {
+            const nodeData = matchingNode.data as JourneyNodeData;
+            const nodeState =
+              nsm.get(matchingNode.id) || esm.get(nodeData.eventName || "");
+            const nodeEventName = nodeData.eventName || "";
+
+            // CRITICAL: Always update onState, originalNodeId, and originalEventName to match current node
+            // This ensures the action is correctly associated with the node even after multiple deletions
+            if (nodeState) {
+              const needsUpdate =
+                action.onState !== nodeState ||
+                (actionOriginalNodeId || matchingNode.id) !== matchingNode.id ||
+                (actionOriginalEventName || nodeEventName) !== nodeEventName;
+
+              if (needsUpdate) {
+                // Update onState and metadata to match current node
+                return {
+                  ...action,
+                  onState: nodeState,
+                  config: {
+                    ...action.config,
+                    originalNodeId: matchingNode.id, // Always use current node's ID
+                    originalEventName: nodeEventName, // Always use current node's event name
+                  } as typeof action.config & {
+                    originalNodeId: string;
+                    originalEventName: string;
+                  },
+                };
+              }
+            }
+          }
+          return action;
+        });
+        // Use replaceActions from useFieldArray to ensure React Hook Form tracks changes correctly
+        replaceActions(updatedActions);
+      }
+
+      // Finalize setting state and mark as initialized
+      setNodes(updatedNodes);
+      setEdges(updatedEdges);
+      setEventStateMap(esm);
+      setNodeStateMap(nsm);
+      isInitializedRef.current = true;
+    }
+  }, [eventInfo, nudgeActions, setEdges, setNodes, setValue, theme]); // Now depends on form data, but guarded by isInitializedRef // Sync flow changes back to form
+
   const syncFlowToForm = useCallback(() => {
+    // Only run if initialization is complete
+    if (!isInitializedRef.current) return; // Rebuild state maps first to ensure they're up to date
+
     const esm = buildEventStateMap(nodes as Node<JourneyNodeData>[]);
     const nsm = buildNodeStateMap(nodes as Node<JourneyNodeData>[], esm);
     setEventStateMap(esm);
@@ -556,16 +799,14 @@ export default function JourneyFlowBuilderIntegrated({
       esm,
       nsm
     );
-    setValue("ruleEngine.eventInfo", newEventInfo);
+    // CRITICAL: This setValue updates `eventInfo` which could re-trigger the init useEffect
+    // if not guarded. The fix is done via isInitializedRef in the init effect.
+    setValue("ruleEngine.eventInfo", newEventInfo); // Handle resetStates - collect the nextState values from exit branches
 
-    // Handle resetStates - collect the nextState values from exit branches
-    // Simply get the nextState value when user selects "exit" as target node
     const resetStates: string[] = [];
     newEventInfo.forEach((eventInfo) => {
       eventInfo.currentState?.forEach((currentState) => {
         currentState.nextState?.forEach((nextState) => {
-          // Check if this nextState is an exit transition
-          // Exit transitions have state numbers that don't match any event's currentState
           const transitionToState = String(nextState.transitionTo);
           const stateExistsInEvents = newEventInfo.some((ei) =>
             ei.currentState?.some(
@@ -573,7 +814,6 @@ export default function JourneyFlowBuilderIntegrated({
             )
           );
 
-          // If it doesn't exist in events, it's an exit transition - add nextState value to resetStates
           if (!stateExistsInEvents) {
             if (!resetStates.includes(transitionToState)) {
               resetStates.push(transitionToState);
@@ -582,13 +822,10 @@ export default function JourneyFlowBuilderIntegrated({
         });
       });
     });
-    setValue("nudgeSelection.resetStates", resetStates);
+    setValue("nudgeSelection.resetStates", resetStates); // Sync all engagements from all nodes to nudgeSelection.actions
 
-    // Sync all engagements from all nodes to nudgeSelection.actions
-    const currentActions = watch("nudgeSelection.actions") || [];
+    const currentActions = getValues("nudgeSelection.actions") || [];
     let updatedActions = [...currentActions];
-
-    // Collect all engagements from all nodes with their state numbers
     const engagementStateMap = new Map<
       string,
       {
@@ -596,19 +833,24 @@ export default function JourneyFlowBuilderIntegrated({
         node: Node<JourneyNodeData>;
         stateNumber: string;
       }
-    >();
+    >(); // Collect engagements from state nodes
 
     nodes.forEach((node) => {
       if (node.type !== "state") return;
 
       const nodeData = (node.data as unknown) as JourneyNodeData;
-      if (!nodeData.engagements || !Array.isArray(nodeData.engagements)) return;
+      if (!nodeData.engagements || !Array.isArray(nodeData.engagements)) {
+        return;
+      }
 
-      // Get the state number for this node
       const stateNumber = nsm.get(node.id) || esm.get(nodeData.eventName || "");
-      if (!stateNumber) return;
+      if (!stateNumber) {
+        console.warn(
+          `[syncFlowToForm] Node ${node.id} has no state number. Skipping engagements to prevent data corruption.`
+        );
+        return;
+      }
 
-      // Collect all engagements for this node
       nodeData.engagements.forEach((engagement) => {
         if (engagement.id) {
           engagementStateMap.set(engagement.id, {
@@ -618,44 +860,214 @@ export default function JourneyFlowBuilderIntegrated({
           });
         }
       });
-    });
+    }); // Sync each engagement to an action (only once per engagement ID)
 
-    // Sync each engagement to an action (only once per engagement ID)
     engagementStateMap.forEach(({ engagement, node, stateNumber }) => {
+      // CRITICAL: Always ensure engagement has originalNodeId set to current node's ID
+      // This is essential for preventing cross-node matching
+      const engagementConfig = engagement.config as
+        | Record<string, unknown>
+        | undefined;
+
+      // Always set originalNodeId and originalEventName to current node's values
+      // This ensures the engagement is correctly associated with this node
+      const nodeData = node.data as JourneyNodeData;
+      engagement.config = {
+        ...engagementConfig,
+        originalNodeId: node.id, // Always use current node's ID
+        originalEventName: nodeData.eventName || "", // Always use current node's event name
+      };
+
       updatedActions = syncEngagementToAction(
         node,
         engagement,
         stateNumber,
         updatedActions
       );
+    }); // CRITICAL: Deduplicate actions by exact actionId first, then by engagement ID
+    // This prevents duplicate actions with the same actionId or same engagement ID
+    const actionsByActionId = new Map<string, typeof updatedActions[0]>();
+    const seenEngagementIds = new Set<string>();
+
+    updatedActions.forEach((action) => {
+      // First, deduplicate by exact actionId
+      if (actionsByActionId.has(action.actionId)) {
+        const existingAction = actionsByActionId.get(action.actionId)!;
+        // Keep the one with variant if one has it and the other doesn't
+        if (action.variant && !existingAction.variant) {
+          actionsByActionId.set(action.actionId, action);
+        }
+        // Otherwise keep existing (first one encountered)
+        return;
+      }
+
+      // Check for duplicate by engagement ID prefix
+      const engagementId = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+
+      if (seenEngagementIds.has(engagementId)) {
+        // This engagement ID already has an action, skip this duplicate
+        console.warn(
+          `[syncFlowToForm] Duplicate action found for engagement ${engagementId}. Keeping first action, skipping: ${action.actionId}`
+        );
+        return;
+      }
+
+      // Add to maps
+      actionsByActionId.set(action.actionId, action);
+      seenEngagementIds.add(engagementId);
     });
 
-    // Remove actions that no longer have corresponding engagements
+    // Rebuild updatedActions from deduplicated map
+    updatedActions = Array.from(actionsByActionId.values());
+
+    // Only remove actions that truly don't exist anymore
+
     const engagementIds = new Set(engagementStateMap.keys());
-    updatedActions = updatedActions.filter((action) => {
-      // Keep action if it matches an engagement ID
+    const existingStateNumbers = new Set<string>();
+    newEventInfo.forEach((event) => {
+      event.currentState?.forEach((state) => {
+        existingStateNumbers.add(String(state.currentState));
+      });
+    });
+
+    // CRITICAL: Build a map of node ID -> engagement IDs that exist on that node
+    // This allows us to verify that an action's engagement actually exists on the node it claims to belong to
+    const nodeToEngagementIdsMap = new Map<string, Set<string>>();
+    nodes.forEach((node) => {
+      if (node.type !== "state") return;
+      const nodeData = (node.data as unknown) as JourneyNodeData;
+      if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
+        const engagementIdsOnNode = new Set<string>();
+        nodeData.engagements.forEach((engagement) => {
+          if (engagement.id) {
+            engagementIdsOnNode.add(engagement.id);
+          }
+        });
+        nodeToEngagementIdsMap.set(node.id, engagementIdsOnNode);
+      }
+    });
+
+    // CRITICAL: First pass - update actions that need originalNodeId correction
+    // This handles cases where nodes were deleted and recreated with new IDs
+    updatedActions = updatedActions.map((action) => {
       const actionEngagementId = action.actionId.includes("_")
         ? action.actionId.split("_")[0]
         : action.actionId;
-      return engagementIds.has(actionEngagementId);
+
+      const actionConfig = action.config as Record<string, unknown> | undefined;
+      const actionOriginalNodeId = actionConfig?.originalNodeId as
+        | string
+        | undefined;
+
+      // Check if originalNodeId points to a node that doesn't exist
+      if (actionOriginalNodeId) {
+        const engagementIdsOnNode = nodeToEngagementIdsMap.get(
+          actionOriginalNodeId
+        );
+        // If node doesn't exist or engagement not on that node, try to find by event name
+        if (
+          !engagementIdsOnNode ||
+          !engagementIdsOnNode.has(actionEngagementId)
+        ) {
+          const actionOriginalEventName = actionConfig?.originalEventName as
+            | string
+            | undefined;
+          if (actionOriginalEventName) {
+            // Find node by event name
+            const nodeByEventName = nodes.find(
+              (n) =>
+                n.type === "state" &&
+                (n.data as JourneyNodeData).eventName ===
+                  actionOriginalEventName
+            );
+            if (nodeByEventName) {
+              const engagementIdsOnNewNode = nodeToEngagementIdsMap.get(
+                nodeByEventName.id
+              );
+              if (
+                engagementIdsOnNewNode &&
+                engagementIdsOnNewNode.has(actionEngagementId)
+              ) {
+                // Found by event name - update originalNodeId to new node ID
+                return {
+                  ...action,
+                  config: {
+                    ...action.config,
+                    originalNodeId: nodeByEventName.id,
+                  } as typeof action.config & { originalNodeId: string },
+                };
+              }
+            }
+          }
+        }
+      }
+      return action;
     });
 
-    // Update the form with synced actions
-    setValue("nudgeSelection.actions", updatedActions);
-  }, [nodes, edges, setValue, watch]);
+    // Second pass - filter out actions that don't have matching engagements
+    updatedActions = updatedActions.filter((action) => {
+      const actionEngagementId = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
 
-  // Sync on node/edge changes
+      // Check if engagement exists in current flow
+      const hasMatchingEngagement = engagementIds.has(actionEngagementId);
+
+      // CRITICAL: Verify that if action has originalNodeId, the engagement actually exists on that node
+      // This prevents keeping actions from deleted engagements or engagements moved to different nodes
+      const actionConfig = action.config as Record<string, unknown> | undefined;
+      const actionOriginalNodeId = actionConfig?.originalNodeId as
+        | string
+        | undefined;
+
+      let engagementExistsOnNode = false;
+      if (actionOriginalNodeId) {
+        const engagementIdsOnNode = nodeToEngagementIdsMap.get(
+          actionOriginalNodeId
+        );
+        if (engagementIdsOnNode) {
+          engagementExistsOnNode = engagementIdsOnNode.has(actionEngagementId);
+        }
+      }
+
+      // Keep action ONLY if:
+      // 1. Engagement exists in current flow AND (if originalNodeId exists) it exists on that specific node
+      // This ensures we don't keep orphaned actions from deleted engagements or wrong nodes
+      const shouldKeep =
+        hasMatchingEngagement &&
+        (engagementExistsOnNode || !actionOriginalNodeId);
+
+      if (!shouldKeep) {
+        console.log(
+          `[syncFlowToForm] Removing action ${
+            action.actionId
+          } - engagement ${actionEngagementId} not found in flow or not on node ${actionOriginalNodeId ||
+            "unknown"}`
+        );
+      }
+
+      return shouldKeep;
+    }); // CRITICAL: Use replaceActions from useFieldArray instead of setValue
+    // This ensures React Hook Form properly tracks the array changes
+
+    replaceActions(updatedActions);
+  }, [nodes, edges, setValue, getValues]);
+
+  // FIX: This effect now ONLY runs when nodes/edges (the React Flow graph state) change due to user interaction,
+  // triggering the sync *back* to the form state.
   useEffect(() => {
     // Skip sync if we're currently saving a node (to prevent infinite loop)
     if (isSavingNodeRef.current) {
       return;
     }
-    if (nodes.length > 0) {
+    // Only run if the component is fully initialized
+    if (nodes.length > 0 && isInitializedRef.current) {
       syncFlowToForm();
     }
-  }, [nodes, edges, syncFlowToForm]);
+  }, [nodes, edges, syncFlowToForm]); // Function to sync saved template back to engagement config
 
-  // Function to sync saved template back to engagement config
   const syncTemplateToEngagement = useCallback(() => {
     const context = currentEngagementContextRef.current;
     if (!context) return;
@@ -668,11 +1080,14 @@ export default function JourneyFlowBuilderIntegrated({
       const engagement = nodeData.engagements?.find(
         (e) => e.id === context.engagementId
       );
-      if (!engagement) return currentNodes;
+      if (!engagement) return currentNodes; // Get the saved template from form (use getValues to get latest data)
 
-      // Get the saved template from form (use getValues to get latest data)
       const currentActions = getValues("nudgeSelection.actions") || [];
-      const savedAction = currentActions[0]; // Template is at index 0
+      const savedAction = currentActions.find(
+        // Find the specific action matching the engagement ID prefix
+        (a) => a.actionId.startsWith(context.engagementId)
+      );
+
       if (savedAction && savedAction.template) {
         // Sync template back to engagement config
         const updatedEngagement = syncActionToEngagement(
@@ -701,21 +1116,18 @@ export default function JourneyFlowBuilderIntegrated({
       }
       return currentNodes;
     });
-  }, [nodes, getValues, setNodes]);
+  }, [getValues, setNodes]); // Function to check if all engagement nodes have templates
 
-  // Function to check if all engagement nodes have templates
   const checkAllEngagementsHaveTemplates = useCallback((): boolean => {
     // Get all state nodes
     const stateNodes = nodes.filter((n) => n.type === "state") as Node<
       JourneyNodeData
-    >[];
+    >[]; // Check each state node's engagements
 
-    // Check each state node's engagements
     for (const node of stateNodes) {
       const nodeData = node.data as JourneyNodeData;
-      const engagements = nodeData.engagements || [];
+      const engagements = nodeData.engagements || []; // If there are engagements, check if all have templates
 
-      // If there are engagements, check if all have templates
       if (engagements.length > 0) {
         for (const engagement of engagements) {
           // Check if engagement has a template in its config
@@ -724,9 +1136,8 @@ export default function JourneyFlowBuilderIntegrated({
             typeof engagement.config === "object" &&
             engagement.config.template &&
             typeof engagement.config.template === "object" &&
-            Object.keys(engagement.config.template).length > 0;
+            Object.keys(engagement.config.template).length > 0; // Check if template has meaningful content (more than just default structure)
 
-          // Check if template has meaningful content (more than just default structure)
           if (hasTemplate) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const template = engagement.config.template as any;
@@ -749,16 +1160,14 @@ export default function JourneyFlowBuilderIntegrated({
     }
 
     return true; // All engagements have templates
-  }, [nodes]);
+  }, [nodes]); // Expose sync function via ref for parent to call
 
-  // Expose sync function via ref for parent to call
   useEffect(() => {
     if (syncTemplateRef) {
       syncTemplateRef.current = syncTemplateToEngagement;
     }
-  }, [syncTemplateToEngagement, syncTemplateRef]);
+  }, [syncTemplateToEngagement, syncTemplateRef]); // Expose check function via ref for parent to call
 
-  // Expose check function via ref for parent to call
   useEffect(() => {
     if (checkAllEngagementsHaveTemplatesRef) {
       checkAllEngagementsHaveTemplatesRef.current = checkAllEngagementsHaveTemplates;
@@ -776,9 +1185,8 @@ export default function JourneyFlowBuilderIntegrated({
     (event: React.MouseEvent, node: Node) => {
       if (node.type === "engagement") {
         const engagementData = (node.data as unknown) as EngagementNodeData;
-        const engagementId = engagementData.engagementId;
+        const engagementId = engagementData.engagementId; // Find the source node for this engagement
 
-        // Find the source node for this engagement
         const sourceEdge = edges.find((e) => e.target === node.id);
         if (sourceEdge && onEngagementSelect) {
           const sourceNode = nodes.find((n) => n.id === sourceEdge.source);
@@ -787,9 +1195,8 @@ export default function JourneyFlowBuilderIntegrated({
             const stateNumber =
               nodeStateMap.get(sourceNode.id) ||
               eventStateMap.get(stateNodeData.eventName || "") ||
-              "0";
+              "0"; // Find the engagement in the source node
 
-            // Find the engagement in the source node
             const engagement = stateNodeData.engagements?.find(
               (e) => e.id === engagementId
             );
@@ -798,21 +1205,46 @@ export default function JourneyFlowBuilderIntegrated({
               currentEngagementContextRef.current = {
                 nodeId: sourceNode.id,
                 engagementId: engagementId,
-              };
+              }; // Sync engagement to form action
 
-              // Sync engagement to form action
-              const currentActions = watch("nudgeSelection.actions") || [];
+              const currentActions = getValues("nudgeSelection.actions") || [];
               const updatedActions = syncEngagementToAction(
                 sourceNode as Node<JourneyNodeData>,
                 engagement,
                 stateNumber,
                 currentActions
               );
-              setValue("nudgeSelection.actions", updatedActions);
-            }
+              replaceActions(updatedActions); // Use replaceActions to ensure React Hook Form tracks changes
 
-            // Call onEngagementSelect to open EngagementSidePanel
-            onEngagementSelect(sourceNode.id, engagementId, stateNumber);
+              let attempts = 0;
+              const maxAttempts = 20; // 2 seconds max wait
+              const checkAndOpen = () => {
+                attempts++;
+                const formActions = getValues("nudgeSelection.actions") || [];
+                const firstAction = formActions.find((a) =>
+                  a.actionId.startsWith(engagementId)
+                ); // Check if form state has been updated with the engagement data
+
+                if (firstAction?.type && firstAction?.template) {
+                  // Form state is ready, open the panel
+                  onEngagementSelect(sourceNode.id, engagementId, stateNumber);
+                } else if (attempts < maxAttempts) {
+                  // Keep polling
+                  setTimeout(checkAndOpen, 100);
+                } else {
+                  // Timeout - open anyway (might be a new engagement without template)
+                  console.warn(
+                    "Timeout waiting for form state update, opening panel anyway"
+                  );
+                  onEngagementSelect(sourceNode.id, engagementId, stateNumber);
+                }
+              }; // Start polling after a small delay to allow setValue to process
+
+              setTimeout(checkAndOpen, 50);
+            } else {
+              // No engagement found, but still try to open panel
+              onEngagementSelect(sourceNode.id, engagementId, stateNumber);
+            }
           }
         }
         return;
@@ -829,7 +1261,7 @@ export default function JourneyFlowBuilderIntegrated({
       onEngagementSelect,
       nodeStateMap,
       eventStateMap,
-      watch,
+      getValues,
       setValue,
     ]
   );
@@ -870,9 +1302,8 @@ export default function JourneyFlowBuilderIntegrated({
         }
 
         const nodeData = (updatedNode.data as unknown) as JourneyNodeData;
-        let workingArray = updated;
+        let workingArray = updated; // Handle engagement nodes
 
-        // Handle engagement nodes
         if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
           // Create or update engagement nodes for this node
           nodeData.engagements.forEach((engagement, engagementIndex) => {
@@ -893,9 +1324,7 @@ export default function JourneyFlowBuilderIntegrated({
               let engagementPosition;
               if (sourceNode) {
                 // Position to the right of source node
-                const baseX = sourceNode.position.x + 300;
-                // Calculate Y position: start from source node's Y, then offset by engagement index
-                // Each engagement is offset by 120px vertically to avoid overlap
+                const baseX = sourceNode.position.x + 300; // Calculate Y position: start from source node's Y, then offset by engagement index // Each engagement is offset by 120px vertically to avoid overlap
                 const baseY = sourceNode.position.y;
                 const verticalOffset = engagementIndex * 120; // 120px spacing between engagement nodes
                 engagementPosition = {
@@ -907,9 +1336,8 @@ export default function JourneyFlowBuilderIntegrated({
                   x: 500,
                   y: 200 + engagementIndex * 120,
                 };
-              }
+              } // Helper function to get proper label for engagement type
 
-              // Helper function to get proper label for engagement type
               const getEngagementLabel = (type: string): string => {
                 switch (type) {
                   case "tooltip":
@@ -921,9 +1349,8 @@ export default function JourneyFlowBuilderIntegrated({
                   default:
                     return type;
                 }
-              };
+              }; // Create engagement node
 
-              // Create engagement node
               const engagementNode: Node<EngagementNodeData> = {
                 id: `engagement-${engagement.id}`,
                 type: "engagement",
@@ -943,9 +1370,8 @@ export default function JourneyFlowBuilderIntegrated({
               );
             } else {
               // Update existing engagement node if type changed
-              const engagementNodeData = (existingEngagementNode.data as unknown) as EngagementNodeData;
+              const engagementNodeData = (existingEngagementNode.data as unknown) as EngagementNodeData; // Helper function to get proper label for engagement type
 
-              // Helper function to get proper label for engagement type
               const getEngagementLabel = (type: string): string => {
                 switch (type) {
                   case "tooltip":
@@ -997,10 +1423,8 @@ export default function JourneyFlowBuilderIntegrated({
               }
             }
           });
-        }
+        } // Remove engagement nodes that are no longer in ANY node's engagements array // This needs to be done after all node updates, so we collect all engagement IDs from all state nodes
 
-        // Remove engagement nodes that are no longer in ANY node's engagements array
-        // This needs to be done after all node updates, so we collect all engagement IDs from all state nodes
         const allEngagementIds = new Set<string>();
         workingArray.forEach((node) => {
           if (node.type === "state") {
@@ -1011,18 +1435,16 @@ export default function JourneyFlowBuilderIntegrated({
               });
             }
           }
-        });
+        }); // Filter out engagement nodes that don't exist in any state node's engagements
 
-        // Filter out engagement nodes that don't exist in any state node's engagements
         workingArray = workingArray.filter((n) => {
           if (n.type === "engagement") {
             const engagementData = (n.data as unknown) as EngagementNodeData;
             return allEngagementIds.has(engagementData.engagementId);
           }
           return true;
-        });
+        }); // Create nodes for branches that reference event names that don't exist yet
 
-        // Create nodes for branches that reference event names that don't exist yet
         if (nodeData.branches && Array.isArray(nodeData.branches)) {
           nodeData.branches.forEach((branch) => {
             if (branch.targetNodeId && branch.targetNodeId !== "exit") {
@@ -1038,9 +1460,8 @@ export default function JourneyFlowBuilderIntegrated({
                 // Find the source node to position the new node relative to it
                 const sourceNodeForPosition = workingArray.find(
                   (n) => n.id === nodeId && n.type === "state"
-                );
+                ); // Calculate position to avoid overlaps
 
-                // Calculate position to avoid overlaps
                 const stateNodes = workingArray
                   .filter((n) => n.type === "state")
                   .map((n) => (n as unknown) as Node<JourneyNodeData>);
@@ -1053,13 +1474,11 @@ export default function JourneyFlowBuilderIntegrated({
                   stateNodes,
                   250, // horizontal spacing
                   150 // vertical spacing
-                );
+                ); // Create new node for this event name
 
-                // Create new node for this event name
                 const newNodeId = `state-${Date.now()}-${Math.random()
                   .toString(36)
-                  .substr(2, 9)}`;
-                // Create default exit branch for new nodes
+                  .substr(2, 9)}`; // Create default exit branch for new nodes
                 const defaultBranch: Branch = {
                   id: `branch-default-${Date.now()}`,
                   targetNodeId: "exit",
@@ -1087,13 +1506,10 @@ export default function JourneyFlowBuilderIntegrated({
         }
 
         return workingArray;
-      });
+      }); // Reset flag after a delay and manually trigger syncFlowToForm
 
-      // Reset flag after a delay and manually trigger syncFlowToForm
       setTimeout(() => {
-        isSavingNodeRef.current = false;
-        // Manually trigger syncFlowToForm after save completes
-        // Use requestAnimationFrame to ensure nodes state has updated
+        isSavingNodeRef.current = false; // Manually trigger syncFlowToForm after save completes // Use requestAnimationFrame to ensure nodes state has updated
         requestAnimationFrame(() => {
           syncFlowToForm();
         });
@@ -1104,23 +1520,86 @@ export default function JourneyFlowBuilderIntegrated({
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
+      // First, find the node being deleted and collect its engagement IDs
+      const nodeToDelete = nodes.find((n) => n.id === nodeId);
+      const engagementIdsToDelete = new Set<string>();
+
+      if (nodeToDelete && nodeToDelete.type === "state") {
+        const nodeData = nodeToDelete.data as JourneyNodeData;
+        if (nodeData.engagements && Array.isArray(nodeData.engagements)) {
+          nodeData.engagements.forEach((engagement) => {
+            if (engagement.id) {
+              engagementIdsToDelete.add(engagement.id);
+            }
+          });
+        }
+      }
+
       setEdges((eds) => {
         // Find engagement node IDs connected to the deleted node
         const engagementNodeIds = new Set<string>();
         eds.forEach((edge) => {
           if (edge.source === nodeId && edge.target.startsWith("engagement-")) {
             engagementNodeIds.add(edge.target);
+            // Extract engagement ID from node ID (format: engagement-{id})
+            const engagementId = edge.target.replace("engagement-", "");
+            if (engagementId) {
+              engagementIdsToDelete.add(engagementId);
+            }
           }
         });
+
+        // Remove actions from form for deleted engagements using React Hook Form's removeAction
+        // CRITICAL: Only remove actions that belong to THIS specific deleted node
+        // We verify by BOTH engagement ID AND originalNodeId to ensure we don't remove actions from other nodes
+        if (engagementIdsToDelete.size > 0) {
+          const currentActions = getValues("nudgeSelection.actions") || [];
+          // Find indices of actions to remove (in reverse order to maintain correct indices)
+          const indicesToRemove: number[] = [];
+          currentActions.forEach((action, index) => {
+            const actionIdPrefix = action.actionId.includes("_")
+              ? action.actionId.split("_")[0]
+              : action.actionId;
+
+            // First check: engagement ID must match one from deleted node
+            if (!engagementIdsToDelete.has(actionIdPrefix)) {
+              // Engagement ID doesn't match - keep this action
+              return;
+            }
+
+            // Second check: action must have originalNodeId that matches the deleted node
+            // This is the critical check to ensure we only remove actions from the deleted node
+            const actionConfig = action.config as
+              | Record<string, unknown>
+              | undefined;
+            const actionOriginalNodeId = actionConfig?.originalNodeId as
+              | string
+              | undefined;
+
+            // CRITICAL: Only remove if action has originalNodeId AND it matches the deleted node ID
+            // If action doesn't have originalNodeId, we can't verify it belongs to another node,
+            // so we keep it to be safe (it might belong to a different node with same engagement ID)
+            if (actionOriginalNodeId && actionOriginalNodeId === nodeId) {
+              // Action belongs to deleted node - mark for removal
+              indicesToRemove.push(index);
+            }
+          });
+
+          // Remove actions in reverse order to maintain correct indices
+          indicesToRemove
+            .sort((a, b) => b - a)
+            .forEach((index) => {
+              removeAction(index);
+            });
+        }
 
         // Update nodes to remove the deleted node and its engagement nodes
         setNodes((nds) => {
           return nds.filter(
             (node) => node.id !== nodeId && !engagementNodeIds.has(node.id)
           );
-        });
+        }); // Remove edges connected to the deleted node and its engagement nodes
 
-        // Remove edges connected to the deleted node and its engagement nodes
         return eds.filter(
           (edge) =>
             edge.source !== nodeId &&
@@ -1130,7 +1609,7 @@ export default function JourneyFlowBuilderIntegrated({
         );
       });
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, nodes, getValues, setValue]
   );
 
   const handleDeleteEdge = useCallback(
@@ -1154,10 +1633,12 @@ export default function JourneyFlowBuilderIntegrated({
   const handleDirectClose = useCallback(() => {
     setConfigPanelOpen(false);
     setSelectedNode(null);
-  }, []);
+  }, []); // Sync edges with branches and engagements
 
-  // Sync edges with branches and engagements
   useEffect(() => {
+    // Only run this synchronization logic if the component is initialized
+    if (!isInitializedRef.current) return;
+
     const branchEdges: Edge[] = [];
     const engagementEdges: Edge[] = [];
 
@@ -1170,9 +1651,8 @@ export default function JourneyFlowBuilderIntegrated({
             // Skip edges for exit branches - they're shown on the node itself
             if (branch.targetNodeId === "exit") {
               return;
-            }
+            } // Find node by eventName
 
-            // Find node by eventName
             const targetNode = nodes.find((n) => {
               if (n.type !== "state") return false;
               const targetNodeData = (n.data as unknown) as JourneyNodeData;
@@ -1187,12 +1667,10 @@ export default function JourneyFlowBuilderIntegrated({
                 targetHandle: null,
                 type: "bezier",
                 data: { branchId: branch.id },
-                style: { strokeWidth: 2 },
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                style: { strokeWidth: 2 }, // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 markerEnd: { type: "arrowclosed" as any },
               });
-            }
-            // If target node doesn't exist yet, don't create edge - it will be created when node is saved
+            } // If target node doesn't exist yet, don't create edge - it will be created when node is saved
           });
         }
 
@@ -1233,9 +1711,8 @@ export default function JourneyFlowBuilderIntegrated({
       // Keep edges that are not branch-based or engagement-based (manually created)
       const manualEdges = currentEdges.filter(
         (e) => !e.id.startsWith("edge-") && !e.id.startsWith("engagement-edge-")
-      );
+      ); // Create maps of existing edges for quick lookup
 
-      // Create maps of existing edges for quick lookup
       const existingBranchEdgesMap = new Map(
         currentEdges
           .filter((e) => e.id.startsWith("edge-"))
@@ -1245,57 +1722,35 @@ export default function JourneyFlowBuilderIntegrated({
         currentEdges
           .filter((e) => e.id.startsWith("engagement-edge-"))
           .map((e) => [e.id, e])
-      );
+      ); // Update or create branch edges
 
-      // Update or create branch edges
       const updatedBranchEdges = branchEdges.map((be) => {
         const existing = existingBranchEdgesMap.get(be.id);
         if (existing) {
           return { ...existing, ...be };
         }
         return be;
-      });
+      }); // Update or create engagement edges
 
-      // Update or create engagement edges
       const updatedEngagementEdges = engagementEdges.map((ee) => {
         const existing = existingEngagementEdgesMap.get(ee.id);
         if (existing) {
           return { ...existing, ...ee };
         }
         return ee;
-      });
+      }); // Combine all edges
 
-      // Combine all edges
       return [...manualEdges, ...updatedBranchEdges, ...updatedEngagementEdges];
     });
-  }, [nodes, setEdges]);
-
-  // Validate unconnected nodes before save (unused but kept for potential future use)
-  // const validateAndSave = useCallback(() => {
-  //   const unconnected = findUnconnectedNodes(
-  //     nodes as Node<JourneyNodeData>[],
-  //     edges
-  //   );
-  //
-  //   if (unconnected.length > 0) {
-  //     setUnconnectedNodesDialog({ open: true, nodeIds: unconnected });
-  //     return;
-  //   }
-  //
-  //   syncFlowToForm();
-  //   if (onSave) {
-  //     onSave();
-  //   }
-  // }, [nodes, edges, syncFlowToForm, onSave]);
+  }, [nodes, setEdges, theme]); // Added theme to dependency array
 
   const handleRemoveUnconnectedNodes = useCallback(() => {
     const {
       nodeIds,
       engagementNodeIds,
       isInitialNodeOnly,
-    } = unconnectedNodesDialog;
+    } = unconnectedNodesDialog; // If it's just the initial node with no data, don't remove it - just close dialog
 
-    // If it's just the initial node with no data, don't remove it - just close dialog
     if (isInitialNodeOnly) {
       setUnconnectedNodesDialog({
         open: false,
@@ -1304,15 +1759,13 @@ export default function JourneyFlowBuilderIntegrated({
         isInitialNodeOnly: false,
       });
       return;
-    }
+    } // Use functional updates to compute and update nodes and edges
 
-    // Use functional updates to compute and update nodes and edges
     setNodes((nds) => {
       setEdges((eds) => {
         // Collect all engagement node IDs that are connected to nodes being removed
-        const engagementNodesToRemove = new Set<string>(engagementNodeIds);
+        const engagementNodesToRemove = new Set<string>(engagementNodeIds); // Find engagement nodes connected to state nodes being removed
 
-        // Find engagement nodes connected to state nodes being removed
         nodeIds.forEach((nodeId) => {
           eds.forEach((edge) => {
             if (
@@ -1322,24 +1775,21 @@ export default function JourneyFlowBuilderIntegrated({
               engagementNodesToRemove.add(edge.target);
             }
           });
-        });
+        }); // First pass: remove the explicitly identified unconnected nodes and their connected engagements
 
-        // First pass: remove the explicitly identified unconnected nodes and their connected engagements
         let tempRemainingNodes = nds.filter(
           (node) =>
             !nodeIds.includes(node.id) && !engagementNodesToRemove.has(node.id)
-        );
+        ); // Remove edges connected to removed nodes
 
-        // Remove edges connected to removed nodes
         let tempRemainingEdges = eds.filter(
           (edge) =>
             !nodeIds.includes(edge.source) &&
             !nodeIds.includes(edge.target) &&
             !engagementNodesToRemove.has(edge.source) &&
             !engagementNodesToRemove.has(edge.target)
-        );
+        ); // Helper function to find all reachable state nodes from entry node using BFS
 
-        // Helper function to find all reachable state nodes from entry node using BFS
         const findReachableStateNodes = (
           entryNodeId: string,
           nodes: Node<Record<string, unknown>>[],
@@ -1351,9 +1801,8 @@ export default function JourneyFlowBuilderIntegrated({
 
           while (queue.length > 0) {
             const currentNodeId = queue.shift();
-            if (!currentNodeId) continue;
+            if (!currentNodeId) continue; // Find all state nodes reachable from current node
 
-            // Find all state nodes reachable from current node
             edges.forEach((edge) => {
               if (edge.source === currentNodeId) {
                 const targetId = edge.target;
@@ -1369,20 +1818,16 @@ export default function JourneyFlowBuilderIntegrated({
           }
 
           return reachableNodes;
-        };
+        }; // Second pass: after removing nodes, check if any remaining nodes become unconnected // Keep checking until no more unconnected nodes are found
 
-        // Second pass: after removing nodes, check if any remaining nodes become unconnected
-        // Keep checking until no more unconnected nodes are found
         let hasMoreUnconnected = true;
         while (hasMoreUnconnected) {
           const stateNodes = tempRemainingNodes.filter(
             (n) => n.type === "state"
-          ) as Node<JourneyNodeData>[];
+          ) as Node<JourneyNodeData>[]; // Check if there's an entry node in the remaining nodes
 
-          // Check if there's an entry node in the remaining nodes
-          const entryNode = stateNodes.find((n) => n.data.isEntry);
+          const entryNode = stateNodes.find((n) => n.data.isEntry); // If no entry node exists, all remaining state nodes are unconnected
 
-          // If no entry node exists, all remaining state nodes are unconnected
           let newlyUnconnectedStateNodes: string[] = [];
           let reachableStateNodes: Set<string> = new Set();
 
@@ -1395,18 +1840,15 @@ export default function JourneyFlowBuilderIntegrated({
               entryNode.id,
               tempRemainingNodes,
               tempRemainingEdges
-            );
+            ); // Nodes not in reachableStateNodes are unconnected
 
-            // Nodes not in reachableStateNodes are unconnected
             newlyUnconnectedStateNodes = stateNodes
               .filter((n) => !reachableStateNodes.has(n.id))
               .map((n) => n.id);
-          }
+          } // Find all engagement nodes connected to newly unconnected state nodes
 
-          // Find all engagement nodes connected to newly unconnected state nodes
-          const newlyUnconnectedEngagements: string[] = [];
+          const newlyUnconnectedEngagements: string[] = []; // Collect engagement nodes connected to unconnected state nodes
 
-          // Collect engagement nodes connected to unconnected state nodes
           newlyUnconnectedStateNodes.forEach((nodeId) => {
             tempRemainingEdges.forEach((edge) => {
               if (
@@ -1416,9 +1858,8 @@ export default function JourneyFlowBuilderIntegrated({
                 newlyUnconnectedEngagements.push(edge.target);
               }
             });
-          });
+          }); // Also find engagement nodes that are not connected to any reachable state node
 
-          // Also find engagement nodes that are not connected to any reachable state node
           const engagementNodes = tempRemainingNodes.filter(
             (n) => n.type === "engagement"
           );
@@ -1430,8 +1871,7 @@ export default function JourneyFlowBuilderIntegrated({
                 // If there's an entry node, check if source is reachable
                 if (entryNode) {
                   return reachableStateNodes.has(edge.source);
-                }
-                // If no entry node, no state nodes are reachable
+                } // If no entry node, no state nodes are reachable
                 return false;
               }
               return false;
@@ -1440,14 +1880,12 @@ export default function JourneyFlowBuilderIntegrated({
             if (!hasReachableSource) {
               newlyUnconnectedEngagements.push(engagementNode.id);
             }
-          });
+          }); // Remove duplicates
 
-          // Remove duplicates
           const uniqueUnconnectedEngagements = Array.from(
             new Set(newlyUnconnectedEngagements)
-          );
+          ); // If no new unconnected nodes found, stop
 
-          // If no new unconnected nodes found, stop
           if (
             newlyUnconnectedStateNodes.length === 0 &&
             uniqueUnconnectedEngagements.length === 0
@@ -1459,9 +1897,8 @@ export default function JourneyFlowBuilderIntegrated({
               (node) =>
                 !newlyUnconnectedStateNodes.includes(node.id) &&
                 !uniqueUnconnectedEngagements.includes(node.id)
-            );
+            ); // Remove edges connected to newly removed nodes
 
-            // Remove edges connected to newly removed nodes
             tempRemainingEdges = tempRemainingEdges.filter(
               (edge) =>
                 !newlyUnconnectedStateNodes.includes(edge.source) &&
@@ -1470,9 +1907,8 @@ export default function JourneyFlowBuilderIntegrated({
                 !uniqueUnconnectedEngagements.includes(edge.target)
             );
           }
-        }
+        } // If no state nodes remain, add initial node
 
-        // If no state nodes remain, add initial node
         const finalStateNodes = tempRemainingNodes.filter(
           (n) => n.type === "state"
         );
@@ -1492,14 +1928,12 @@ export default function JourneyFlowBuilderIntegrated({
             },
           };
           tempRemainingNodes = [...tempRemainingNodes, initialNode];
-        }
+        } // Update nodes (this will be called after setEdges completes)
 
-        // Update nodes (this will be called after setEdges completes)
         setTimeout(() => {
           setNodes(tempRemainingNodes);
-        }, 0);
+        }, 0); // Return updated edges
 
-        // Return updated edges
         return tempRemainingEdges;
       });
 
@@ -1524,11 +1958,9 @@ export default function JourneyFlowBuilderIntegrated({
       nodeIds: [],
       engagementNodeIds: [],
       isInitialNodeOnly: false,
-    });
-    // Do nothing on cancel - just close the dialog
-  }, []);
+    }); // Do nothing on cancel - just close the dialog
+  }, []); // Helper function to find all reachable state nodes from entry node using BFS
 
-  // Helper function to find all reachable state nodes from entry node using BFS
   const findReachableStateNodesForCheck = (
     entryNodeId: string,
     nodes: Node<Record<string, unknown>>[],
@@ -1540,9 +1972,8 @@ export default function JourneyFlowBuilderIntegrated({
 
     while (queue.length > 0) {
       const currentNodeId = queue.shift();
-      if (!currentNodeId) continue;
+      if (!currentNodeId) continue; // Find all state nodes reachable from current node
 
-      // Find all state nodes reachable from current node
       edges.forEach((edge) => {
         if (edge.source === currentNodeId) {
           const targetId = edge.target;
@@ -1558,15 +1989,13 @@ export default function JourneyFlowBuilderIntegrated({
     }
 
     return reachableNodes;
-  };
+  }; // Function to check for unconnected nodes/engagements (exposed via ref)
 
-  // Function to check for unconnected nodes/engagements (exposed via ref)
   const checkUnconnectedNodes = useCallback((): boolean => {
     const stateNodes = nodes.filter((n) => n.type === "state") as Node<
       JourneyNodeData
-    >[];
+    >[]; // Check if there's only one initial node with no event data
 
-    // Check if there's only one initial node with no event data
     const isInitialNodeOnly =
       stateNodes.length === 1 &&
       stateNodes[0].data.isEntry &&
@@ -1583,50 +2012,17 @@ export default function JourneyFlowBuilderIntegrated({
         isInitialNodeOnly: true,
       });
       return true;
-    }
+    } // Check if nodes form a connected graph (even without explicit entry node)
 
-    // Check if there are actions that haven't been attached to nodes yet
-    // This handles the case where engagements are on states without event nodes
-    // If there are unattached engagements but nodes exist with events, don't show popup
-    // The engagements will be attached in the useEffect
-    if (nudgeActions && nudgeActions.length > 0 && stateNodes.length > 0) {
-      const hasUnattachedEngagements = nudgeActions.some((action) => {
-        const actionState = action.onState;
-        // Check if any node has this state
-        return !stateNodes.some((node) => {
-          const nodeState =
-            nodeStateMap.get(node.id) ||
-            eventStateMap.get(node.data.eventName || "");
-          return nodeState === actionState;
-        });
-      });
-
-      // If there are unattached engagements but nodes exist with events, don't show popup
-      // The engagements will be attached in the useEffect
-      if (hasUnattachedEngagements) {
-        // Check if at least one node has an event name (not just initial node)
-        const hasNodesWithEvents = stateNodes.some(
-          (node) => node.data.eventName && node.data.eventName.trim() !== ""
-        );
-        if (hasNodesWithEvents) {
-          // Engagements will be attached, don't show popup
-          return false;
-        }
-      }
-    }
-
-    // Check if nodes form a connected graph (even without explicit entry node)
     const findConnectedComponent = (startNodeId: string): Set<string> => {
       const connected = new Set<string>();
       const queue: string[] = [startNodeId];
-      connected.add(startNodeId);
+      connected.add(startNodeId); // BFS to find all connected nodes (both directions - undirected graph)
 
-      // BFS to find all connected nodes (both directions - undirected graph)
       while (queue.length > 0) {
         const currentId = queue.shift();
-        if (!currentId) continue;
+        if (!currentId) continue; // Find nodes reachable FROM this node
 
-        // Find nodes reachable FROM this node
         edges.forEach((edge) => {
           if (edge.source === currentId) {
             const targetId = edge.target;
@@ -1638,9 +2034,8 @@ export default function JourneyFlowBuilderIntegrated({
               queue.push(targetId);
             }
           }
-        });
+        }); // Find nodes that reach TO this node (bidirectional check)
 
-        // Find nodes that reach TO this node (bidirectional check)
         edges.forEach((edge) => {
           if (edge.target === currentId) {
             const sourceId = edge.source;
@@ -1656,9 +2051,8 @@ export default function JourneyFlowBuilderIntegrated({
       }
 
       return connected;
-    };
+    }; // Check if all state nodes are in one connected component
 
-    // Check if all state nodes are in one connected component
     let allNodesConnected = false;
     if (stateNodes.length > 0) {
       const firstNodeId = stateNodes[0].id;
@@ -1666,9 +2060,8 @@ export default function JourneyFlowBuilderIntegrated({
       allNodesConnected = stateNodes.every((node) =>
         connectedComponent.has(node.id)
       );
-    }
+    } // Check for unconnected nodes using reachability from entry node
 
-    // Check for unconnected nodes using reachability from entry node
     const entryNode = stateNodes.find((n) => n.data.isEntry);
     let unconnectedStateNodes: string[] = [];
     let reachableStateNodes: Set<string> = new Set();
@@ -1691,9 +2084,8 @@ export default function JourneyFlowBuilderIntegrated({
             potentialEntryNodes[0].id,
             nodes,
             edges
-          );
+          ); // Nodes not in reachableStateNodes are unconnected
 
-          // Nodes not in reachableStateNodes are unconnected
           unconnectedStateNodes = stateNodes
             .filter((n) => !reachableStateNodes.has(n.id))
             .map((n) => n.id);
@@ -1708,27 +2100,23 @@ export default function JourneyFlowBuilderIntegrated({
         entryNode.id,
         nodes,
         edges
-      );
+      ); // Nodes not in reachableStateNodes are unconnected
 
-      // Nodes not in reachableStateNodes are unconnected
       unconnectedStateNodes = stateNodes
         .filter((n) => !reachableStateNodes.has(n.id))
         .map((n) => n.id);
-    }
+    } // Find unconnected engagement nodes
 
-    // Find unconnected engagement nodes
-    const unconnectedEngagements: string[] = [];
+    const unconnectedEngagements: string[] = []; // Collect engagement nodes connected to unconnected state nodes
 
-    // Collect engagement nodes connected to unconnected state nodes
     unconnectedStateNodes.forEach((nodeId) => {
       edges.forEach((edge) => {
         if (edge.source === nodeId && edge.target.startsWith("engagement-")) {
           unconnectedEngagements.push(edge.target);
         }
       });
-    });
+    }); // Also find engagement nodes that are not connected to any reachable state node
 
-    // Also find engagement nodes that are not connected to any reachable state node
     const engagementNodes = nodes.filter((n) => n.type === "engagement");
 
     engagementNodes.forEach((engagementNode) => {
@@ -1742,8 +2130,7 @@ export default function JourneyFlowBuilderIntegrated({
             // If there's an entry node, check if source is reachable
             if (entryNode) {
               return reachableStateNodes.has(edge.source);
-            }
-            // If no entry node, check if source is in the connected component
+            } // If no entry node, check if source is in the connected component
             if (stateNodes.length > 0) {
               const connectedComponent = findConnectedComponent(
                 stateNodes[0].id
@@ -1758,9 +2145,8 @@ export default function JourneyFlowBuilderIntegrated({
       if (!hasReachableSource) {
         unconnectedEngagements.push(engagementNode.id);
       }
-    });
+    }); // Remove duplicates
 
-    // Remove duplicates
     const uniqueUnconnectedEngagements = Array.from(
       new Set(unconnectedEngagements)
     );
@@ -1778,16 +2164,14 @@ export default function JourneyFlowBuilderIntegrated({
       return true;
     }
     return false;
-  }, [nodes, edges, nudgeActions, nodeStateMap, eventStateMap]);
+  }, [nodes, edges]); // Expose checkUnconnectedNodes via ref if provided
 
-  // Expose checkUnconnectedNodes via ref if provided
   useEffect(() => {
     if (checkUnconnectedNodesRef) {
       checkUnconnectedNodesRef.current = checkUnconnectedNodes;
     }
-  }, [checkUnconnectedNodes, checkUnconnectedNodesRef]);
+  }, [checkUnconnectedNodes, checkUnconnectedNodesRef]); // Get event names from events prop
 
-  // Get event names from events prop
   const eventNames = events.map((e) => e.metadata.eventName);
 
   return (
@@ -1831,6 +2215,7 @@ export default function JourneyFlowBuilderIntegrated({
             defaultEdgeOptions={{ type: "bezier" }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+               
             <Controls
               style={{
                 backgroundColor: theme.palette.background.paper,
@@ -1875,9 +2260,8 @@ export default function JourneyFlowBuilderIntegrated({
                 const stateNumber =
                   nodeStateMap.get(selectedNode.id) ||
                   eventStateMap.get(selectedNode.data.eventName || "") ||
-                  "0";
+                  "0"; // Find the engagement
 
-                // Find the engagement
                 const engagement = selectedNode.data.engagements?.find(
                   (e) => e.id === engagementId
                 );
@@ -1886,17 +2270,17 @@ export default function JourneyFlowBuilderIntegrated({
                   currentEngagementContextRef.current = {
                     nodeId: selectedNode.id,
                     engagementId: engagementId,
-                  };
+                  }; // Sync engagement to form action
 
-                  // Sync engagement to form action
-                  const currentActions = watch("nudgeSelection.actions") || [];
+                  const currentActions =
+                    getValues("nudgeSelection.actions") || [];
                   const updatedActions = syncEngagementToAction(
                     selectedNode,
                     engagement,
                     stateNumber,
                     currentActions
                   );
-                  setValue("nudgeSelection.actions", updatedActions);
+                  replaceActions(updatedActions); // Use replaceActions to ensure React Hook Form tracks changes
                 }
 
                 onEngagementSelect(selectedNode.id, engagementId, stateNumber);
@@ -1905,7 +2289,6 @@ export default function JourneyFlowBuilderIntegrated({
           />
         )}
       </Drawer>
-
       <Dialog
         open={unconnectedNodesDialog.open}
         onClose={() =>
@@ -1928,10 +2311,10 @@ export default function JourneyFlowBuilderIntegrated({
               ? "Please fill the initial journey and engagement. Select an event for the initial node and add engagements to configure your journey."
               : unconnectedNodesDialog.nodeIds.length > 0 &&
                 unconnectedNodesDialog.engagementNodeIds.length > 0
-              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) and ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Please remove them manually.`
+              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) and ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected to the main flow. Please remove them manually.`
               : unconnectedNodesDialog.nodeIds.length > 0
-              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) that are not connected. Please remove them manually.`
-              : `There are ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected. Please remove them manually.`}
+              ? `There are ${unconnectedNodesDialog.nodeIds.length} detached node(s) that are not connected to the main flow. Please remove them manually.`
+              : `There are ${unconnectedNodesDialog.engagementNodeIds.length} detached engagement(s) that are not connected to the main flow. Please remove them manually.`}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -1945,7 +2328,7 @@ export default function JourneyFlowBuilderIntegrated({
               })
             }
           >
-            OK
+            Ok
           </Button>
         </DialogActions>
       </Dialog>

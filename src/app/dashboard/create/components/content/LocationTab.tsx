@@ -13,18 +13,38 @@ import {
   ReactNativeJson,
 } from "../../types/journey.interface";
 import { contentTabStyles } from "./styles/contentTabStyles";
+import { useMemo } from "react";
 
 interface LocationTabProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
+  engagementId?: string | null;
 }
 
-export default function LocationTab({ control }: LocationTabProps) {
-  const { setValue } = useFormContext<CreateJourneyFormData>();
+export default function LocationTab({
+  control,
+  engagementId,
+}: LocationTabProps) {
+  const { setValue, getValues } = useFormContext<CreateJourneyFormData>();
+
+  // Find the correct action index based on engagementId
+  const actionIndex = useMemo(() => {
+    if (!engagementId) return 0;
+
+    const formActions = getValues("nudgeSelection.actions") || [];
+    const index = formActions.findIndex((action) => {
+      const actionIdPrefix = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+      return actionIdPrefix === engagementId;
+    });
+
+    return index >= 0 ? index : 0;
+  }, [engagementId, getValues]);
 
   const template = useWatch({
     control,
-    name: "nudgeSelection.actions.0.template",
+    name: `nudgeSelection.actions.${actionIndex}.template` as any,
   }) as ReactNativeJson | undefined;
 
   const updateTemplateProps = (
@@ -40,7 +60,10 @@ export default function LocationTab({ control }: LocationTabProps) {
         [propKey]: value,
       },
     };
-    setValue("nudgeSelection.actions.0.template", updatedTemplate);
+    setValue(
+      `nudgeSelection.actions.${actionIndex}.template` as any,
+      updatedTemplate
+    );
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,7 +82,9 @@ export default function LocationTab({ control }: LocationTabProps) {
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
         <Controller
-          name="nudgeSelection.actions.0.template.props.targetScreen"
+          name={
+            `nudgeSelection.actions.${actionIndex}.template.props.targetScreen` as any
+          }
           control={control}
           render={({ field, fieldState }) => (
             <TextField
@@ -83,7 +108,9 @@ export default function LocationTab({ control }: LocationTabProps) {
         />
 
         <Controller
-          name="nudgeSelection.actions.0.template.props.targetId"
+          name={
+            `nudgeSelection.actions.${actionIndex}.template.props.targetId` as any
+          }
           control={control}
           render={({ field, fieldState }) => (
             <TextField
