@@ -177,8 +177,8 @@ function HomepageCTA() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/architecture">
-            Explore Architecture
+            to="/docs/features/journeys">
+            Explore Features
           </Link>
         </div>
       </div>
