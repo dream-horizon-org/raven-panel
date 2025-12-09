@@ -77,7 +77,7 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Design beautiful in-app content with live preview. Choose from 
-        templates or build custom layouts with drag-and-drop elements.
+        templates or build custom layouts by adding and configuring elements.
       </>
     ),
   },

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Getting Started
 
-This guide will help you set up Raven Panel for local development.
+This guide will help you set up Raven for local development.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/raven-panel.git
+git clone https://github.com/dream-horizon-org/raven-panel.git
 cd raven-panel
 ```
 
@@ -37,22 +37,7 @@ Or with npm:
 npm install
 ```
 
-### 3. Environment Configuration
-
-Create a `.env.local` file in the project root:
-
-```bash
-# API Configuration
-NEXT_PUBLIC_API_BASE_URL=https://api.example.com
-
-# Google OAuth (for authentication)
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
-
-# Feature Flags
-NEXT_PUBLIC_ENABLE_ANALYTICS=true
-```
-
-### 4. Start Development Server
+### 3. Start Development Server
 
 ```bash
 yarn dev
@@ -99,16 +84,31 @@ raven-panel/
 └── coverage/               # Test coverage reports
 ```
 
-## Authentication Setup
+## Interface Overview
 
-Raven Panel uses Google OAuth for authentication. To set this up:
+### Sidebar Navigation
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to **APIs & Services > Credentials**
-4. Create an **OAuth 2.0 Client ID**
-5. Add your development URL to authorized origins: `http://localhost:3000`
-6. Copy the Client ID to your `.env.local` file
+The left sidebar provides access to:
+- **Journeys** - Main journey management page
+- **Dark Mode Toggle** - Switch between light and dark themes
+- **User Profile** - View your account details
+
+### Header Actions
+
+The header contains:
+- **Search Bar** - Search journeys by name
+- **Create Journey Button** - Start creating a new journey
+
+## Browser Support
+
+Raven works best on modern browsers:
+
+| Browser | Minimum Version |
+|---------|-----------------|
+| Chrome | 90+ |
+| Firefox | 88+ |
+| Safari | 14+ |
+| Edge | 90+ |
 
 ## IDE Setup
 
@@ -163,9 +163,8 @@ yarn app:check
 
 ## Next Steps
 
-Now that you have Raven Panel running locally:
+Now that you have Raven running locally:
 
-1. [Explore the Architecture](./architecture) to understand the codebase
-2. [Learn about Journeys](./features/journeys) to understand the core feature
-3. [Review the API](./api/overview) to understand data flow
-
+1. **[Learn about Journeys](./features/journeys)** - Understand the core feature and listing page
+2. **[Create a Journey](./features/create-journey)** - Design your first nudge
+3. **[Set up Scheduling](./features/scheduling)** - Configure when journeys go live

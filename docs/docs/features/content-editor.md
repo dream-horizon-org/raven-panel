@@ -52,7 +52,17 @@ type TemplateType = 'modal' | 'banner' | 'tooltip' | 'slideout' | 'fullscreen';
 
 ### Element Types
 
-Build content by adding elements to your template:
+Build content by adding elements to your template. Use the **"Add Element"** button to select and add elements:
+
+1. Click **"Add Element"** button
+2. Select element type from dropdown menu:
+   - Vertical Stack
+   - Horizontal Stack
+   - Text
+   - Image
+3. Element is added to your layout
+4. Expand the element to configure its properties
+5. Use delete button to remove elements
 
 #### Text Element
 

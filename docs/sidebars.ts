@@ -4,26 +4,16 @@ const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'intro',
     'getting-started',
-    'architecture',
     {
       type: 'category',
       label: 'Features',
       items: [
         'features/journeys',
+        'features/create-journey',
         'features/cohorts',
         'features/events',
         'features/content-editor',
         'features/scheduling',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'API Reference',
-      items: [
-        'api/overview',
-        'api/journeys-api',
-        'api/cohorts-api',
-        'api/events-api',
       ],
     },
     {

@@ -4,262 +4,185 @@ sidebar_position: 1
 
 # Journeys
 
-Journeys are the core feature of Raven Panel. They allow you to create automated user engagement flows triggered by specific events or schedules.
+The Journeys feature is the core of Raven. It allows you to create, manage, and monitor user engagement journeys that deliver timely nudges to your users.
 
-## Overview
+## Listing Page
 
-A journey consists of several key components:
+The listing page provides an overview of all journeys created in Raven. It serves as the main dashboard where panel users can view, search, filter, and manage their journeys.
 
-- **Target Audience** - Which users should receive this journey (cohorts)
-- **Triggers** - What events start the journey
-- **Content** - What to show users (in-app messages, modals, etc.)
-- **Schedule** - When the journey is active
-- **Frequency** - How often users can see this journey
+### Header Section
 
-## Journey States
+The header displays:
+- **Title**: Shows "Journeys" along with the total count of all journeys
+- **Create Journey Button**: Click to navigate to the journey creation flow
+
+### Search Bar
+
+The search bar allows users to search for a specific journey by name:
+
+- Type to filter journeys in real-time
+- Search is debounced (300ms delay) to prevent excessive API calls
+- Clear button (X) appears when text is entered to reset search
+- Search icon indicates the input purpose
+
+### Status Tabs
+
+Journeys are organized by their current status. Click any tab to filter the list:
+
+| Status | Description |
+|--------|-------------|
+| **All** | Shows all journeys regardless of status |
+| **Draft** | Journeys being created/edited, not yet live |
+| **Live** | Journeys actively reaching users |
+| **Scheduled** | Journeys set to go live at a future date |
+| **Paused** | Journeys temporarily stopped |
+| **Concluded** | Journeys that completed their scheduled run |
+| **Terminated** | Journeys permanently stopped |
+
+Each tab displays a count badge showing the number of journeys in that status.
+
+### Journeys Table
+
+The table displays detailed information about each journey:
+
+| Column | Description |
+|--------|-------------|
+| **Title** | The name assigned to the journey, displayed with a unique emoji icon for easy identification |
+| **Status** | Current status displayed as a colored badge/chip |
+| **Created By** | The email/username of the user who created the journey |
+| **Created On** | The date when the journey was created (formatted as "Dec 3, 2025") |
+| **Actions** | Quick action buttons for the journey |
+
+#### Bulk Selection
+
+The table supports selecting multiple journeys using checkboxes:
+- **Header checkbox**: Select/deselect all journeys on the current page
+- **Row checkboxes**: Select individual journeys
+- **Indeterminate state**: Shows when some (but not all) journeys are selected
+
+### Actions
+
+Each journey row has quick action buttons:
+
+| Action | Icon | Description |
+|--------|------|-------------|
+| **Edit** | ✏️ Pencil | Open the journey editor to modify the journey |
+| **Clone** | 📋 Copy | Create a duplicate of the journey |
+| **More Options** | ⋮ Three dots | Opens additional actions menu |
+
+#### More Options Menu
+
+The three-dot menu provides additional actions:
+
+| Action | Description | Permission Required |
+|--------|-------------|---------------------|
+| **Copy Journey ID** | Copies the journey ID to clipboard | View |
+| **Make Live** | Publish a draft journey immediately | Publish |
+| **Schedule** | Set a future publish date for the journey | Publish |
+| **Pause** | Temporarily stop a live journey | Edit |
+| **Terminate** | Permanently stop a journey | Edit |
+| **Conclude** | Mark a journey as completed | Edit |
+
+### Pagination
+
+Navigate through large lists of journeys using:
+
+- **Previous button** (←): Go to the previous page
+- **Next button** (→): Go to the next page  
+- **Page numbers**: Click to jump to a specific page
+- **Page size selector**: Choose how many journeys to display per page (10, 20, 50, or 100)
+
+### Empty State
+
+When no journeys exist or match the current filters, a friendly empty state is shown with:
+- An illustration (paper airplane being designed)
+- Message: "All quiet on the journeys front."
+- Subtext: "You don't have any journeys yet. Create a new journey to get started."
+
+### Loading States
+
+- **Initial load**: Shows a centered loading spinner
+- **Fetching/filtering**: Shows a semi-transparent overlay with spinner while maintaining table visibility
+- **Error state**: Displays error message if journey loading fails
+
+---
+
+## Journey Lifecycle
+
+Journeys follow a state machine with defined transitions:
 
 ```
-┌──────────┐    Publish    ┌──────────┐    Pause     ┌──────────┐
-│  Draft   │─────────────▶│  Active  │─────────────▶│  Paused  │
-└──────────┘              └──────────┘              └──────────┘
-     │                          │                        │
-     │                          │                        │
-     └────────── Archive ───────┴───── Archive ─────────┘
-                                │
-                                ▼
-                          ┌──────────┐
-                          │ Archived │
-                          └──────────┘
+┌──────────┐   Publish   ┌──────────┐
+│  DRAFT   │────────────▶│   LIVE   │
+└──────────┘             └──────────┘
+     │                        │
+     │                        ├───▶ PAUSED ───▶ (can resume to LIVE)
+     │                        │
+     │                        ├───▶ CONCLUDED (journey completed)
+     │                        │
+     └────────────────────────┴───▶ TERMINATED (permanently stopped)
 ```
 
-| State | Description |
-|-------|-------------|
-| **Draft** | Journey is being created/edited, not live |
-| **Active** | Journey is published and reaching users |
-| **Paused** | Journey temporarily stopped |
-| **Archived** | Journey retired, no longer accessible |
+**Or with scheduling:**
+
+```
+┌──────────┐   Schedule  ┌───────────┐   Auto    ┌──────────┐
+│  DRAFT   │────────────▶│ SCHEDULED │──────────▶│   LIVE   │
+└──────────┘             └───────────┘           └──────────┘
+```
+
+### Status Definitions
+
+| Status | Description | Available Actions |
+|--------|-------------|-------------------|
+| **Draft** | Journey is being created or edited, not visible to users | Edit, Clone, Make Live, Schedule, Terminate |
+| **Live** | Journey is published and actively reaching users | Pause, Conclude, Terminate |
+| **Scheduled** | Journey is set to go live at a future date/time | Edit, Terminate |
+| **Paused** | Journey is temporarily stopped, can be resumed | Resume (Make Live), Terminate |
+| **Concluded** | Journey has completed its run as intended | Clone |
+| **Terminated** | Journey is permanently stopped | Clone |
+
+---
+
+## Permissions
+
+Raven implements role-based access control:
+
+| Permission Level | Capabilities |
+|------------------|--------------|
+| **View Access** | View journeys list, view journey details, copy journey ID |
+| **Edit Access** | Create journeys, edit journeys, clone journeys, pause/terminate journeys |
+| **Publish Access** | Make journeys live, schedule journeys |
+
+When a user lacks the required permission, the corresponding action buttons are disabled.
+
+---
 
 ## Creating a Journey
 
-### 1. Basic Information
+Click the **"+ Create journey"** button to start building a new journey. The button is disabled if you don't have edit permissions.
 
-Start by providing the journey name and description:
+The create journey flow is organized into two main tabs:
 
-```typescript
-interface JourneyBasicInfo {
-  name: string;        // Required, unique identifier
-  description?: string; // Optional details
-}
-```
+1. **Content** - Design the nudge (Tooltip, BottomSheet, or Popup)
+   - Select engagement type
+   - Choose template variant
+   - Customize appearance and content
+   - Set target location
 
-### 2. Define Target Audience
+2. **Journey Setup** - Configure targeting and behavior
+   - Select user segments (target audience)
+   - Configure event triggers
+   - Set schedule (start/end dates)
+   - Define frequency rules
 
-Select which users should see this journey by choosing a cohort:
+See **[Creating a Journey](./create-journey)** for a complete step-by-step guide.
 
-```typescript
-interface CohortSelection {
-  cohortId: string;
-  cohortName: string;
-  userCount: number;  // Estimated reach
-}
-```
+---
 
-:::tip
-Create cohorts in your analytics platform first, then import them to Raven Panel.
-:::
+## Dark Mode Support
 
-### 3. Set Up Event Triggers
-
-Define what events should trigger this journey:
-
-```typescript
-interface EventTrigger {
-  eventName: string;
-  operator: 'equals' | 'contains' | 'matches';
-  value?: string;
-  properties?: PropertyFilter[];
-}
-
-interface PropertyFilter {
-  key: string;
-  type: 'string' | 'number' | 'boolean' | 'date';
-  operator: FilterOperator;
-  value: unknown;
-}
-```
-
-#### Example Triggers
-
-| Trigger Type | Example |
-|--------------|---------|
-| Page View | User visits `/checkout` page |
-| Button Click | User clicks "Add to Cart" button |
-| Custom Event | User completes onboarding |
-| Session Start | User opens app after 7 days |
-
-### 4. Design Content
-
-Use the content editor to design what users will see:
-
-- **Templates** - Pre-built layouts (modal, banner, tooltip)
-- **Elements** - Buttons, text, images, forms
-- **Styling** - Colors, fonts, animations
-- **Actions** - What happens on interaction
-
-### 5. Configure Schedule
-
-Set when the journey should be active:
-
-```typescript
-interface JourneySchedule {
-  type: 'immediate' | 'scheduled' | 'recurring';
-  startDate?: Date;
-  endDate?: Date;
-  timezone?: string;
-  recurrence?: RecurrencePattern;
-}
-```
-
-### 6. Set Frequency Rules
-
-Control how often users see this journey:
-
-```typescript
-interface FrequencyConfig {
-  limit: number;           // Max times to show
-  period: 'session' | 'day' | 'week' | 'lifetime';
-  cooldown?: number;       // Minutes between shows
-}
-```
-
-## Journey Listing
-
-The dashboard displays all journeys with filtering and sorting:
-
-```typescript
-// Filter options
-interface JourneyFilters {
-  status?: JourneyStatus[];
-  search?: string;
-  createdBy?: string;
-  dateRange?: {
-    start: Date;
-    end: Date;
-  };
-}
-
-// Sort options
-type SortField = 'name' | 'createdAt' | 'updatedAt' | 'status';
-type SortOrder = 'asc' | 'desc';
-```
-
-## Journey Actions
-
-### Edit Journey
-
-Modify any aspect of a draft or paused journey:
-
-```typescript
-await updateJourney(journeyId, {
-  name: 'Updated Journey Name',
-  schedule: { type: 'scheduled', startDate: new Date() },
-});
-```
-
-### Clone Journey
-
-Create a copy of an existing journey:
-
-```typescript
-const newJourney = await cloneJourney(originalJourneyId, {
-  name: 'Journey Copy',
-});
-```
-
-### Change Status
-
-Transition journey between states:
-
-```typescript
-// Publish draft
-await publishJourney(journeyId);
-
-// Pause active journey
-await pauseJourney(journeyId);
-
-// Resume paused journey
-await resumeJourney(journeyId);
-
-// Archive journey
-await archiveJourney(journeyId);
-```
-
-## Best Practices
-
-### Naming Conventions
-
-Use descriptive names that indicate:
-- Target audience
-- Purpose/goal
-- Campaign (if applicable)
-
-**Good**: `New Users - Welcome Modal - Q1 2024`  
-**Bad**: `Journey 1`
-
-### Testing Journeys
-
-Before publishing:
-
-1. Preview content on different devices
-2. Test with a small cohort first
-3. Verify event triggers work correctly
-4. Check frequency limits behave as expected
-
-### Performance Tips
-
-- Keep content lightweight for fast loading
-- Use lazy loading for images
-- Minimize JavaScript in content
-- Test on low-end devices
-
-## Code Examples
-
-### Fetching Journeys
-
-```typescript
-import { useJourneysList } from '@/hooks/useJourneysList';
-
-function JourneyList() {
-  const { data, isLoading, error } = useJourneysList(tenantId);
-  
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage error={error} />;
-  
-  return (
-    <div>
-      {data.journeys.map(journey => (
-        <JourneyCard key={journey.id} journey={journey} />
-      ))}
-    </div>
-  );
-}
-```
-
-### Creating a Journey
-
-```typescript
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createJourney } from '@/api/services/createJourney.service';
-
-function useCreateJourney() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: createJourney,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['journeys'] });
-    },
-  });
-}
-```
-
+The journeys listing page fully supports dark mode:
+- Toggle available in the sidebar
+- All components adapt to the selected theme
+- Status badges, icons, and table styling adjust automatically

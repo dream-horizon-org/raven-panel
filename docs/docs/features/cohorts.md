@@ -94,28 +94,6 @@ function CohortSelector() {
 }
 ```
 
-## API Reference
-
-### List Cohorts
-
-```typescript
-// GET /tenants/:tenantId/cohorts
-interface CohortsResponse {
-  cohorts: Cohort[];
-  total: number;
-}
-```
-
-### Get Cohort Details
-
-```typescript
-// GET /tenants/:tenantId/cohorts/:cohortId
-interface CohortDetails extends Cohort {
-  criteria?: CohortCriteria[];
-  sampleUsers?: UserSample[];
-}
-```
-
 ## Best Practices
 
 ### Cohort Naming

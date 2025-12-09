@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Raven Panel',
-  tagline: 'Customer Journey Management Platform',
+  title: 'Raven',
+  tagline: 'Real-Time Nudge Platform for User Engagement',
   favicon: 'img/favicon.ico',
 
   url: 'https://dream-horizon-org.github.io',
@@ -40,9 +40,9 @@ const config: Config = {
   themeConfig: {
     image: 'img/raven-social-card.png',
     navbar: {
-      title: 'Raven Panel',
+      title: 'Raven',
       logo: {
-        alt: 'Raven Panel Logo',
+        alt: 'Raven Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -70,8 +70,8 @@ const config: Config = {
               to: '/docs/getting-started',
             },
             {
-              label: 'Architecture',
-              to: '/docs/architecture',
+              label: 'Journeys',
+              to: '/docs/features/journeys',
             },
           ],
         },
@@ -91,10 +91,6 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            {
-              label: 'API Reference',
-              to: '/docs/api/overview',
-            },
             {
               label: 'GitHub',
               href: 'https://github.com/dream-horizon-org/raven-panel',
