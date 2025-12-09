@@ -226,6 +226,7 @@ export default function EventTriggerSection({
           <Tooltip
             title={JOURNEY_TEXT.SECTIONS.EVENT_TRIGGER.TOOLTIP}
             placement="top"
+            arrow
           >
             <HelpOutlineIcon sx={eventTriggerSectionStyles.fieldInfoIcon} />
           </Tooltip>

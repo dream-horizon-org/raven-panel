@@ -21,6 +21,7 @@ import {
   DialogActions,
   Autocomplete,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -32,6 +33,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {
   JourneyNodeData,
   Condition,
@@ -45,6 +47,7 @@ import {
   normalizePropertyType,
 } from "../../utils/propertyTypeUtils";
 import { FormControl, InputLabel, Select } from "@mui/material";
+import JourneyTutorialDialog from "./JourneyTutorialDialog";
 
 interface NodeConfigurationPanelProps {
   node: Node<JourneyNodeData>;
@@ -137,6 +140,8 @@ export default function NodeConfigurationPanel({
   const eventName = watch("eventName") || "";
 
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
+  const [showHelpTooltip, setShowHelpTooltip] = useState(true);
   const [newlyAddedBranchId, setNewlyAddedBranchId] = useState<string | null>(
     null
   );
@@ -159,6 +164,15 @@ export default function NodeConfigurationPanel({
 
   // Ref to track the previous node ID to detect node changes
   const previousNodeIdRef = useRef<string>(node.id);
+
+  // Show tooltip on mount and hide after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowHelpTooltip(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Track if connection highlight was already dismissed (to prevent re-highlighting when new branch is added)
   const connectionHighlightDismissedRef = useRef(false);
@@ -993,13 +1007,42 @@ export default function NodeConfigurationPanel({
           )}
           <Typography sx={styles.headerTitleStyles}>{headerLabel}</Typography>
         </Box>
-        <IconButton
-          size="small"
-          onClick={handleCloseClick}
-          sx={styles.closeButtonStyles}
-        >
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Tooltip
+            title="Learn How Journeys Work"
+            placement="bottom"
+            arrow
+            open={showHelpTooltip}
+            onClose={() => setShowHelpTooltip(false)}
+            disableHoverListener
+            disableFocusListener
+            disableTouchListener
+          >
+            <IconButton
+              size="small"
+              onClick={() => {
+                setTutorialDialogOpen(true);
+                setShowHelpTooltip(false);
+              }}
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  color: "primary.main",
+                  bgcolor: "action.hover",
+                },
+              }}
+            >
+              <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <IconButton
+            size="small"
+            onClick={handleCloseClick}
+            sx={styles.closeButtonStyles}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       <Box
@@ -1670,6 +1713,11 @@ export default function NodeConfigurationPanel({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <JourneyTutorialDialog
+        open={tutorialDialogOpen}
+        onClose={() => setTutorialDialogOpen(false)}
+      />
     </Box>
   );
 }
