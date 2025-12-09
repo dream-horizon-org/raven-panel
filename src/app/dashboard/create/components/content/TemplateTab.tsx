@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from "react";
 import { Box, Typography, Card, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -20,6 +21,7 @@ import { templateTabStyles } from "./styles/templateTabStyles";
 interface TemplateTabProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
+  engagementId?: string | null;
 }
 
 /* ----------------- POPUP TEMPLATES (unchanged) ----------------- */
@@ -843,10 +845,29 @@ const TEMPLATE_OPTIONS: Record<
   ],
 };
 
-export default function TemplateTab({ control }: TemplateTabProps) {
-  const { setValue } = useFormContext<CreateJourneyFormData>();
+export default function TemplateTab({
+  control,
+  engagementId,
+}: TemplateTabProps) {
+  const { setValue, getValues } = useFormContext<CreateJourneyFormData>();
   const actions = useWatch({ control, name: "nudgeSelection.actions" });
-  const engagementType = actions?.[0]?.type as NudgeType | undefined;
+
+  // Find the correct action index based on engagementId
+  const actionIndex = useMemo(() => {
+    if (!engagementId) return 0;
+
+    const formActions = getValues("nudgeSelection.actions") || [];
+    const index = formActions.findIndex((action) => {
+      const actionIdPrefix = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+      return actionIdPrefix === engagementId;
+    });
+
+    return index >= 0 ? index : 0;
+  }, [engagementId, getValues]);
+
+  const engagementType = actions?.[actionIndex]?.type as NudgeType | undefined;
 
   const templates = engagementType
     ? TEMPLATE_OPTIONS[engagementType] || []
@@ -876,7 +897,7 @@ export default function TemplateTab({ control }: TemplateTabProps) {
       ) : (
         <Box sx={templateTabStyles.templatesGrid}>
           <Controller
-            name="nudgeSelection.actions.0.template"
+            name={`nudgeSelection.actions.${actionIndex}.template` as any}
             control={control}
             render={({ field }: { field: FieldValues }) => (
               <>
@@ -897,7 +918,7 @@ export default function TemplateTab({ control }: TemplateTabProps) {
                     field.onChange(templateJson);
                     // Also set the variant field on the action
                     setValue(
-                      "nudgeSelection.actions.0.variant",
+                      `nudgeSelection.actions.${actionIndex}.variant` as any,
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       template.id as any
                     );

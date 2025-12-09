@@ -30,7 +30,7 @@ import {
   NudgeType,
   ReactNativeJson,
 } from "../types/journey.interface";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import TemplateTab from "./content/TemplateTab";
 import ContentTab from "./content/ContentTab";
 import LocationTab from "./content/LocationTab";
@@ -45,6 +45,7 @@ interface EngagementSidePanelProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
   onTemplateSaved?: () => void;
+  engagementId?: string | null;
 }
 
 export default function EngagementSidePanel({
@@ -53,6 +54,7 @@ export default function EngagementSidePanel({
   control,
   errors,
   onTemplateSaved,
+  engagementId,
 }: EngagementSidePanelProps) {
   const {
     getValues,
@@ -84,44 +86,64 @@ export default function EngagementSidePanel({
     control,
     name: "nudgeSelection.actions",
   });
-  const engagementType = actions?.[0]?.type;
+
+  // Find the correct action index based on engagementId
+  const actionIndex = useMemo(() => {
+    if (!engagementId) return 0;
+
+    const formActions = getValues("nudgeSelection.actions") || [];
+    const index = formActions.findIndex((action) => {
+      const actionIdPrefix = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+      return actionIdPrefix === engagementId;
+    });
+
+    return index >= 0 ? index : 0;
+  }, [engagementId, getValues]);
+
+  // Get engagement type from form state - find the action that matches the engagementId
+  // CRITICAL: If engagementId is provided, find the specific action for that engagement
+  // Otherwise, fall back to first action (for backward compatibility)
+  const engagementType = useMemo(() => {
+    const formActions = getValues("nudgeSelection.actions") || [];
+    const targetAction = formActions[actionIndex];
+    return targetAction?.type || actions?.[actionIndex]?.type;
+  }, [actions, getValues, engagementId, actionIndex]);
+
   const isTooltip = engagementType === NudgeType.TOOLTIP;
 
   useEffect(() => {
     if (open) {
+      // Use getValues to get the latest form state when panel opens
       const currentData = getValues();
-      const currentTemplate =
-        currentData.nudgeSelection?.actions?.[0]?.template;
+      const currentActions = currentData.nudgeSelection?.actions || [];
+
+      // Find the action that matches the engagementId if provided
+      let targetAction = currentActions[0]; // Default to first action
+
+      if (engagementId) {
+        const matchingAction = currentActions.find((action) => {
+          // Extract the engagement ID prefix from actionId (before the underscore)
+          const actionIdPrefix = action.actionId.includes("_")
+            ? action.actionId.split("_")[0]
+            : action.actionId;
+
+          // Exact match: actionIdPrefix should equal engagementId
+          return actionIdPrefix === engagementId;
+        });
+
+        if (matchingAction) {
+          targetAction = matchingAction;
+        }
+      }
+
+      const currentTemplate = targetAction?.template;
       initialTemplateRef.current = currentTemplate
         ? JSON.parse(JSON.stringify(currentTemplate))
         : null;
     }
-  }, [open, getValues]);
-
-  // Helper to get nested error from errors object
-  // const getNestedError = (path: string) => {
-  //   const pathParts = path.split(".");
-  //   let current: Record<string, unknown> | unknown = errorSource;
-  //   for (const part of pathParts) {
-  //     if (current && typeof current === "object" && !Array.isArray(current)) {
-  //       const index = parseInt(part, 10);
-  //       if (!isNaN(index) && part === String(index)) {
-  //         if (part in current) {
-  //           current = (current as Record<string, unknown>)[part];
-  //         } else {
-  //           return undefined;
-  //         }
-  //       } else if (part in current) {
-  //         current = (current as Record<string, unknown>)[part];
-  //       } else {
-  //         return undefined;
-  //       }
-  //     } else {
-  //       return undefined;
-  //     }
-  //   }
-  //   return current;
-  // };
+  }, [open, getValues, engagementId]);
 
   const hasErrorsInPath = (path: string): boolean => {
     const value = get(errorSource, path);
@@ -142,7 +164,7 @@ export default function EngagementSidePanel({
     if (isTooltip) {
       const props = get(
         errorSource,
-        "nudgeSelection.actions.0.template.props"
+        `nudgeSelection.actions.${actionIndex}.template.props`
       ) as Record<string, unknown> | undefined;
 
       if (props && typeof props === "object") {
@@ -155,10 +177,14 @@ export default function EngagementSidePanel({
         if (keysWithError.length > 0) return true;
       }
 
-      return hasErrorsInPath("nudgeSelection.actions.0.template.styles");
+      return hasErrorsInPath(
+        `nudgeSelection.actions.${actionIndex}.template.styles`
+      );
     }
 
-    return hasErrorsInPath("nudgeSelection.actions.0.template.children");
+    return hasErrorsInPath(
+      `nudgeSelection.actions.${actionIndex}.template.children`
+    );
   };
 
   const hasLocationErrors = (): boolean => {
@@ -167,21 +193,24 @@ export default function EngagementSidePanel({
     return (
       !!get(
         errorSource,
-        "nudgeSelection.actions.0.template.props.targetScreen"
+        `nudgeSelection.actions.${actionIndex}.template.props.targetScreen`
       ) ||
-      !!get(errorSource, "nudgeSelection.actions.0.template.props.targetId")
+      !!get(
+        errorSource,
+        `nudgeSelection.actions.${actionIndex}.template.props.targetId`
+      )
     );
   };
 
   const handleSave = () => {
     const data = getValues();
-    if (!data.nudgeSelection?.actions?.[0]?.template) {
+    if (!data.nudgeSelection?.actions?.[actionIndex]?.template) {
       onClose();
       return;
     }
 
-    const template = data.nudgeSelection.actions[0].template;
-    const basePath = "nudgeSelection.actions.0.template" as Path<
+    const template = data.nudgeSelection.actions[actionIndex].template;
+    const basePath = `nudgeSelection.actions.${actionIndex}.template` as Path<
       CreateJourneyFormData
     >;
 
@@ -215,11 +244,14 @@ export default function EngagementSidePanel({
   const handleDiscard = () => {
     // Reset template to initial state
     if (initialTemplateRef.current) {
-      setValue("nudgeSelection.actions.0.template", initialTemplateRef.current);
+      setValue(
+        `nudgeSelection.actions.${actionIndex}.template` as any,
+        initialTemplateRef.current
+      );
     } else {
       // If no initial template, clear it
       setValue(
-        "nudgeSelection.actions.0.template",
+        `nudgeSelection.actions.${actionIndex}.template` as any,
         (undefined as unknown) as ReactNativeJson
       );
     }
@@ -303,7 +335,7 @@ export default function EngagementSidePanel({
           <ElementLocatorProvider>
             <Box sx={engagementSidePanelStyles.content}>
               <Box sx={engagementSidePanelStyles.previewSection}>
-                <PreviewPanel control={control} />
+                <PreviewPanel control={control} engagementId={engagementId} />
               </Box>
 
               <Box sx={engagementSidePanelStyles.configSection}>
@@ -365,13 +397,25 @@ export default function EngagementSidePanel({
 
                 <Box sx={engagementSidePanelStyles.tabContent}>
                   {activeSubTab === "template" && (
-                    <TemplateTab control={control} errors={errors} />
+                    <TemplateTab
+                      control={control}
+                      errors={errors}
+                      engagementId={engagementId}
+                    />
                   )}
                   {activeSubTab === "content" && (
-                    <ContentTab control={control} errors={errors} />
+                    <ContentTab
+                      control={control}
+                      errors={errors}
+                      engagementId={engagementId}
+                    />
                   )}
                   {activeSubTab === "location" && isTooltip && (
-                    <LocationTab control={control} errors={errors} />
+                    <LocationTab
+                      control={control}
+                      errors={errors}
+                      engagementId={engagementId}
+                    />
                   )}
                 </Box>
               </Box>

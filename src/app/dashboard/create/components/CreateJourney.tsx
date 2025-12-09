@@ -150,6 +150,7 @@ export default function CreateJourneyPage({
   const {
     control,
     handleSubmit,
+    formState,
     formState: { errors },
     trigger,
     reset,
@@ -507,50 +508,89 @@ export default function CreateJourneyPage({
   };
   const [activeTab, setActiveTab] = useState<"setup" | "ui">("ui");
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
-
-  // Watch template to check validation
-  const template = useWatch({
-    control,
-    name: "nudgeSelection.actions.0.template",
-  });
+  const [currentEngagementId, setCurrentEngagementId] = useState<string | null>(
+    null
+  );
 
   const watchedActions = useWatch({
     control,
     name: "nudgeSelection.actions",
   });
 
+  // Find the first action with a template (not just actions[0])
+  const template = useMemo(() => {
+    if (!watchedActions || watchedActions.length === 0) return undefined;
+    const actionWithTemplate = watchedActions.find((action) => action.template);
+    return actionWithTemplate?.template;
+  }, [watchedActions]);
+
   const hasTemplate = useMemo(() => {
     return (
       watchedActions &&
       watchedActions.length > 0 &&
-      watchedActions.some((action) => action.template)
+      watchedActions.some((action) => action.template && action.template.type)
     );
   }, [watchedActions]);
 
   // State to force re-validation check when template is saved
   const [validationKey, setValidationKey] = useState(0);
 
-  // Helper to check if any errors exist in template path
+  // Helper to check if any errors exist in template path for ANY action
+  // Use formState.errors which is more reactive to clearErrors
   const hasTemplateErrors = useMemo(() => {
-    const templateErrorsPath = errors.nudgeSelection?.actions?.[0]?.template;
-    if (!templateErrorsPath) return false;
+    // Use formState.errors for reactivity, fallback to errors prop
+    const currentErrors =
+      formState.errors.nudgeSelection?.actions ||
+      errors.nudgeSelection?.actions;
+    if (!currentErrors) return false;
 
-    // Recursively check if any error exists
-    const checkForErrors = (obj: unknown): boolean => {
-      if (!obj || typeof obj !== "object") return false;
-      if ("message" in obj) return true;
+    // Handle both array and object cases
+    const actionsErrors = Array.isArray(currentErrors)
+      ? currentErrors
+      : currentErrors && typeof currentErrors === "object"
+      ? [currentErrors]
+      : [];
 
-      for (const key in obj) {
-        if (checkForErrors((obj as Record<string, unknown>)[key])) return true;
-      }
-      return false;
-    };
+    if (actionsErrors.length === 0) return false;
 
-    return checkForErrors(templateErrorsPath);
-  }, [errors, template, validationKey]);
+    // Check all actions for template errors
+    for (let i = 0; i < actionsErrors.length; i++) {
+      const actionErrors = actionsErrors[i];
+      if (!actionErrors || typeof actionErrors !== "object") continue;
+
+      const templateErrorsPath = (actionErrors as Record<string, unknown>)
+        .template;
+      if (!templateErrorsPath) continue;
+
+      // Recursively check if any error exists
+      const checkForErrors = (obj: unknown): boolean => {
+        if (!obj || typeof obj !== "object") return false;
+        if ("message" in obj) return true;
+
+        for (const key in obj) {
+          if (checkForErrors((obj as Record<string, unknown>)[key]))
+            return true;
+        }
+        return false;
+      };
+
+      if (checkForErrors(templateErrorsPath)) return true;
+    }
+
+    return false;
+  }, [formState.errors, errors, validationKey]);
 
   // Template is valid if it exists and has no errors
-  const isTemplateValid = !!template && !hasTemplateErrors;
+  const isTemplateValid = useMemo(() => {
+    const isValid = !!template && !hasTemplateErrors;
+    console.log("[CreateJourney] isTemplateValid check:", {
+      hasTemplate: !!template,
+      templateType: template?.type,
+      hasTemplateErrors,
+      isTemplateValid: isValid,
+    });
+    return isValid;
+  }, [template, hasTemplateErrors]);
 
   // Ref to store the sync function from JourneyFlowBuilderIntegrated
   const syncTemplateRef = useRef<(() => void) | null>(null);
@@ -562,34 +602,81 @@ export default function CreateJourneyPage({
   // Note: validationKey is used in hasTemplateErrors useMemo dependency
 
   // Callback to trigger re-validation when template is saved
-  const handleTemplateSaved = () => {
+  const handleTemplateSaved = async () => {
     // Sync template back to engagement config first
     if (syncTemplateRef.current) {
       syncTemplateRef.current();
     }
 
-    // Force re-check by updating validation key
-    setValidationKey((prev) => prev + 1);
-    // Also trigger form validation to ensure errors object is updated
-    setTimeout(() => {
-      trigger(
-        "nudgeSelection.actions.0.template" as Path<CreateJourneyFormData>
+    // Clear errors for all action templates
+    const currentActions = getValues("nudgeSelection.actions") || [];
+    currentActions.forEach((_, index) => {
+      clearErrors(
+        `nudgeSelection.actions.${index}.template` as Path<
+          CreateJourneyFormData
+        >
       );
-    }, 0);
+    });
+
+    // Wait a bit for clearErrors to process, then trigger validation
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Trigger form validation for all action templates to ensure errors object is updated
+    const actions = getValues("nudgeSelection.actions") || [];
+    const validationPromises = actions.map((_, index) =>
+      trigger(
+        `nudgeSelection.actions.${index}.template` as Path<
+          CreateJourneyFormData
+        >
+      )
+    );
+    await Promise.all(validationPromises);
+
+    // Force re-check by updating validation key after validation completes
+    setValidationKey((prev) => prev + 1);
   };
 
   const checkUnconnectedNodesRef = useRef<(() => boolean) | null>(null);
 
   const handleTabChange = async (newTab: "setup" | "ui") => {
+    console.log("[CreateJourney] Tab change requested:", newTab);
+
+    // Wait a bit to ensure any pending syncFlowToForm operations complete
+    // This is important when nodes are deleted - we need to wait for form data to sync
+    // syncFlowToForm runs automatically in useEffect when nodes/edges change
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
     // Check for unconnected nodes/engagements when changing tabs
     if (checkUnconnectedNodesRef.current) {
       const hasUnconnected = checkUnconnectedNodesRef.current();
       if (hasUnconnected) {
+        console.log(
+          "[CreateJourney] Unconnected nodes found, blocking tab change"
+        );
         // Dialog will be shown by JourneyFlowBuilderIntegrated
         // Don't proceed with tab change
         return;
       }
     }
+
+    // Log form state before tab change
+    const formDataBeforeTabChange = getValues();
+    console.log("[CreateJourney] Form data before tab change:", {
+      actionsCount:
+        formDataBeforeTabChange.nudgeSelection?.actions?.length || 0,
+      actions: formDataBeforeTabChange.nudgeSelection?.actions?.map((a) => ({
+        actionId: a.actionId,
+        type: a.type,
+        onState: a.onState,
+        hasTemplate: !!a.template,
+        templateType: a.template?.type,
+      })),
+      eventInfoCount:
+        formDataBeforeTabChange.ruleEngine?.eventInfo?.length || 0,
+      isTemplateValid,
+      hasTemplate,
+      hasTemplateErrors,
+    });
 
     // If moving to setup tab, check if all engagement nodes have templates
     if (newTab === "setup") {
@@ -669,6 +756,8 @@ export default function CreateJourneyPage({
     );
   }
 
+  console.log("form data", formState);
+
   return (
     <FormProvider {...methods}>
       <Box sx={createJourneyPageStyles.pageContainer}>
@@ -697,9 +786,11 @@ export default function CreateJourneyPage({
                   isLoadingEvents={isLoadingEvents || isFetchingEvents}
                   systemPropertyNames={systemPropertyNames}
                   systemPropertyTypes={systemPropertyTypes}
-                  onEngagementSelect={() => {
+                  onEngagementSelect={(nodeId, engagementId, stateNumber) => {
                     // The integrated component handles the mapping to form actions
-                    // Just open the side panel for template selection
+                    // Track which engagement is being edited
+                    setCurrentEngagementId(engagementId);
+                    // Open the side panel for template selection
                     setSidePanelOpen(true);
                   }}
                   syncTemplateRef={syncTemplateRef}
@@ -719,10 +810,14 @@ export default function CreateJourneyPage({
 
               <EngagementSidePanel
                 open={sidePanelOpen}
-                onClose={() => setSidePanelOpen(false)}
+                onClose={() => {
+                  setSidePanelOpen(false);
+                  setCurrentEngagementId(null);
+                }}
                 control={control}
                 errors={errors}
                 onTemplateSaved={handleTemplateSaved}
+                engagementId={currentEngagementId}
               />
               <JourneyActions
                 activeTab={activeTab}
