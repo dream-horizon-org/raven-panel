@@ -254,10 +254,9 @@ export const parseJourneyDataToFormData = (
       };
     }
 
-    const onState =
-      Object.entries(stateToAction).find(
-        ([, actionId]) => actionId === action.actionId
-      )?.[0] || "1";
+    const onState = Object.entries(stateToAction).find(
+      ([, actionId]) => actionId === action.actionId
+    )?.[0];
 
     // CRITICAL: Find the event name that corresponds to this state
     // This allows us to restore engagements to the correct node even if state numbers shift after deletion

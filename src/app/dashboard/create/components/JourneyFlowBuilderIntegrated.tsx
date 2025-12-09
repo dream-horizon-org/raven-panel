@@ -208,6 +208,8 @@ export default function JourneyFlowBuilderIntegrated({
   });
 
   useEffect(() => {
+    console.log("eventInfo::", eventInfo);
+    console.log("nudgeActions::", nudgeActions);
     if (isInitializedRef.current) {
       return;
     }
@@ -255,6 +257,20 @@ export default function JourneyFlowBuilderIntegrated({
 
       // Restore engagements from nudgeSelection.actions
       if (nudgeActions && nudgeActions.length > 0) {
+        // CRITICAL: Build a map of nextState -> eventName from eventInfo
+        // This tells us which event transitions to which state
+        // Example: If AppInstalled transitions to state "1", then nextStateToEventMap["1"] = "AppInstalled"
+        const nextStateToEventMap = new Map<string, string>();
+        eventInfo?.forEach((event) => {
+          event.currentState?.forEach((currentState) => {
+            currentState.nextState?.forEach((nextState) => {
+              const nextStateStr = String(nextState.transitionTo);
+              // Map nextState to the event that transitions to it
+              nextStateToEventMap.set(nextStateStr, event.eventname);
+            });
+          });
+        });
+
         // CRITICAL FIX: Check for orphaned actions BEFORE restoring
         const stateNumberToNodeIdMap = new Map<string, string>();
         initialNodes.forEach((node) => {
@@ -329,10 +345,21 @@ export default function JourneyFlowBuilderIntegrated({
 
           if (!nodeState) return node;
 
+          console.log(
+            `Processing node: ${nodeData.eventName}, state: ${nodeState}`
+          );
+          console.log(
+            `All nudgeActions:`,
+            nudgeActions.map((a) => ({
+              actionId: a.actionId,
+              onState: a.onState,
+              type: a.type,
+            }))
+          );
+
           // Find actions for this state
-          // CRITICAL: Only restore engagements that belong to THIS specific node
-          // Check if action has originalNodeId stored - if it does, verify it matches this node's ID
-          // This is the PRIMARY check to prevent restoring engagements from deleted nodes
+          // CRITICAL: After deletion, onState is the source of truth because it's been updated
+          // to reflect the new state numbers. We should check onState FIRST if it exists.
           const stateActions = nudgeActions.filter((action) => {
             const actionConfig = action.config as
               | Record<string, unknown>
@@ -341,9 +368,43 @@ export default function JourneyFlowBuilderIntegrated({
               | string
               | undefined;
 
-            // CRITICAL: If action has originalNodeId, it MUST match this node's ID
-            // This is the most reliable check because node IDs are unique and don't change
-            // State numbers can shift after deletion, so matching by state alone is unreliable
+            // CRITICAL: If action has onState, check if it matches this node's state
+            // This is the PRIMARY check after deletion because onState is updated correctly
+            // when nodes are deleted and state numbers shift
+            if (action.onState) {
+              console.log("test action.onState::", action.onState);
+              console.log("test nodeState::", nodeState);
+              const isActionStateResetState =
+                resetStates?.includes(action.onState) || false;
+              const isNodeStateResetState =
+                resetStates?.includes(nodeState) || false;
+
+              // Case 1: onState exactly matches nodeState - restore it
+              if (action.onState === nodeState) {
+                return true;
+              }
+
+              // Case 2: Action's onState is a reset state, but node's state is not
+              // Check if this node transitions to that reset state
+              if (isActionStateResetState && !isNodeStateResetState) {
+                const nodeResetStates = nodeToResetStateMap.get(node.id);
+                if (nodeResetStates && nodeResetStates.has(action.onState)) {
+                  // Node transitions to this reset state - restore the action
+                  return true;
+                }
+                // Node doesn't transition to the reset state - don't restore
+                return false;
+              }
+
+              // Case 3: Both are regular states but don't match - don't restore
+              // This means the action belongs to a different node
+              if (!isActionStateResetState && !isNodeStateResetState) {
+                return false;
+              }
+            }
+
+            // Fallback: If action has originalNodeId, it MUST match this node's ID
+            // This is the most reliable check for actions that haven't been updated yet
             if (actionOriginalNodeId) {
               if (actionOriginalNodeId !== node.id) {
                 console.log(
@@ -430,8 +491,53 @@ export default function JourneyFlowBuilderIntegrated({
             return true;
           });
 
-          if (stateActions.length > 0) {
-            const restoredEngagements: Engagement[] = stateActions.map(
+          // CRITICAL: When attaching engagements, match by nextState from eventInfo
+          // onState represents the state number where the engagement should appear
+          // We need to find which event transitions to that state and attach the engagement to that event's node
+          // Example: If action.onState is "1", find which event transitions to state "1" and attach to that event's node
+          const actionsForThisNode = nudgeActions.filter((action) => {
+            if (!action.onState) return false;
+
+            // Find which event transitions to this onState
+            const eventNameThatTransitionsToOnState = nextStateToEventMap.get(
+              action.onState
+            );
+
+            // Check if this node's eventName matches the event that transitions to the onState
+            if (eventNameThatTransitionsToOnState === nodeData.eventName) {
+              console.log(
+                `[JourneyFlowBuilderIntegrated] Attaching action ${action.actionId} (type: ${action.type}, onState: ${action.onState}) to node ${nodeData.eventName} (state: ${nodeState}) because this event transitions to state ${action.onState}`
+              );
+              return true;
+            }
+
+            // No match
+            console.log(
+              `[JourneyFlowBuilderIntegrated] Action ${
+                action.actionId
+              } (type: ${action.type}, onState: ${
+                action.onState
+              }) does not match node ${
+                nodeData.eventName
+              } (state: ${nodeState}). Event that transitions to state ${
+                action.onState
+              }: ${eventNameThatTransitionsToOnState || "none"}`
+            );
+            return false;
+          });
+
+          if (actionsForThisNode.length > 0) {
+            console.log(
+              `[JourneyFlowBuilderIntegrated] Attaching ${actionsForThisNode.length} engagement(s) to node ${nodeData.eventName} (state: ${nodeState}):`,
+              actionsForThisNode.map((a) => ({
+                type: a.type,
+                onState: a.onState,
+                actionId: a.actionId,
+              }))
+            );
+          }
+          if (actionsForThisNode.length > 0) {
+            const restoredEngagements: Engagement[] = actionsForThisNode.map(
               (action) => {
                 const engagementId = action.actionId.includes("_")
                   ? action.actionId.split("_")[0]
@@ -651,8 +757,18 @@ export default function JourneyFlowBuilderIntegrated({
         updatedEdges = [...initialEdges, ...engagementEdges];
         // --- END ENGAGEMENT NODE/EDGE CREATION ---
 
-        // CRITICAL: Update actions' onState to match current node states after restoration
+        // CRITICAL: Rebuild eventInfo from current flow state to get accurate next states
+        // This ensures we have the correct transitions after deletions
+        const currentEventInfo = convertFlowToEventInfo(
+          updatedNodes as Node<JourneyNodeData>[],
+          updatedEdges,
+          esm,
+          nsm
+        );
+
+        // CRITICAL: Update actions' onState to match next states after restoration
         // This ensures stateToAction mapping is correct even after multiple deletions
+        // onState should be the NEXT state (where engagement appears), not the current state
         const currentActions = getValues("nudgeSelection.actions") || [];
 
         // Build a map of engagement IDs to nodes for quick lookup
@@ -671,6 +787,34 @@ export default function JourneyFlowBuilderIntegrated({
               });
             }
           }
+        });
+
+        // Build a map of node's current state -> next state from currentEventInfo
+        const nodeStateToNextStateMap = new Map<string, string>();
+        currentEventInfo.forEach((eventInfoEntry) => {
+          eventInfoEntry.currentState?.forEach((currentState) => {
+            const currentStateStr = String(currentState.currentState);
+            // Get the first nextState transition
+            const firstNextState = currentState.nextState?.[0];
+            if (firstNextState) {
+              const nextStateStr = String(firstNextState.transitionTo);
+              // Find the node with this event name and current state
+              const nodeWithEvent = updatedNodes.find(
+                (n) =>
+                  n.type === "state" &&
+                  (n.data as JourneyNodeData).eventName ===
+                    eventInfoEntry.eventname
+              );
+              if (nodeWithEvent) {
+                const nodeState =
+                  nsm.get(nodeWithEvent.id) ||
+                  esm.get(eventInfoEntry.eventname) ||
+                  currentStateStr;
+                // Map: node's current state -> next state it transitions to
+                nodeStateToNextStateMap.set(nodeState, nextStateStr);
+              }
+            }
+          });
         });
 
         const updatedActions = currentActions.map((action) => {
@@ -744,26 +888,61 @@ export default function JourneyFlowBuilderIntegrated({
               nsm.get(matchingNode.id) || esm.get(nodeData.eventName || "");
             const nodeEventName = nodeData.eventName || "";
 
+            // CRITICAL: Get the next state that this node transitions to
+            // This is the state where the engagement should appear (onState)
+            const nextState = nodeState
+              ? nodeStateToNextStateMap.get(nodeState)
+              : undefined;
+
             // CRITICAL: Always update onState, originalNodeId, and originalEventName to match current node
             // This ensures the action is correctly associated with the node even after multiple deletions
-            if (nodeState) {
+            // CRITICAL: onState should be the NEXT state (where engagement appears), not the current state
+            if (nextState) {
               const needsUpdate =
+                !action.onState || // CRITICAL: Update if onState is undefined
+                action.onState !== nextState || // Compare with nextState, not nodeState
+                (actionOriginalNodeId || matchingNode.id) !== matchingNode.id ||
+                (actionOriginalEventName || nodeEventName) !== nodeEventName;
+
+              if (needsUpdate) {
+                // Update onState to next state and metadata to match current node
+                return {
+                  ...action,
+                  onState: nextState, // CRITICAL: Set onState to node's NEXT state (where engagement appears)
+                  config: {
+                    ...action.config,
+                    originalNodeId: matchingNode.id, // Always use current node's ID
+                    originalEventName: nodeEventName, // Always use current node's event name
+                    originalOnState: nextState, // CRITICAL: Store the next state for recovery
+                  } as typeof action.config & {
+                    originalNodeId: string;
+                    originalEventName: string;
+                    originalOnState: string;
+                  },
+                };
+              }
+            } else if (nodeState) {
+              // Fallback: If nextState not found, use current state (shouldn't happen normally)
+              // This might happen if the node has no transitions
+              const needsUpdate =
+                !action.onState ||
                 action.onState !== nodeState ||
                 (actionOriginalNodeId || matchingNode.id) !== matchingNode.id ||
                 (actionOriginalEventName || nodeEventName) !== nodeEventName;
 
               if (needsUpdate) {
-                // Update onState and metadata to match current node
                 return {
                   ...action,
-                  onState: nodeState,
+                  onState: nodeState, // Fallback to current state
                   config: {
                     ...action.config,
-                    originalNodeId: matchingNode.id, // Always use current node's ID
-                    originalEventName: nodeEventName, // Always use current node's event name
+                    originalNodeId: matchingNode.id,
+                    originalEventName: nodeEventName,
+                    originalOnState: nodeState,
                   } as typeof action.config & {
                     originalNodeId: string;
                     originalEventName: string;
+                    originalOnState: string;
                   },
                 };
               }
@@ -783,6 +962,42 @@ export default function JourneyFlowBuilderIntegrated({
       isInitializedRef.current = true;
     }
   }, [eventInfo, nudgeActions, setEdges, setNodes, setValue, theme]); // Now depends on form data, but guarded by isInitializedRef // Sync flow changes back to form
+
+  // Helper function to get the next state that a node transitions to
+  const getNextStateForNode = useCallback(
+    (
+      node: Node<JourneyNodeData>,
+      currentEventInfo: EventInfo[] | undefined,
+      currentEsm: EventStateMap,
+      currentNsm: NodeStateMap
+    ): string | undefined => {
+      const nodeData = node.data as JourneyNodeData;
+      const nodeState =
+        currentNsm.get(node.id) || currentEsm.get(nodeData.eventName || "");
+
+      if (!nodeState || !currentEventInfo) return undefined;
+
+      // Find the event info for this node's event
+      const eventInfoEntry = currentEventInfo.find(
+        (ei) => ei.eventname === nodeData.eventName
+      );
+
+      if (eventInfoEntry) {
+        // Find the currentState entry that matches this node's state
+        const currentStateEntry = eventInfoEntry.currentState?.find(
+          (cs) => String(cs.currentState) === nodeState
+        );
+
+        if (currentStateEntry?.nextState?.[0]) {
+          // Return the first nextState transition
+          return String(currentStateEntry.nextState[0].transitionTo);
+        }
+      }
+
+      return undefined;
+    },
+    []
+  );
 
   const syncFlowToForm = useCallback(() => {
     // Only run if initialization is complete
@@ -835,6 +1050,34 @@ export default function JourneyFlowBuilderIntegrated({
       }
     >(); // Collect engagements from state nodes
 
+    // CRITICAL: Build a map of node's current state -> next state from eventInfo
+    // This tells us what state each node transitions to
+    const nodeStateToNextStateMap = new Map<string, string>();
+    newEventInfo.forEach((eventInfo) => {
+      eventInfo.currentState?.forEach((currentState) => {
+        const currentStateStr = String(currentState.currentState);
+        // Get the first nextState transition (assuming single transition for now)
+        const firstNextState = currentState.nextState?.[0];
+        if (firstNextState) {
+          const nextStateStr = String(firstNextState.transitionTo);
+          // Find the node with this event name and current state
+          const nodeWithEvent = nodes.find(
+            (n) =>
+              n.type === "state" &&
+              (n.data as JourneyNodeData).eventName === eventInfo.eventname
+          );
+          if (nodeWithEvent) {
+            const nodeState =
+              nsm.get(nodeWithEvent.id) ||
+              esm.get(eventInfo.eventname) ||
+              currentStateStr;
+            // Map: node's current state -> next state it transitions to
+            nodeStateToNextStateMap.set(nodeState, nextStateStr);
+          }
+        }
+      });
+    });
+
     nodes.forEach((node) => {
       if (node.type !== "state") return;
 
@@ -851,23 +1094,35 @@ export default function JourneyFlowBuilderIntegrated({
         return;
       }
 
+      // CRITICAL: Get the next state that this node transitions to
+      // This is the state where the engagement should appear
+      const nextState = nodeStateToNextStateMap.get(stateNumber);
+
       nodeData.engagements.forEach((engagement) => {
         if (engagement.id) {
           engagementStateMap.set(engagement.id, {
             engagement,
             node: node as Node<JourneyNodeData>,
-            stateNumber,
+            stateNumber: nextState || stateNumber, // Use nextState if available, fallback to current state
           });
         }
       });
     }); // Sync each engagement to an action (only once per engagement ID)
 
     engagementStateMap.forEach(({ engagement, node, stateNumber }) => {
-      // CRITICAL: Always ensure engagement has originalNodeId set to current node's ID
-      // This is essential for preventing cross-node matching
+      // CRITICAL: stateNumber here is actually the NEXT state (where engagement appears)
+      // This is the state that should be used for onState in the action
       const engagementConfig = engagement.config as
         | Record<string, unknown>
         | undefined;
+
+      // Check if engagement has originalOnState that is a reset state
+      // If so, preserve that reset state instead of using the next state
+      const originalOnState = engagementConfig?.originalOnState as
+        | string
+        | undefined;
+      const isOriginalOnStateResetState =
+        originalOnState && resetStates?.includes(originalOnState);
 
       // Always set originalNodeId and originalEventName to current node's values
       // This ensures the engagement is correctly associated with this node
@@ -876,12 +1131,21 @@ export default function JourneyFlowBuilderIntegrated({
         ...engagementConfig,
         originalNodeId: node.id, // Always use current node's ID
         originalEventName: nodeData.eventName || "", // Always use current node's event name
+        // Preserve originalOnState if it's a reset state, otherwise use next state
+        originalOnState: isOriginalOnStateResetState
+          ? originalOnState
+          : stateNumber, // stateNumber is now the next state
       };
+
+      // Use originalOnState if it's a reset state, otherwise use next state
+      const stateToUse = isOriginalOnStateResetState
+        ? originalOnState
+        : stateNumber; // stateNumber is now the next state
 
       updatedActions = syncEngagementToAction(
         node,
         engagement,
-        stateNumber,
+        stateToUse,
         updatedActions
       );
     }); // CRITICAL: Deduplicate actions by exact actionId first, then by engagement ID
@@ -1007,10 +1271,22 @@ export default function JourneyFlowBuilderIntegrated({
     });
 
     // Second pass - filter out actions that don't have matching engagements
+    // EXCEPTION: Keep actions with onState that is a reset state, even if not attached to any node
     updatedActions = updatedActions.filter((action) => {
       const actionEngagementId = action.actionId.includes("_")
         ? action.actionId.split("_")[0]
         : action.actionId;
+
+      // Check if action's onState is a reset state
+      // Reset states don't have direct node representations, so their engagements won't be in the flow
+      // But we should still keep the action
+      const isActionOnStateResetState =
+        action.onState && resetStates?.includes(action.onState);
+
+      // If it's a reset state action, always keep it
+      if (isActionOnStateResetState) {
+        return true;
+      }
 
       // Check if engagement exists in current flow
       const hasMatchingEngagement = engagementIds.has(actionEngagementId);
@@ -1049,7 +1325,68 @@ export default function JourneyFlowBuilderIntegrated({
       }
 
       return shouldKeep;
-    }); // CRITICAL: Use replaceActions from useFieldArray instead of setValue
+    });
+
+    // CRITICAL: After syncing all engagements, update all actions' onState to match current next states
+    // This ensures that after node deletion, when state numbers shift, all onState values are updated correctly
+    updatedActions = updatedActions.map((action) => {
+      const actionConfig = action.config as Record<string, unknown> | undefined;
+      const actionOriginalNodeId = actionConfig?.originalNodeId as
+        | string
+        | undefined;
+      const actionOriginalOnState = actionConfig?.originalOnState as
+        | string
+        | undefined;
+
+      // Check if originalOnState is a reset state - if so, preserve it
+      const isOriginalOnStateResetState =
+        actionOriginalOnState && resetStates?.includes(actionOriginalOnState);
+
+      // Find the node this action belongs to
+      const matchingNode = nodes.find(
+        (n) => n.id === actionOriginalNodeId && n.type === "state"
+      ) as Node<JourneyNodeData> | undefined;
+
+      if (matchingNode) {
+        const nodeData = matchingNode.data as JourneyNodeData;
+        const nodeState =
+          nsm.get(matchingNode.id) || esm.get(nodeData.eventName || "");
+
+        if (nodeState) {
+          // Get the next state that this node transitions to
+          const nextState = nodeStateToNextStateMap.get(nodeState);
+
+          // If originalOnState is a reset state, preserve it
+          if (isOriginalOnStateResetState && actionOriginalOnState) {
+            if (action.onState !== actionOriginalOnState) {
+              // Update onState to match the preserved reset state
+              return {
+                ...action,
+                onState: actionOriginalOnState,
+                config: {
+                  ...action.config,
+                  originalOnState: actionOriginalOnState, // Preserve reset state
+                } as typeof action.config & { originalOnState: string },
+              };
+            }
+          } else if (nextState && action.onState !== nextState) {
+            // Update onState to match the current next state
+            return {
+              ...action,
+              onState: nextState,
+              config: {
+                ...action.config,
+                originalOnState: nextState, // Also update originalOnState
+              } as typeof action.config & { originalOnState: string },
+            };
+          }
+        }
+      }
+
+      return action;
+    });
+
+    // CRITICAL: Use replaceActions from useFieldArray instead of setValue
     // This ensures React Hook Form properly tracks the array changes
 
     replaceActions(updatedActions);
@@ -1207,11 +1544,24 @@ export default function JourneyFlowBuilderIntegrated({
                 engagementId: engagementId,
               }; // Sync engagement to form action
 
+              // CRITICAL: Get the next state that this node transitions to
+              // This is the state where the engagement should appear
+              const currentEventInfo = getValues("ruleEngine.eventInfo") as
+                | EventInfo[]
+                | undefined;
+              const nextState =
+                getNextStateForNode(
+                  sourceNode as Node<JourneyNodeData>,
+                  currentEventInfo,
+                  eventStateMap,
+                  nodeStateMap
+                ) || stateNumber; // Fallback to current state if next state not found
+
               const currentActions = getValues("nudgeSelection.actions") || [];
               const updatedActions = syncEngagementToAction(
                 sourceNode as Node<JourneyNodeData>,
                 engagement,
-                stateNumber,
+                nextState, // Use next state instead of current state
                 currentActions
               );
               replaceActions(updatedActions); // Use replaceActions to ensure React Hook Form tracks changes
@@ -1535,71 +1885,453 @@ export default function JourneyFlowBuilderIntegrated({
         }
       }
 
-      setEdges((eds) => {
-        // Find engagement node IDs connected to the deleted node
-        const engagementNodeIds = new Set<string>();
-        eds.forEach((edge) => {
-          if (edge.source === nodeId && edge.target.startsWith("engagement-")) {
-            engagementNodeIds.add(edge.target);
-            // Extract engagement ID from node ID (format: engagement-{id})
-            const engagementId = edge.target.replace("engagement-", "");
-            if (engagementId) {
-              engagementIdsToDelete.add(engagementId);
-            }
+      // Find engagement node IDs connected to the deleted node
+      const engagementNodeIds = new Set<string>();
+      edges.forEach((edge) => {
+        if (edge.source === nodeId && edge.target.startsWith("engagement-")) {
+          engagementNodeIds.add(edge.target);
+          // Extract engagement ID from node ID (format: engagement-{id})
+          const engagementId = edge.target.replace("engagement-", "");
+          if (engagementId) {
+            engagementIdsToDelete.add(engagementId);
+          }
+        }
+      });
+
+      // Remove actions from form for deleted engagements using React Hook Form's removeAction
+      // CRITICAL: Only remove actions that belong to THIS specific deleted node
+      // We verify by BOTH engagement ID AND originalNodeId to ensure we don't remove actions from other nodes
+      if (engagementIdsToDelete.size > 0) {
+        const currentActions = getValues("nudgeSelection.actions") || [];
+        // Find indices of actions to remove (in reverse order to maintain correct indices)
+        const indicesToRemove: number[] = [];
+        currentActions.forEach((action, index) => {
+          const actionIdPrefix = action.actionId.includes("_")
+            ? action.actionId.split("_")[0]
+            : action.actionId;
+
+          // First check: engagement ID must match one from deleted node
+          if (!engagementIdsToDelete.has(actionIdPrefix)) {
+            // Engagement ID doesn't match - keep this action
+            return;
+          }
+
+          // Second check: action must have originalNodeId that matches the deleted node
+          // This is the critical check to ensure we only remove actions from the deleted node
+          const actionConfig = action.config as
+            | Record<string, unknown>
+            | undefined;
+          const actionOriginalNodeId = actionConfig?.originalNodeId as
+            | string
+            | undefined;
+
+          // CRITICAL: Only remove if action has originalNodeId AND it matches the deleted node ID
+          // If action doesn't have originalNodeId, we can't verify it belongs to another node,
+          // so we keep it to be safe (it might belong to a different node with same engagement ID)
+          if (actionOriginalNodeId && actionOriginalNodeId === nodeId) {
+            // Action belongs to deleted node - mark for removal
+            indicesToRemove.push(index);
           }
         });
 
-        // Remove actions from form for deleted engagements using React Hook Form's removeAction
-        // CRITICAL: Only remove actions that belong to THIS specific deleted node
-        // We verify by BOTH engagement ID AND originalNodeId to ensure we don't remove actions from other nodes
-        if (engagementIdsToDelete.size > 0) {
+        // Remove actions in reverse order to maintain correct indices
+        indicesToRemove
+          .sort((a, b) => b - a)
+          .forEach((index) => {
+            removeAction(index);
+          });
+      }
+
+      // Update nodes to remove the deleted node and its engagement nodes
+      setNodes((nds) => {
+        const filteredNodes = nds.filter(
+          (node) => node.id !== nodeId && !engagementNodeIds.has(node.id)
+        );
+
+        // CRITICAL: After deletion, state numbers shift - update all remaining actions' onState
+        // This ensures engagements stay intact for nodes that shifted to the deleted node's place
+        setTimeout(() => {
+          console.log(
+            "[handleDeleteNode] Starting onState update after deletion"
+          );
+          console.log("[handleDeleteNode] Deleted nodeId:", nodeId);
+          console.log(
+            "[handleDeleteNode] Remaining nodes count:",
+            filteredNodes.length
+          );
+
+          // Rebuild state maps with remaining nodes to get NEW state numbers
+          const esm = buildEventStateMap(
+            filteredNodes as Node<JourneyNodeData>[]
+          );
+          const nsm = buildNodeStateMap(
+            filteredNodes as Node<JourneyNodeData>[],
+            esm
+          );
+
+          console.log("[handleDeleteNode] New state maps:");
+          console.log(
+            "[handleDeleteNode] EventStateMap:",
+            Array.from(esm.entries())
+          );
+          console.log(
+            "[handleDeleteNode] NodeStateMap:",
+            Array.from(nsm.entries())
+          );
+
+          // Rebuild eventInfo from remaining nodes to get NEW next states
+          const newEdges = edges.filter(
+            (edge) =>
+              edge.source !== nodeId &&
+              edge.target !== nodeId &&
+              !engagementNodeIds.has(edge.source) &&
+              !engagementNodeIds.has(edge.target)
+          );
+          const newEventInfo = convertFlowToEventInfo(
+            filteredNodes as Node<JourneyNodeData>[],
+            newEdges,
+            esm,
+            nsm
+          );
+
+          console.log(
+            "[handleDeleteNode] New eventInfo:",
+            JSON.stringify(newEventInfo, null, 2)
+          );
+
+          // Build a map of node's current state -> next state from newEventInfo
+          const nodeStateToNextStateMap = new Map<string, string>();
+          newEventInfo.forEach((eventInfoEntry) => {
+            eventInfoEntry.currentState?.forEach((currentState) => {
+              const currentStateStr = String(currentState.currentState);
+              const firstNextState = currentState.nextState?.[0];
+              if (firstNextState) {
+                const nextStateStr = String(firstNextState.transitionTo);
+                // Find the node with this event name and current state
+                const nodeWithEvent = filteredNodes.find(
+                  (n) =>
+                    n.type === "state" &&
+                    (n.data as JourneyNodeData).eventName ===
+                      eventInfoEntry.eventname
+                );
+                if (nodeWithEvent) {
+                  const nodeState =
+                    nsm.get(nodeWithEvent.id) ||
+                    esm.get(eventInfoEntry.eventname) ||
+                    currentStateStr;
+                  // Map: node's current state -> next state it transitions to
+                  nodeStateToNextStateMap.set(nodeState, nextStateStr);
+                  console.log(
+                    `[handleDeleteNode] Node ${nodeWithEvent.data.eventName} (state ${nodeState}) transitions to ${nextStateStr}`
+                  );
+                }
+              }
+            });
+          });
+
+          console.log(
+            "[handleDeleteNode] nodeStateToNextStateMap:",
+            Array.from(nodeStateToNextStateMap.entries())
+          );
+
+          // Get current actions and update their onState to match their node's NEW next state
           const currentActions = getValues("nudgeSelection.actions") || [];
-          // Find indices of actions to remove (in reverse order to maintain correct indices)
-          const indicesToRemove: number[] = [];
-          currentActions.forEach((action, index) => {
-            const actionIdPrefix = action.actionId.includes("_")
-              ? action.actionId.split("_")[0]
-              : action.actionId;
+          console.log(
+            "[handleDeleteNode] Current actions before update:",
+            currentActions.map((a) => ({
+              actionId: a.actionId,
+              onState: a.onState,
+              type: a.type,
+              originalNodeId: (a.config as Record<string, unknown>)
+                ?.originalNodeId,
+            }))
+          );
 
-            // First check: engagement ID must match one from deleted node
-            if (!engagementIdsToDelete.has(actionIdPrefix)) {
-              // Engagement ID doesn't match - keep this action
-              return;
-            }
-
-            // Second check: action must have originalNodeId that matches the deleted node
-            // This is the critical check to ensure we only remove actions from the deleted node
+          const updatedActions = currentActions.map((action) => {
             const actionConfig = action.config as
               | Record<string, unknown>
               | undefined;
             const actionOriginalNodeId = actionConfig?.originalNodeId as
               | string
               | undefined;
+            const actionOriginalOnState = actionConfig?.originalOnState as
+              | string
+              | undefined;
 
-            // CRITICAL: Only remove if action has originalNodeId AND it matches the deleted node ID
-            // If action doesn't have originalNodeId, we can't verify it belongs to another node,
-            // so we keep it to be safe (it might belong to a different node with same engagement ID)
-            if (actionOriginalNodeId && actionOriginalNodeId === nodeId) {
-              // Action belongs to deleted node - mark for removal
-              indicesToRemove.push(index);
+            console.log(
+              `[handleDeleteNode] Processing action ${action.actionId}:`,
+              {
+                currentOnState: action.onState,
+                originalNodeId: actionOriginalNodeId,
+                originalOnState: actionOriginalOnState,
+                type: action.type,
+              }
+            );
+
+            // CRITICAL: Calculate reset states from NEW eventInfo, not from old form data
+            // After deletion, reset states may have changed (e.g., state "2" was reset, now it's regular)
+            // A state is a reset state ONLY if it's a nextState but NOT a currentState of any event
+            const newResetStates: string[] = [];
+            const allCurrentStates = new Set<string>();
+            const allNextStates = new Set<string>();
+
+            // First, collect all current states and next states
+            newEventInfo.forEach((eventInfo) => {
+              eventInfo.currentState?.forEach((currentState) => {
+                const currentStateStr = String(currentState.currentState);
+                allCurrentStates.add(currentStateStr);
+
+                currentState.nextState?.forEach((nextState) => {
+                  const nextStateStr = String(nextState.transitionTo);
+                  allNextStates.add(nextStateStr);
+                });
+              });
+            });
+
+            // A state is a reset state if it's a nextState but NOT a currentState
+            allNextStates.forEach((nextState) => {
+              if (!allCurrentStates.has(nextState)) {
+                if (!newResetStates.includes(nextState)) {
+                  newResetStates.push(nextState);
+                }
+              }
+            });
+
+            // Check if originalOnState is STILL a reset state in the NEW state configuration
+            const isOriginalOnStateResetState =
+              actionOriginalOnState &&
+              newResetStates.includes(actionOriginalOnState);
+
+            console.log(
+              `[handleDeleteNode] Old reset states:`,
+              getValues("nudgeSelection.resetStates")
+            );
+            console.log(
+              `[handleDeleteNode] New reset states (after deletion):`,
+              newResetStates
+            );
+            console.log(
+              `[handleDeleteNode] Action originalOnState:`,
+              actionOriginalOnState
+            );
+            console.log(
+              `[handleDeleteNode] Is originalOnState still a reset state:`,
+              isOriginalOnStateResetState
+            );
+
+            if (!actionOriginalNodeId) {
+              // Action doesn't have originalNodeId - try to find node by engagement ID
+              // Extract engagement ID from actionId
+              const actionEngagementId = action.actionId.includes("_")
+                ? action.actionId.split("_")[0]
+                : action.actionId;
+
+              console.log(
+                `[handleDeleteNode] Action ${action.actionId} has no originalNodeId, trying to find by engagement ID: ${actionEngagementId}`
+              );
+
+              // Try to find the node that has this engagement
+              let matchingNodeByEngagement: Node<JourneyNodeData> | undefined;
+              filteredNodes.forEach((node) => {
+                if (node.type === "state") {
+                  const nodeData = node.data as JourneyNodeData;
+                  if (
+                    nodeData.engagements?.some(
+                      (e) => e.id === actionEngagementId
+                    )
+                  ) {
+                    matchingNodeByEngagement = node as Node<JourneyNodeData>;
+                  }
+                }
+              });
+
+              if (matchingNodeByEngagement) {
+                console.log(
+                  `[handleDeleteNode] Found node by engagement ID: ${matchingNodeByEngagement.id}, eventName: ${matchingNodeByEngagement.data.eventName}`
+                );
+                // Continue with the found node
+                const nodeData = matchingNodeByEngagement.data as JourneyNodeData;
+                const newNodeState =
+                  nsm.get(matchingNodeByEngagement.id) ||
+                  esm.get(nodeData.eventName || "");
+
+                if (newNodeState) {
+                  const newNextState = nodeStateToNextStateMap.get(
+                    newNodeState
+                  );
+                  if (newNextState && action.onState !== newNextState) {
+                    console.log(
+                      `[handleDeleteNode] Action ${action.actionId} - updating onState from ${action.onState} to ${newNextState} (found by engagement ID)`
+                    );
+                    return {
+                      ...action,
+                      onState: newNextState,
+                      config: {
+                        ...action.config,
+                        originalNodeId: matchingNodeByEngagement.id, // Set originalNodeId for future updates
+                        originalEventName: nodeData.eventName || "",
+                        originalOnState: newNextState,
+                      } as typeof action.config & {
+                        originalNodeId: string;
+                        originalEventName: string;
+                        originalOnState: string;
+                      },
+                    };
+                  }
+                }
+              } else {
+                console.log(
+                  `[handleDeleteNode] Action ${action.actionId} - could not find node by engagement ID, skipping update`
+                );
+              }
+              return action;
             }
+
+            // Find the node this action belongs to
+            const matchingNode = filteredNodes.find(
+              (n) => n.id === actionOriginalNodeId && n.type === "state"
+            ) as Node<JourneyNodeData> | undefined;
+
+            if (!matchingNode) {
+              // Node not found - action is orphaned, will be handled by syncFlowToForm
+              console.log(
+                `[handleDeleteNode] Action ${action.actionId} - node ${actionOriginalNodeId} not found in filtered nodes`
+              );
+              return action;
+            }
+
+            // Get the NEW state number for this node (after deletion, states have shifted)
+            const nodeData = matchingNode.data as JourneyNodeData;
+            const newNodeState =
+              nsm.get(matchingNode.id) || esm.get(nodeData.eventName || "");
+
+            console.log(
+              `[handleDeleteNode] Action ${action.actionId} - matching node:`,
+              {
+                nodeId: matchingNode.id,
+                eventName: nodeData.eventName,
+                newNodeState: newNodeState,
+              }
+            );
+
+            if (!newNodeState) {
+              console.log(
+                `[handleDeleteNode] Action ${action.actionId} - node has no state, skipping update`
+              );
+              return action;
+            }
+
+            // CRITICAL: Get the NEW next state that this node transitions to
+            // This is the state where the engagement should appear (onState)
+            const newNextState = nodeStateToNextStateMap.get(newNodeState);
+
+            console.log(
+              `[handleDeleteNode] Action ${action.actionId} - next state lookup:`,
+              {
+                newNodeState: newNodeState,
+                newNextState: newNextState,
+                currentOnState: action.onState,
+              }
+            );
+
+            // CRITICAL: If the node has a new next state, ALWAYS use that (even if originalOnState was a reset state)
+            // Only preserve reset state if there's NO new next state for this node
+            if (newNextState && action.onState !== newNextState) {
+              // Node has a new next state - update to it (this takes priority over preserving reset state)
+              console.log(
+                `[handleDeleteNode] Action ${action.actionId} - updating onState from ${action.onState} to ${newNextState} (node has new next state)`
+              );
+              return {
+                ...action,
+                onState: newNextState, // CRITICAL: Update onState to NEW next state (where engagement appears)
+                config: {
+                  ...action.config,
+                  originalOnState: newNextState, // Also update stored state
+                } as typeof action.config & { originalOnState: string },
+              };
+            } else if (
+              isOriginalOnStateResetState &&
+              actionOriginalOnState &&
+              !newNextState
+            ) {
+              // Only preserve reset state if there's NO new next state for this node
+              if (action.onState !== actionOriginalOnState) {
+                console.log(
+                  `[handleDeleteNode] Action ${action.actionId} - updating onState to preserved reset state (no new next state): ${actionOriginalOnState}`
+                );
+                return {
+                  ...action,
+                  onState: actionOriginalOnState,
+                  config: {
+                    ...action.config,
+                    originalOnState: actionOriginalOnState, // Preserve reset state
+                  } as typeof action.config & { originalOnState: string },
+                };
+              } else {
+                console.log(
+                  `[handleDeleteNode] Action ${action.actionId} - onState already matches preserved reset state: ${actionOriginalOnState}`
+                );
+              }
+            } else if (!newNextState) {
+              console.log(
+                `[handleDeleteNode] Action ${action.actionId} - no next state found for node state ${newNodeState}`
+              );
+            } else {
+              console.log(
+                `[handleDeleteNode] Action ${action.actionId} - onState already correct: ${action.onState} === ${newNextState}`
+              );
+            }
+
+            return action;
           });
 
-          // Remove actions in reverse order to maintain correct indices
-          indicesToRemove
-            .sort((a, b) => b - a)
-            .forEach((index) => {
-              removeAction(index);
-            });
-        }
-
-        // Update nodes to remove the deleted node and its engagement nodes
-        setNodes((nds) => {
-          return nds.filter(
-            (node) => node.id !== nodeId && !engagementNodeIds.has(node.id)
+          console.log(
+            "[handleDeleteNode] Updated actions after onState update:",
+            updatedActions.map((a) => ({
+              actionId: a.actionId,
+              onState: a.onState,
+              type: a.type,
+              originalNodeId: (a.config as Record<string, unknown>)
+                ?.originalNodeId,
+              originalOnState: (a.config as Record<string, unknown>)
+                ?.originalOnState,
+            }))
           );
-        }); // Remove edges connected to the deleted node and its engagement nodes
 
+          // CRITICAL: Update eventInfo in form first to ensure state transitions are correct
+          setValue("ruleEngine.eventInfo", newEventInfo);
+
+          // Handle resetStates - collect the nextState values from exit branches
+          const resetStates: string[] = [];
+          newEventInfo.forEach((eventInfo) => {
+            eventInfo.currentState?.forEach((currentState) => {
+              currentState.nextState?.forEach((nextState) => {
+                const transitionToState = String(nextState.transitionTo);
+                const stateExistsInEvents = newEventInfo.some((ei) =>
+                  ei.currentState?.some(
+                    (cs) => String(cs.currentState) === transitionToState
+                  )
+                );
+
+                if (!stateExistsInEvents) {
+                  if (!resetStates.includes(transitionToState)) {
+                    resetStates.push(transitionToState);
+                  }
+                }
+              });
+            });
+          });
+          setValue("nudgeSelection.resetStates", resetStates);
+
+          // Update actions in form with new onState values
+          replaceActions(updatedActions);
+        }, 0);
+
+        return filteredNodes;
+      });
+
+      // Remove edges connected to the deleted node and its engagement nodes
+      setEdges((eds) => {
         return eds.filter(
           (edge) =>
             edge.source !== nodeId &&
@@ -1609,7 +2341,16 @@ export default function JourneyFlowBuilderIntegrated({
         );
       });
     },
-    [setNodes, setEdges, nodes, getValues, setValue]
+    [
+      setNodes,
+      setEdges,
+      nodes,
+      edges,
+      getValues,
+      setValue,
+      removeAction,
+      replaceActions,
+    ]
   );
 
   const handleDeleteEdge = useCallback(
@@ -2215,7 +2956,6 @@ export default function JourneyFlowBuilderIntegrated({
             defaultEdgeOptions={{ type: "bezier" }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-               
             <Controls
               style={{
                 backgroundColor: theme.palette.background.paper,
@@ -2257,10 +2997,25 @@ export default function JourneyFlowBuilderIntegrated({
               _engagementType: string
             ) => {
               if (onEngagementSelect && selectedNode) {
-                const stateNumber =
+                const currentStateNumber =
                   nodeStateMap.get(selectedNode.id) ||
                   eventStateMap.get(selectedNode.data.eventName || "") ||
-                  "0"; // Find the engagement
+                  "0";
+
+                // CRITICAL: Get the next state that this node transitions to
+                // This is the state where the engagement should appear
+                const currentEventInfo = getValues("ruleEngine.eventInfo") as
+                  | EventInfo[]
+                  | undefined;
+                const stateNumber =
+                  getNextStateForNode(
+                    selectedNode,
+                    currentEventInfo,
+                    eventStateMap,
+                    nodeStateMap
+                  ) || currentStateNumber; // Fallback to current state if next state not found
+
+                // Find the engagement
 
                 const engagement = selectedNode.data.engagements?.find(
                   (e) => e.id === engagementId
