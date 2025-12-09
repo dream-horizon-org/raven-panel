@@ -171,8 +171,10 @@ export default function CreateJourneyPage({
         setIsLoadingJourney(true);
         hasFetchedJourneyRef.current = journeyId;
         const journeyResponse = await getJourneyById(Number(journeyId));
-        const formData = parseJourneyDataToFormData(journeyResponse);
 
+        console.log("journeyResponse::", journeyResponse);
+        const formData = parseJourneyDataToFormData(journeyResponse);
+        console.log("formData details::", formData);
         // Match event with events list if available
         if (
           formData.ruleEngine.currentDropdownSelectedEvent &&

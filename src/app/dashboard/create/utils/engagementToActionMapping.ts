@@ -247,14 +247,22 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
   // Get the event name from the node - this is critical for matching after deletions
   const nodeEventName = node.data.eventName || "";
 
+  // CRITICAL: Preserve originalOnState if it's a reset state, otherwise use current stateNumber
+  // This ensures reset states are preserved even after node deletions
+  const finalOriginalOnState =
+    originalOnState && originalOnState !== stateNumber
+      ? originalOnState
+      : stateNumber;
+
   const newAction = {
     config: {
       triggerDelay:
         actionIndex >= 0 ? currentActions[actionIndex].config.triggerDelay : 0,
       originalNodeId: finalNodeId, // Always store the node ID this engagement belongs to
       originalEventName: nodeEventName, // CRITICAL: Store event name for matching after node deletions
+      originalOnState: finalOriginalOnState, // CRITICAL: Store the onState for recovery after deletions
     },
-    onState,
+    onState, // CRITICAL: This is the NEXT state where engagement appears (from stateNumber parameter)
     actionId,
     type: nudgeType,
     variant: actionIndex >= 0 ? currentActions[actionIndex].variant : undefined,
@@ -266,17 +274,20 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
   // If action exists, update it; otherwise add new one
   if (actionIndex >= 0) {
     const updatedActions = [...currentActions];
-    // CRITICAL: Always update originalNodeId to match current node
-    // This ensures if an action was incorrectly matched, it gets corrected
+    // CRITICAL: Always update originalNodeId, originalEventName, and onState to match current node
+    // This ensures if an action was incorrectly matched or states shifted after deletion, it gets corrected
     updatedActions[actionIndex] = {
       ...newAction,
+      onState, // CRITICAL: Always update onState to current next state
       config: {
         ...newAction.config,
         originalNodeId: finalNodeId, // Always use current node's ID
         originalEventName: nodeEventName, // Always update event name to current node's event name
+        originalOnState: finalOriginalOnState, // Always update originalOnState to current state
       } as typeof newAction.config & {
         originalNodeId: string;
         originalEventName: string;
+        originalOnState: string;
       },
     };
     // Move to index 0 for EngagementSidePanel
