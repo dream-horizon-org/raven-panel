@@ -3,7 +3,7 @@
 import { Box, TextField, Typography, IconButton, Tooltip } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { journeyHeaderStyles } from "./content/styles/journeyHeaderStyles";
@@ -23,11 +23,21 @@ export default function JourneyHeader({
   isEditMode = false,
 }: JourneyHeaderProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleBack = () => {
+    const statusParam = searchParams?.get("status");
+    if (statusParam) {
+      router.push(`/dashboard?status=${statusParam}`);
+    } else {
+      router.back();
+    }
+  };
 
   return (
     <Box sx={journeyHeaderStyles.header}>
       <IconButton
-        onClick={() => router.back()}
+        onClick={handleBack}
         sx={journeyHeaderStyles.backButton}
         size="small"
       >
