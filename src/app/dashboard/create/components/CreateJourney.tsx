@@ -488,7 +488,13 @@ export default function CreateJourneyPage({
       }
 
       if (statusUpdateSuccess) {
-        router.push("/dashboard");
+        const statusParam = searchParams?.get("status");
+        const params = new URLSearchParams();
+        if (statusParam) {
+          params.set("status", statusParam);
+        }
+        const queryString = params.toString();
+        router.push(`/dashboard${queryString ? `?${queryString}` : ""}`);
       } else {
       }
     } catch (error) {
