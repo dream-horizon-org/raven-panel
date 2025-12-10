@@ -438,7 +438,8 @@ export default function JourneyFlowBuilderIntegrated({
               // verify that this node actually transitions to that reset state
               if (action.onState !== nodeState) {
                 const isActionStateResetState =
-                  resetStates?.includes(action.onState) || false;
+                  (action.onState && resetStates?.includes(action.onState)) ||
+                  false;
                 const isNodeStateResetState =
                   resetStates?.includes(nodeState) || false;
 
@@ -448,7 +449,7 @@ export default function JourneyFlowBuilderIntegrated({
                   const nodeResetStates = nodeToResetStateMap.get(node.id);
                   if (
                     !nodeResetStates ||
-                    !nodeResetStates.has(action.onState)
+                    !nodeResetStates.has(action?.onState || "undefined")
                   ) {
                     // Node doesn't transition to the reset state - don't restore
                     console.log(

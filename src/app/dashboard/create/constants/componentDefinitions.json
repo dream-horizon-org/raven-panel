@@ -73,11 +73,6 @@
           "type": "enum",
           "default": "Roboto",
           "acceptedValues": ["Roboto", "Inter", "Trim"]
-        },
-        {
-          "name": "fontSize",
-          "display": "Font Size",
-          "type": "number"
         }
       ],
       "styles": [
@@ -94,7 +89,8 @@
         "paddingTop",
         "paddingBottom",
         "alignItems",
-        "color"
+        "color",
+        "fontSize"
       ],
       "actions": [
         {
@@ -144,11 +140,6 @@
           "type": "enum",
           "default": "Roboto",
           "acceptedValues": ["Roboto", "Inter", "Trim"]
-        },  
-        {
-          "name": "fontSize",
-          "display": "Font Size",
-          "type": "number"
         }
       ],
       "actions": [
@@ -186,7 +177,8 @@
         "paddingBottom",
         "alignItems",
         "color",
-        "textAlign"
+        "textAlign",
+        "fontSize"
       ]
     },
     {

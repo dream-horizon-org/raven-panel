@@ -274,7 +274,7 @@ export interface NudgeSelectionHookForm {
     config: {
       triggerDelay: number;
     };
-    onState: string;
+    onState: string | undefined;
     actionId: string;
     type: NudgeType;
     variant?: NudgeSelectionPopupMenu | NudgeSelectionTooltipMenu;
