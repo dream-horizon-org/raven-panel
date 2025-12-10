@@ -85,17 +85,17 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     const isFancodeEmail = userEmail.endsWith("@fancode.com");
 
     let hasViewAccess = isDream11Email || isFancodeEmail;
-    const hasEditAccess = true;
-    const hasPublishAccess = true;
+    let hasEditAccess = false;
+    let hasPublishAccess = false;
 
     const userPermission = permissions.find(
       (p) => p.user.toLowerCase() === userEmail.toLowerCase()
     );
 
     if (userPermission) {
-      // hasViewAccess = userPermission.view;
-      // hasEditAccess = userPermission.edit;
-      // hasPublishAccess = userPermission.publish;
+      hasViewAccess = userPermission.view;
+      hasEditAccess = userPermission.edit;
+      hasPublishAccess = userPermission.publish;
     }
 
     return { hasViewAccess, hasEditAccess, hasPublishAccess };
