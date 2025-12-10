@@ -8,9 +8,9 @@ export const getAnalyticsEventsForCTA = async ({
   const res = await axiosInstance.get<EventsSchemaResponse>(
     API_ENDPOINTS.EVENTS_SCHEMA,
     {
-      params: { limit: 10000, companyName: "dream11", branchId: 0 },
+      params: { limit: 100, companyName: "dream11", branchId: 0 },
       headers: { "x-tenant-id": "dream11", "x-skip-validation": "false" },
-      signal, 
+      signal,
     }
   );
   return res.data;

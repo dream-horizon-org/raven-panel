@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { Control } from "react-hook-form";
+import { Control, useFormContext } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import {
   CreateJourneyFormData,
@@ -15,6 +15,7 @@ import { useElementLocator } from "../../contexts/ElementLocatorContext";
 
 interface PreviewPanelProps {
   control: Control<CreateJourneyFormData>;
+  engagementId?: string | null;
 }
 
 /**
@@ -60,11 +61,31 @@ const convertStyleValue = (
   return `${dpToPx(value)}px`;
 };
 
-export default function PreviewPanel({ control }: PreviewPanelProps) {
+export default function PreviewPanel({
+  control,
+  engagementId,
+}: PreviewPanelProps) {
   const { selectedTestID, setSelectedTestID } = useElementLocator();
+  const { getValues } = useFormContext<CreateJourneyFormData>();
+
+  // Find the correct action index based on engagementId
+  const actionIndex = useMemo(() => {
+    if (!engagementId) return 0;
+
+    const formActions = getValues("nudgeSelection.actions") || [];
+    const index = formActions.findIndex((action) => {
+      const actionIdPrefix = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+      return actionIdPrefix === engagementId;
+    });
+
+    return index >= 0 ? index : 0;
+  }, [engagementId, getValues]);
+
   const template = useWatch({
     control,
-    name: "nudgeSelection.actions.0.template",
+    name: `nudgeSelection.actions.${actionIndex}.template` as any,
   }) as ReactNativeJson | undefined;
 
   const actions = useWatch({
@@ -72,7 +93,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     name: "nudgeSelection.actions",
   });
 
-  const engagementType = actions?.[0]?.type;
+  const engagementType = actions?.[actionIndex]?.type;
 
   // Auto-dismiss highlight after 3 seconds
   useEffect(() => {
