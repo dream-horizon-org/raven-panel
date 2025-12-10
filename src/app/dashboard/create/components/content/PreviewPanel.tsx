@@ -222,8 +222,10 @@ export default function PreviewPanel({
         ...(nodeProps.fontSize !== undefined && nodeProps.fontSize !== null
           ? { fontSize: convertStyleValue(nodeProps.fontSize) }
           : {}),
-        // Apply fontFamily from props if present
-        ...(nodeProps.fontFamily ? { fontFamily: nodeProps.fontFamily } : {}),
+        // Apply fontFamily from props if present (with fallback fonts)
+        ...(nodeProps.fontFamily
+          ? { fontFamily: `${nodeProps.fontFamily}, sans-serif` }
+          : {}),
         // Apply text alignment - ensure it's set correctly
         ...(mappedTextAlign
           ? {
@@ -318,9 +320,9 @@ export default function PreviewPanel({
             ...(nodeProps.fontSize !== undefined && nodeProps.fontSize !== null
               ? { fontSize: convertStyleValue(nodeProps.fontSize) }
               : {}),
-            // Apply fontFamily from props if present
+            // Apply fontFamily from props if present (with fallback fonts)
             ...(nodeProps.fontFamily
-              ? { fontFamily: nodeProps.fontFamily }
+              ? { fontFamily: `${nodeProps.fontFamily}, sans-serif` }
               : {}),
             // Apply text alignment - ensure it's set correctly
             ...(mappedTextAlign
