@@ -103,12 +103,11 @@ export const getDefaultPopupTemplate = (): ReactNativeJson => ({
                   },
                 ],
                 fontWeight: "bold",
+                fontSize: 16,
                 testID: "testID-57",
               },
               actions: [],
-              styles: {
-                fontSize: 16,
-              },
+              styles: {},
             },
             {
               type: "Text",
@@ -125,7 +124,6 @@ export const getDefaultPopupTemplate = (): ReactNativeJson => ({
               actions: [],
               styles: {
                 marginBottom: 12,
-                fontSize: 14,
               },
             },
           ],
@@ -182,7 +180,6 @@ export const getDefaultPopupTemplate = (): ReactNativeJson => ({
                     marginTop: 8,
                     marginBottom: 10,
                     textAlign: "center",
-                    fontSize: 14,
                   },
                 },
               ],
@@ -228,7 +225,6 @@ export const getDefaultPopupTemplate = (): ReactNativeJson => ({
                     marginBottom: 10,
                     textAlign: "center",
                     color: "#FFFFFF",
-                    fontSize: 14,
                   },
                 },
               ],
@@ -336,10 +332,11 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
                   },
                 ],
                 fontWeight: "bold",
+                fontSize: 16,
                 testID: "testID-682",
               },
               actions: [],
-              styles: { fontSize: 16 },
+              styles: {},
             },
             {
               type: "Text",
@@ -403,7 +400,6 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
                     alignItems: "center",
                     justifyContent: "center",
                     color: "#FFFFFF",
-                    fontSize: 14,
                   },
                 },
               ],
@@ -482,7 +478,6 @@ export const generateTemplate = (
                     styles: {
                       textAlign: "center",
                       color: "#111827",
-                      fontSize: 18,
                     },
                   },
                   {
@@ -538,6 +533,7 @@ export const generateTemplate = (
                     props: {
                       title: [{ value: "ALLOW", isTemplateString: false }],
                       fontWeight: "bold",
+                      fontSize: 16,
                       testID: "testID-38-left",
                     },
                     actions: [
@@ -566,7 +562,6 @@ export const generateTemplate = (
                       alignItems: "center",
                       textAlign: "center",
                       color: "#FFFFFF",
-                      fontSize: 16,
                     },
                   },
                   {
@@ -574,6 +569,7 @@ export const generateTemplate = (
                     props: {
                       title: [{ value: "DISMISS", isTemplateString: false }],
                       fontWeight: "bold",
+                      fontSize: 16,
                       testID: "testID-38-right",
                     },
                     actions: [
@@ -596,7 +592,6 @@ export const generateTemplate = (
                       alignItems: "center",
                       textAlign: "center",
                       color: "#111827",
-                      fontSize: 16,
                     },
                   },
                 ],
@@ -663,7 +658,6 @@ export const generateTemplate = (
                   styles: {
                     textAlign: "center",
                     color: "#111827",
-                    fontSize: 18,
                   },
                 },
                 // close icon goes to the RIGHT (same testID)
@@ -707,6 +701,7 @@ export const generateTemplate = (
               props: {
                 title: [{ value: "ALLOW", isTemplateString: false }],
                 fontWeight: "bold",
+                fontSize: 16,
                 testID: `testID-${timestamp + 8}`,
               },
               actions: [
@@ -736,7 +731,6 @@ export const generateTemplate = (
                 alignItems: "center",
                 textAlign: "center",
                 color: "#FFFFFF",
-                fontSize: 16,
               },
             },
           ],
