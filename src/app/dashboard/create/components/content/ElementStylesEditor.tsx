@@ -8,8 +8,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
-  ButtonGroup,
 } from "@mui/material";
 import {
   ReactNativeJson,
@@ -72,7 +70,7 @@ const ALIGN_ITEMS_VALUES = [
   "baseline",
 ];
 
-const TEXT_ALIGN_VALUES = ["left", "center", "right", "justify"];
+const TEXT_ALIGN_VALUES = ["left", "center", "right"];
 
 export default function ElementStylesEditor({
   element,
@@ -161,9 +159,17 @@ export default function ElementStylesEditor({
       "backgroundColor"
     ] as string) || "#FFFFFF";
 
-  // Handle color change
+  const textColor =
+    ((element.styles as Record<string, string | number | undefined>)?.[
+      "color"
+    ] as string) || "#000000";
+
   const handleColorChange = (color: string) => {
     onStyleChange("backgroundColor", color);
+  };
+
+  const handleTextColorChange = (color: string) => {
+    onStyleChange("color", color);
   };
 
   const renderStyleInput = (styleName: string) => {
@@ -369,19 +375,36 @@ export default function ElementStylesEditor({
       return (
         <Box key={styleName}>
           <Typography
-            sx={contentElementEditorStyles.contentLabel}
+            sx={contentElementEditorStyles.spacingSubLabel}
             gutterBottom
           >
             Text Alignment
           </Typography>
-          <ButtonGroup size="small">
-            <Button
-              variant={currentAlign === "left" ? "contained" : "outlined"}
+          <Box
+            sx={{
+              display: "inline-flex",
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 1,
+              overflow: "hidden",
+            }}
+          >
+            <Box
               onClick={() => onStyleChange(styleName, "left")}
               sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 1,
+                px: 2,
+                cursor: "pointer",
+                backgroundColor:
+                  currentAlign === "left" ? "primary.main" : "background.paper",
+                borderRight: "1px solid",
+                borderColor: "divider",
                 "&:hover": {
                   backgroundColor:
-                    currentAlign === "left" ? undefined : "action.hover",
+                    currentAlign === "left" ? "primary.dark" : "action.hover",
                 },
               }}
             >
@@ -394,19 +417,30 @@ export default function ElementStylesEditor({
               >
                 <path
                   d="M2 3H14M2 6H10M2 9H14M2 12H10"
-                  stroke="currentColor"
+                  stroke={currentAlign === "left" ? "#FFFFFF" : "currentColor"}
                   strokeWidth="1.5"
                   strokeLinecap="round"
                 />
               </svg>
-            </Button>
-            <Button
-              variant={currentAlign === "center" ? "contained" : "outlined"}
+            </Box>
+            <Box
               onClick={() => onStyleChange(styleName, "center")}
               sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 1,
+                px: 2,
+                cursor: "pointer",
+                backgroundColor:
+                  currentAlign === "center"
+                    ? "primary.main"
+                    : "background.paper",
+                borderRight: "1px solid",
+                borderColor: "divider",
                 "&:hover": {
                   backgroundColor:
-                    currentAlign === "center" ? undefined : "action.hover",
+                    currentAlign === "center" ? "primary.dark" : "action.hover",
                 },
               }}
             >
@@ -419,19 +453,30 @@ export default function ElementStylesEditor({
               >
                 <path
                   d="M3 3H13M4 6H12M3 9H13M4 12H12"
-                  stroke="currentColor"
+                  stroke={
+                    currentAlign === "center" ? "#FFFFFF" : "currentColor"
+                  }
                   strokeWidth="1.5"
                   strokeLinecap="round"
                 />
               </svg>
-            </Button>
-            <Button
-              variant={currentAlign === "right" ? "contained" : "outlined"}
+            </Box>
+            <Box
               onClick={() => onStyleChange(styleName, "right")}
               sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 1,
+                px: 2,
+                cursor: "pointer",
+                backgroundColor:
+                  currentAlign === "right"
+                    ? "primary.main"
+                    : "background.paper",
                 "&:hover": {
                   backgroundColor:
-                    currentAlign === "right" ? undefined : "action.hover",
+                    currentAlign === "right" ? "primary.dark" : "action.hover",
                 },
               }}
             >
@@ -444,13 +489,13 @@ export default function ElementStylesEditor({
               >
                 <path
                   d="M2 3H14M6 6H14M2 9H14M6 12H14"
-                  stroke="currentColor"
+                  stroke={currentAlign === "right" ? "#FFFFFF" : "currentColor"}
                   strokeWidth="1.5"
                   strokeLinecap="round"
                 />
               </svg>
-            </Button>
-          </ButtonGroup>
+            </Box>
+          </Box>
         </Box>
       );
     }
@@ -481,10 +526,7 @@ export default function ElementStylesEditor({
     if (styleName === "backgroundColor") {
       return (
         <Box key={styleName}>
-          <Typography
-            sx={contentElementEditorStyles.contentLabel}
-            gutterBottom
-          >
+          <Typography sx={contentElementEditorStyles.contentLabel} gutterBottom>
             Background Color
           </Typography>
           <Box sx={{ display: "inline-flex", gap: 1, alignItems: "center" }}>
@@ -519,6 +561,59 @@ export default function ElementStylesEditor({
               type="color"
               value={backgroundColor}
               onChange={(e) => handleColorChange(e.target.value)}
+              style={{
+                width: 40,
+                height: 40,
+                cursor: "pointer",
+                border: hasError
+                  ? "2px solid #d32f2f"
+                  : "1px solid rgba(0, 0, 0, 0.23)",
+                borderRadius: 4,
+              }}
+            />
+          </Box>
+        </Box>
+      );
+    }
+
+    if (styleName === "color") {
+      return (
+        <Box key={styleName}>
+          <Typography sx={contentElementEditorStyles.contentLabel} gutterBottom>
+            Text Color
+          </Typography>
+          <Box sx={{ display: "inline-flex", gap: 1, alignItems: "center" }}>
+            <TextField
+              size="small"
+              value={textColor}
+              onChange={(e) => handleTextColorChange(e.target.value)}
+              placeholder="#000000"
+              sx={{ width: 150 }}
+              error={hasError}
+              helperText={errorMessage as string}
+              FormHelperTextProps={{
+                sx: { color: hasError ? "error.main" : "inherit" },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <Box
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 1,
+                      backgroundColor: textColor,
+                      border: "1px solid",
+                      borderColor: hasError ? "error.main" : "divider",
+                      mr: 1,
+                    }}
+                  />
+                ),
+              }}
+            />
+            <input
+              type="color"
+              value={textColor}
+              onChange={(e) => handleTextColorChange(e.target.value)}
               style={{
                 width: 40,
                 height: 40,
@@ -727,13 +822,12 @@ export default function ElementStylesEditor({
 
       {dimensionStyles.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography
-            sx={contentElementEditorStyles.contentLabel}
-            gutterBottom
-          >
+          <Typography sx={contentElementEditorStyles.contentLabel} gutterBottom>
             Dimensions
           </Typography>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mt: 2 }}>
+          <Box
+            sx={{ display: "flex", gap: 2, alignItems: "flex-start", mt: 2 }}
+          >
             {dimensionStyles.map((styleName) => renderStyleInput(styleName))}
           </Box>
         </Box>
