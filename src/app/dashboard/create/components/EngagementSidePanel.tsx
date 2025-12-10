@@ -38,6 +38,7 @@ import PreviewPanel from "./content/PreviewPanel";
 import { engagementSidePanelStyles } from "./content/styles/engagementSidePanelStyles";
 import { validateTemplate } from "../utils/validation";
 import { ElementLocatorProvider } from "../contexts/ElementLocatorContext";
+import { JOURNEY_TEXT } from "../constants/journeyConstants";
 
 interface EngagementSidePanelProps {
   open: boolean;
@@ -308,6 +309,8 @@ export default function EngagementSidePanel({
     // Panel remains open, user can continue editing
   };
 
+  console.log("engagementType", engagementType);
+
   return (
     <>
       <Drawer
@@ -321,8 +324,11 @@ export default function EngagementSidePanel({
         <Box sx={engagementSidePanelStyles.container}>
           <Box sx={engagementSidePanelStyles.header}>
             <Typography sx={engagementSidePanelStyles.title}>
-              Configure Engagement:{" "}
-              {engagementType ? String(engagementType) : "Select Type"}
+              {engagementType === NudgeType.NUDGE_UI
+                ? JOURNEY_TEXT.ENGAGEMENT.BOTTOMSHEET
+                : `${JOURNEY_TEXT.ENGAGEMENT.CONFIGURE_ENGAGEMENT} ${
+                    engagementType ? String(engagementType) : "Select Type"
+                  }`}
             </Typography>
             <IconButton
               onClick={() => handleCloseRequest(onClose)}

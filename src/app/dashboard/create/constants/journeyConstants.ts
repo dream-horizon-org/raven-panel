@@ -105,6 +105,10 @@ export const JOURNEY_TEXT = {
     NEXT: "Next",
     CREATE_JOURNEY: "Create Journey",
   },
+  ENGAGEMENT: {
+    BOTTOMSHEET: "Configure Engagement: Bottomsheet",
+    CONFIGURE_ENGAGEMENT: "Configure Engagement: ",
+  },
 } as const;
 
 export const getJourneyFormDefaults = () => ({
