@@ -81,11 +81,7 @@ export const getStyleType = (
   ) {
     return "enum";
   }
-  if (
-    styleName === "fontSize" ||
-    styleName === "fontWeight" ||
-    styleName === "lineHeight"
-  ) {
+  if (styleName === "fontWeight" || styleName === "lineHeight") {
     return "string";
   }
   return "number";
