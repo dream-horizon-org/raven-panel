@@ -1,3 +1,4 @@
+import { CTAStatus } from "@/api/services/types/journeys.interface";
 // Status label mappings
 export const STATUS_LABEL_MAP: Record<string, string> = {
   DRAFT: "Draft",
@@ -92,3 +93,25 @@ export const DEFAULT_VALUES = {
   emptyCreator: "—",
   defaultTotalPages: 1,
 } as const;
+
+export const STATUSES = [
+  "ALL",
+  "DRAFT",
+  "LIVE",
+  "SCHEDULED",
+  "PAUSED",
+  "CONCLUDED",
+  "TERMINATED",
+] as const;
+
+export const formatStatusLabel = (status: CTAStatus): string => {
+  const statusMap: Record<string, string> = {
+    DRAFT: "Draft",
+    LIVE: "Live",
+    SCHEDULED: "Scheduled",
+    PAUSED: "Paused",
+    CONCLUDED: "Concluded",
+    TERMINATED: "Terminated",
+  };
+  return statusMap[status.toUpperCase()] || status;
+};

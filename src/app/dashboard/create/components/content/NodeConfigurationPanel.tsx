@@ -43,7 +43,7 @@ import {
   getInputType,
   isNumericType,
   normalizePropertyType,
-} from "../../utils/propertyTypeUtils";
+} from "../../utils/propertyType.utils";
 import { FormControl, InputLabel, Select } from "@mui/material";
 
 interface NodeConfigurationPanelProps {

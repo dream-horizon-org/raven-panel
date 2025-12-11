@@ -72,10 +72,10 @@ export default function JourneyActions({
         >
           {isSubmitting
             ? isEditMode
-              ? "Updating..."
-              : "Creating..."
+              ? JOURNEY_TEXT.LOADING.UPDATING
+              : JOURNEY_TEXT.LOADING.CREATING
             : isEditMode
-            ? "Update Journey"
+            ? JOURNEY_TEXT.LOADING.UPDATE_JOURNEY
             : JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
         </Button>
       )}

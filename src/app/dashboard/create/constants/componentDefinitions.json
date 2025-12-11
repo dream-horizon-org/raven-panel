@@ -411,7 +411,7 @@
           "name": "position",
           "type": "enum",
           "display": "Position",
-          "acceptedValues": ["top", "bottom", "left", "right"]
+          "acceptedValues": ["top", "bottom", "left", "right", "center"]
         },
         {
           "name": "titleFontSize",

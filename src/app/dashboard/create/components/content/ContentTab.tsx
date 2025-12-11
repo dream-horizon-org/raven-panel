@@ -20,7 +20,7 @@ import ContentElementEditor from "./ContentElementEditor";
 import {
   getComponentDefinition,
   getComponentDefinitionByDisplay,
-} from "../../utils/componentDefinitions";
+} from "../../utils/componentDefinitions.utils";
 import ElementPropsEditor from "./ElementPropsEditor";
 import ElementStylesEditor from "./ElementStylesEditor";
 

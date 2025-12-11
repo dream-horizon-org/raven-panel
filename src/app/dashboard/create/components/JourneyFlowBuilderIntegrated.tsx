@@ -50,12 +50,12 @@ import {
   convertEventInfoToFlow,
   EventStateMap,
   NodeStateMap,
-} from "../utils/stateMapping";
+} from "../utils/stateMapping.utils";
 import {
   syncEngagementToAction,
   syncActionToEngagement,
   mapNudgeTypeToEngagementType,
-} from "../utils/engagementToActionMapping";
+} from "../utils/engagementToActionMapping.utils";
 
 // Helper function to calculate non-overlapping position for new nodes
 function calculateNonOverlappingPosition(
@@ -208,8 +208,6 @@ export default function JourneyFlowBuilderIntegrated({
   });
 
   useEffect(() => {
-    console.log("eventInfo::", eventInfo);
-    console.log("nudgeActions::", nudgeActions);
     if (isInitializedRef.current) {
       return;
     }
@@ -345,18 +343,6 @@ export default function JourneyFlowBuilderIntegrated({
 
           if (!nodeState) return node;
 
-          console.log(
-            `Processing node: ${nodeData.eventName}, state: ${nodeState}`
-          );
-          console.log(
-            `All nudgeActions:`,
-            nudgeActions.map((a) => ({
-              actionId: a.actionId,
-              onState: a.onState,
-              type: a.type,
-            }))
-          );
-
           // Find actions for this state
           // CRITICAL: After deletion, onState is the source of truth because it's been updated
           // to reflect the new state numbers. We should check onState FIRST if it exists.
@@ -372,8 +358,6 @@ export default function JourneyFlowBuilderIntegrated({
             // This is the PRIMARY check after deletion because onState is updated correctly
             // when nodes are deleted and state numbers shift
             if (action.onState) {
-              console.log("test action.onState::", action.onState);
-              console.log("test nodeState::", nodeState);
               const isActionStateResetState =
                 resetStates?.includes(action.onState) || false;
               const isNodeStateResetState =
@@ -407,9 +391,6 @@ export default function JourneyFlowBuilderIntegrated({
             // This is the most reliable check for actions that haven't been updated yet
             if (actionOriginalNodeId) {
               if (actionOriginalNodeId !== node.id) {
-                console.log(
-                  `[JourneyFlowBuilderIntegrated] Skipping action ${action.actionId} - originalNodeId (${actionOriginalNodeId}) doesn't match node ID (${node.id})`
-                );
                 return false; // Don't restore - engagement was from a different node
               }
               // originalNodeId matches - this action belongs to this node
@@ -427,9 +408,6 @@ export default function JourneyFlowBuilderIntegrated({
               // If originalEventName is stored, it must match this node's eventName
               // This is the PRIMARY check when originalNodeId is not available
               if (originalEventName !== nodeData.eventName) {
-                console.log(
-                  `[JourneyFlowBuilderIntegrated] Skipping action ${action.actionId} - originalEventName (${originalEventName}) doesn't match node eventName (${nodeData.eventName})`
-                );
                 return false; // Don't restore - engagement was from a different node
               }
 
@@ -452,15 +430,9 @@ export default function JourneyFlowBuilderIntegrated({
                     !nodeResetStates.has(action?.onState || "undefined")
                   ) {
                     // Node doesn't transition to the reset state - don't restore
-                    console.log(
-                      `[JourneyFlowBuilderIntegrated] Skipping action ${action.actionId} - action is mapped to reset state ${action.onState} but node ${nodeData.eventName} (state ${nodeState}) doesn't transition to it`
-                    );
                     return false;
                   }
                   // Node transitions to this reset state - allow restoration
-                  console.log(
-                    `[JourneyFlowBuilderIntegrated] Restoring reset state action ${action.actionId} (state ${action.onState}) to node ${nodeData.eventName} (state ${nodeState}) because node transitions to reset state`
-                  );
                 } else if (!isActionStateResetState && !isNodeStateResetState) {
                   // Both are regular states but don't match - this might be due to state shifts after deletions
                   // Allow restoration but log a warning
@@ -506,37 +478,15 @@ export default function JourneyFlowBuilderIntegrated({
 
             // Check if this node's eventName matches the event that transitions to the onState
             if (eventNameThatTransitionsToOnState === nodeData.eventName) {
-              console.log(
-                `[JourneyFlowBuilderIntegrated] Attaching action ${action.actionId} (type: ${action.type}, onState: ${action.onState}) to node ${nodeData.eventName} (state: ${nodeState}) because this event transitions to state ${action.onState}`
-              );
               return true;
             }
 
             // No match
-            console.log(
-              `[JourneyFlowBuilderIntegrated] Action ${
-                action.actionId
-              } (type: ${action.type}, onState: ${
-                action.onState
-              }) does not match node ${
-                nodeData.eventName
-              } (state: ${nodeState}). Event that transitions to state ${
-                action.onState
-              }: ${eventNameThatTransitionsToOnState || "none"}`
-            );
             return false;
           });
 
-          if (actionsForThisNode.length > 0) {
-            console.log(
-              `[JourneyFlowBuilderIntegrated] Attaching ${actionsForThisNode.length} engagement(s) to node ${nodeData.eventName} (state: ${nodeState}):`,
-              actionsForThisNode.map((a) => ({
-                type: a.type,
-                onState: a.onState,
-                actionId: a.actionId,
-              }))
-            );
-          }
+          // if (actionsForThisNode.length > 0) {
+          // }
           if (actionsForThisNode.length > 0) {
             const restoredEngagements: Engagement[] = actionsForThisNode.map(
               (action) => {
@@ -1316,14 +1266,8 @@ export default function JourneyFlowBuilderIntegrated({
         hasMatchingEngagement &&
         (engagementExistsOnNode || !actionOriginalNodeId);
 
-      if (!shouldKeep) {
-        console.log(
-          `[syncFlowToForm] Removing action ${
-            action.actionId
-          } - engagement ${actionEngagementId} not found in flow or not on node ${actionOriginalNodeId ||
-            "unknown"}`
-        );
-      }
+      // if (!shouldKeep) {
+      // }
 
       return shouldKeep;
     });
@@ -1952,15 +1896,6 @@ export default function JourneyFlowBuilderIntegrated({
         // CRITICAL: After deletion, state numbers shift - update all remaining actions' onState
         // This ensures engagements stay intact for nodes that shifted to the deleted node's place
         setTimeout(() => {
-          console.log(
-            "[handleDeleteNode] Starting onState update after deletion"
-          );
-          console.log("[handleDeleteNode] Deleted nodeId:", nodeId);
-          console.log(
-            "[handleDeleteNode] Remaining nodes count:",
-            filteredNodes.length
-          );
-
           // Rebuild state maps with remaining nodes to get NEW state numbers
           const esm = buildEventStateMap(
             filteredNodes as Node<JourneyNodeData>[]
@@ -1968,16 +1903,6 @@ export default function JourneyFlowBuilderIntegrated({
           const nsm = buildNodeStateMap(
             filteredNodes as Node<JourneyNodeData>[],
             esm
-          );
-
-          console.log("[handleDeleteNode] New state maps:");
-          console.log(
-            "[handleDeleteNode] EventStateMap:",
-            Array.from(esm.entries())
-          );
-          console.log(
-            "[handleDeleteNode] NodeStateMap:",
-            Array.from(nsm.entries())
           );
 
           // Rebuild eventInfo from remaining nodes to get NEW next states
@@ -1993,11 +1918,6 @@ export default function JourneyFlowBuilderIntegrated({
             newEdges,
             esm,
             nsm
-          );
-
-          console.log(
-            "[handleDeleteNode] New eventInfo:",
-            JSON.stringify(newEventInfo, null, 2)
           );
 
           // Build a map of node's current state -> next state from newEventInfo
@@ -2022,32 +1942,13 @@ export default function JourneyFlowBuilderIntegrated({
                     currentStateStr;
                   // Map: node's current state -> next state it transitions to
                   nodeStateToNextStateMap.set(nodeState, nextStateStr);
-                  console.log(
-                    `[handleDeleteNode] Node ${nodeWithEvent.data.eventName} (state ${nodeState}) transitions to ${nextStateStr}`
-                  );
                 }
               }
             });
           });
 
-          console.log(
-            "[handleDeleteNode] nodeStateToNextStateMap:",
-            Array.from(nodeStateToNextStateMap.entries())
-          );
-
           // Get current actions and update their onState to match their node's NEW next state
           const currentActions = getValues("nudgeSelection.actions") || [];
-          console.log(
-            "[handleDeleteNode] Current actions before update:",
-            currentActions.map((a) => ({
-              actionId: a.actionId,
-              onState: a.onState,
-              type: a.type,
-              originalNodeId: (a.config as Record<string, unknown>)
-                ?.originalNodeId,
-            }))
-          );
-
           const updatedActions = currentActions.map((action) => {
             const actionConfig = action.config as
               | Record<string, unknown>
@@ -2058,16 +1959,6 @@ export default function JourneyFlowBuilderIntegrated({
             const actionOriginalOnState = actionConfig?.originalOnState as
               | string
               | undefined;
-
-            console.log(
-              `[handleDeleteNode] Processing action ${action.actionId}:`,
-              {
-                currentOnState: action.onState,
-                originalNodeId: actionOriginalNodeId,
-                originalOnState: actionOriginalOnState,
-                type: action.type,
-              }
-            );
 
             // CRITICAL: Calculate reset states from NEW eventInfo, not from old form data
             // After deletion, reset states may have changed (e.g., state "2" was reset, now it's regular)
@@ -2103,33 +1994,12 @@ export default function JourneyFlowBuilderIntegrated({
               actionOriginalOnState &&
               newResetStates.includes(actionOriginalOnState);
 
-            console.log(
-              `[handleDeleteNode] Old reset states:`,
-              getValues("nudgeSelection.resetStates")
-            );
-            console.log(
-              `[handleDeleteNode] New reset states (after deletion):`,
-              newResetStates
-            );
-            console.log(
-              `[handleDeleteNode] Action originalOnState:`,
-              actionOriginalOnState
-            );
-            console.log(
-              `[handleDeleteNode] Is originalOnState still a reset state:`,
-              isOriginalOnStateResetState
-            );
-
             if (!actionOriginalNodeId) {
               // Action doesn't have originalNodeId - try to find node by engagement ID
               // Extract engagement ID from actionId
               const actionEngagementId = action.actionId.includes("_")
                 ? action.actionId.split("_")[0]
                 : action.actionId;
-
-              console.log(
-                `[handleDeleteNode] Action ${action.actionId} has no originalNodeId, trying to find by engagement ID: ${actionEngagementId}`
-              );
 
               // Try to find the node that has this engagement
               let matchingNodeByEngagement: Node<JourneyNodeData> | undefined;
@@ -2147,9 +2017,6 @@ export default function JourneyFlowBuilderIntegrated({
               });
 
               if (matchingNodeByEngagement) {
-                console.log(
-                  `[handleDeleteNode] Found node by engagement ID: ${matchingNodeByEngagement.id}, eventName: ${matchingNodeByEngagement.data.eventName}`
-                );
                 // Continue with the found node
                 const nodeData = matchingNodeByEngagement.data as JourneyNodeData;
                 const newNodeState =
@@ -2161,9 +2028,6 @@ export default function JourneyFlowBuilderIntegrated({
                     newNodeState
                   );
                   if (newNextState && action.onState !== newNextState) {
-                    console.log(
-                      `[handleDeleteNode] Action ${action.actionId} - updating onState from ${action.onState} to ${newNextState} (found by engagement ID)`
-                    );
                     return {
                       ...action,
                       onState: newNextState,
@@ -2181,9 +2045,6 @@ export default function JourneyFlowBuilderIntegrated({
                   }
                 }
               } else {
-                console.log(
-                  `[handleDeleteNode] Action ${action.actionId} - could not find node by engagement ID, skipping update`
-                );
               }
               return action;
             }
@@ -2195,9 +2056,6 @@ export default function JourneyFlowBuilderIntegrated({
 
             if (!matchingNode) {
               // Node not found - action is orphaned, will be handled by syncFlowToForm
-              console.log(
-                `[handleDeleteNode] Action ${action.actionId} - node ${actionOriginalNodeId} not found in filtered nodes`
-              );
               return action;
             }
 
@@ -2206,19 +2064,7 @@ export default function JourneyFlowBuilderIntegrated({
             const newNodeState =
               nsm.get(matchingNode.id) || esm.get(nodeData.eventName || "");
 
-            console.log(
-              `[handleDeleteNode] Action ${action.actionId} - matching node:`,
-              {
-                nodeId: matchingNode.id,
-                eventName: nodeData.eventName,
-                newNodeState: newNodeState,
-              }
-            );
-
             if (!newNodeState) {
-              console.log(
-                `[handleDeleteNode] Action ${action.actionId} - node has no state, skipping update`
-              );
               return action;
             }
 
@@ -2226,22 +2072,10 @@ export default function JourneyFlowBuilderIntegrated({
             // This is the state where the engagement should appear (onState)
             const newNextState = nodeStateToNextStateMap.get(newNodeState);
 
-            console.log(
-              `[handleDeleteNode] Action ${action.actionId} - next state lookup:`,
-              {
-                newNodeState: newNodeState,
-                newNextState: newNextState,
-                currentOnState: action.onState,
-              }
-            );
-
             // CRITICAL: If the node has a new next state, ALWAYS use that (even if originalOnState was a reset state)
             // Only preserve reset state if there's NO new next state for this node
             if (newNextState && action.onState !== newNextState) {
               // Node has a new next state - update to it (this takes priority over preserving reset state)
-              console.log(
-                `[handleDeleteNode] Action ${action.actionId} - updating onState from ${action.onState} to ${newNextState} (node has new next state)`
-              );
               return {
                 ...action,
                 onState: newNextState, // CRITICAL: Update onState to NEW next state (where engagement appears)
@@ -2257,9 +2091,6 @@ export default function JourneyFlowBuilderIntegrated({
             ) {
               // Only preserve reset state if there's NO new next state for this node
               if (action.onState !== actionOriginalOnState) {
-                console.log(
-                  `[handleDeleteNode] Action ${action.actionId} - updating onState to preserved reset state (no new next state): ${actionOriginalOnState}`
-                );
                 return {
                   ...action,
                   onState: actionOriginalOnState,
@@ -2269,35 +2100,14 @@ export default function JourneyFlowBuilderIntegrated({
                   } as typeof action.config & { originalOnState: string },
                 };
               } else {
-                console.log(
-                  `[handleDeleteNode] Action ${action.actionId} - onState already matches preserved reset state: ${actionOriginalOnState}`
-                );
               }
             } else if (!newNextState) {
-              console.log(
-                `[handleDeleteNode] Action ${action.actionId} - no next state found for node state ${newNodeState}`
-              );
-            } else {
-              console.log(
-                `[handleDeleteNode] Action ${action.actionId} - onState already correct: ${action.onState} === ${newNextState}`
-              );
             }
+            // else {
+            // }
 
             return action;
           });
-
-          console.log(
-            "[handleDeleteNode] Updated actions after onState update:",
-            updatedActions.map((a) => ({
-              actionId: a.actionId,
-              onState: a.onState,
-              type: a.type,
-              originalNodeId: (a.config as Record<string, unknown>)
-                ?.originalNodeId,
-              originalOnState: (a.config as Record<string, unknown>)
-                ?.originalOnState,
-            }))
-          );
 
           // CRITICAL: Update eventInfo in form first to ensure state transitions are correct
           setValue("ruleEngine.eventInfo", newEventInfo);

@@ -5,7 +5,7 @@ import {
   statusTabStyles,
   statusTabLabelContainerStyles,
 } from "./styles/statusTabStyles";
-import { STATUSES } from "./ListingConstants";
+import { STATUSES } from "./DashboardConstants";
 
 export type Status = typeof STATUSES[number];
 export type StatusCounts = Partial<Record<Status, number>>;

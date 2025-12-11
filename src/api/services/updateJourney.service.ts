@@ -4,7 +4,7 @@ import {
   CreateJourneyFormData,
   ReactNativeJson,
 } from "@/app/dashboard/create/types/journey.interface";
-import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney";
+import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney.utils";
 import { UpdateCtaInput } from "./types/updateJourney.interface";
 
 export const updateJourney = async (
