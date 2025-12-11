@@ -62,6 +62,7 @@ Raven streamlines the nudge creation process by offering:
 
 Raven includes the following capabilities:
 
+- ✅ **[Engagement Types](./features/engagement-types)** - Choose the right nudge format (Tooltip, BottomSheet, Popup)
 - ✅ **[Journeys Listing](./features/journeys)** - View, filter, and manage all user journeys
 - ✅ **[Create Journey](./features/create-journey)** - Build new journeys with intuitive interface
 - ✅ **[User Segments](./features/cohorts)** - Target specific user segments

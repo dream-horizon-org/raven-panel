@@ -4,338 +4,130 @@ sidebar_position: 3
 
 # Deployment
 
-This guide covers building and deploying Raven Panel to various environments.
+This guide covers deploying Raven Panel to production environments. For most teams, deployment is handled by your DevOps or infrastructure team, but understanding the process helps ensure smooth releases.
 
-## Build Process
+## Overview
 
-### Production Build
+Raven Panel can be deployed to various platforms depending on your infrastructure setup. The application is built as a Next.js application and can run on:
 
-Create an optimized production build:
+- **Cloud platforms** (Vercel, AWS, GCP, Azure)
+- **Container platforms** (Docker, Kubernetes)
+- **Traditional servers** (with Node.js runtime)
 
-```bash
-yarn build
-```
+## Pre-Deployment Checklist
 
-This generates the `.next` directory containing the production-ready application.
+Before deploying, ensure:
 
-### Build Output
+- ✅ All environment variables are configured
+- ✅ Google OAuth credentials are set up
+- ✅ API endpoints are accessible from production
+- ✅ User permissions and access controls are configured
+- ✅ Health checks are working
 
-```
-.next/
-├── cache/           # Build cache
-├── server/          # Server-side bundles
-├── static/          # Static assets
-└── standalone/      # Standalone server (if configured)
-```
+## Environment Configuration
 
-### Environment Variables
+Raven Panel requires the following environment variables:
 
-Set environment variables for production:
+### Required Variables
 
-```bash
-# Required
-NEXT_PUBLIC_API_BASE_URL=https://api.production.example.com
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-production-client-id
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_ENV` | Environment identifier | `production`, `uat`, or `development` |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID | `your-google-client-id.apps.googleusercontent.com` |
 
-# Optional
-NEXT_PUBLIC_ENABLE_ANALYTICS=true
-NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
-```
+### How Environment Affects Behavior
 
-## Deployment Options
+The `NEXT_PUBLIC_ENV` variable determines which API endpoints the application connects to:
 
-### Vercel (Recommended)
+- **production** → Connects to production APIs (`kong.dream11.com`)
+- **uat** → Connects to UAT/staging APIs (`kong-uat.dream11.com`)
+- **development** → Uses local development endpoints
 
-The easiest way to deploy Next.js applications:
+## Deployment Platforms
 
-1. Push your code to GitHub
-2. Import your repository in [Vercel](https://vercel.com)
-3. Configure environment variables
-4. Deploy
+### Cloud Hosting (Recommended)
 
-```bash
-# Or using Vercel CLI
-npx vercel --prod
-```
+**Vercel** is the easiest option for Next.js applications:
 
-### Docker
+1. Connect your GitHub repository
+2. Configure environment variables in the dashboard
+3. Deploy automatically on every push to main branch
 
-#### Dockerfile
+**Other Options:**
+- AWS Amplify
+- Netlify
+- Railway
+- Render
 
-```dockerfile
-# Base image
-FROM node:18-alpine AS base
+### Container Deployment
 
-# Dependencies
-FROM base AS deps
-WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+If your organization uses Docker:
 
-# Builder
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN yarn build
+1. Build the Docker image
+2. Push to your container registry
+3. Deploy to your container platform (Kubernetes, ECS, etc.)
 
-# Runner
-FROM base AS runner
-WORKDIR /app
+The application includes a Dockerfile for containerized deployments.
 
-ENV NODE_ENV production
+### Traditional Server
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+For servers with Node.js installed:
 
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+1. Build the application (`yarn build`)
+2. Start the production server (`yarn start`)
+3. Use a process manager like PM2 for reliability
 
-USER nextjs
+## Post-Deployment
 
-EXPOSE 3000
-ENV PORT 3000
+After deployment:
 
-CMD ["node", "server.js"]
-```
-
-#### Build and Run
-
-```bash
-# Build image
-docker build -t raven-panel .
-
-# Run container
-docker run -p 3000:3000 \
-  -e NEXT_PUBLIC_API_BASE_URL=https://api.example.com \
-  raven-panel
-```
-
-### Kubernetes
-
-#### Deployment Manifest
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: raven-panel
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: raven-panel
-  template:
-    metadata:
-      labels:
-        app: raven-panel
-    spec:
-      containers:
-        - name: raven-panel
-          image: your-registry/raven-panel:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: NEXT_PUBLIC_API_BASE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: raven-config
-                  key: api-url
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "200m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-          readinessProbe:
-            httpGet:
-              path: /healthcheck.txt
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /healthcheck.txt
-              port: 3000
-            initialDelaySeconds: 15
-            periodSeconds: 20
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: raven-panel
-spec:
-  selector:
-    app: raven-panel
-  ports:
-    - port: 80
-      targetPort: 3000
-  type: LoadBalancer
-```
-
-## CI/CD Pipeline
-
-### GitHub Actions
-
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn lint
-      - run: yarn test
-      - run: yarn app:check
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'yarn'
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
-        env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.API_URL }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: .next
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: .next
-      # Deploy to your platform
-      - run: echo "Deploy to production"
-```
-
-## Health Checks
-
-### Health Check Endpoint
-
-The application includes a health check file at `/healthcheck.txt`:
-
-```
-OK
-```
-
-### Custom Health Check
-
-For more detailed health checks, create an API route:
-
-```typescript
-// app/api/health/route.ts
-export async function GET() {
-  const health = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    checks: {
-      api: await checkApiConnection(),
-      database: await checkDatabaseConnection(),
-    },
-  };
-
-  const allHealthy = Object.values(health.checks).every(c => c.status === 'up');
-
-  return Response.json(health, {
-    status: allHealthy ? 200 : 503,
-  });
-}
-```
+1. **Verify health** - Check `/healthcheck.txt` endpoint
+2. **Test authentication** - Ensure Google OAuth works
+3. **Test journey creation** - Create a test journey
+4. **Monitor logs** - Watch for any errors
+5. **Check permissions** - Verify user access controls
 
 ## Monitoring
 
-### Recommended Tools
+Monitor these key metrics:
 
-| Tool | Purpose |
-|------|---------|
-| **Sentry** | Error tracking |
-| **Datadog** | APM and logging |
-| **Prometheus** | Metrics collection |
-| **Grafana** | Visualization |
+- **Application health** - Uptime and response times
+- **User authentication** - Login success rates
+- **Journey performance** - Journey creation and publishing
+- **Error rates** - Track and resolve issues quickly
 
-### Sentry Integration
+## Troubleshooting
 
-```typescript
-// sentry.client.config.ts
-import * as Sentry from '@sentry/nextjs';
+### Application Won't Start
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1,
-});
-```
+- Check environment variables are set correctly
+- Verify Node.js version (requires Node 20+)
+- Check port 3000 is available
 
-## Security Checklist
+### Authentication Issues
 
-Before deploying to production:
+- Verify Google OAuth credentials
+- Check redirect URIs are configured
+- Ensure environment variables match your OAuth setup
 
-- [ ] Environment variables are secure
-- [ ] HTTPS is enforced
-- [ ] CORS is configured correctly
-- [ ] Authentication is working
-- [ ] Rate limiting is in place
-- [ ] Error messages don't leak sensitive info
-- [ ] Dependencies are up to date
-- [ ] Security headers are set
+### API Connection Problems
 
-### Security Headers
+- Verify `NEXT_PUBLIC_ENV` is set correctly
+- Check network connectivity to API endpoints
+- Review API endpoint URLs in configuration
 
-Configure in `next.config.ts`:
+## Getting Help
 
-```typescript
-const securityHeaders = [
-  {
-    key: 'X-DNS-Prefetch-Control',
-    value: 'on',
-  },
-  {
-    key: 'X-Frame-Options',
-    value: 'SAMEORIGIN',
-  },
-  {
-    key: 'X-Content-Type-Options',
-    value: 'nosniff',
-  },
-  {
-    key: 'Referrer-Policy',
-    value: 'origin-when-cross-origin',
-  },
-];
+If you encounter deployment issues:
 
-module.exports = {
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: securityHeaders,
-      },
-    ];
-  },
-};
-```
+1. Check application logs
+2. Verify environment configuration
+3. Contact your DevOps team
+4. Review the [Getting Started](./getting-started) guide
+
+---
+
+:::info For Developers
+For detailed technical deployment instructions, configuration files, and advanced setup, contact your development team or refer to internal documentation.
+:::
 

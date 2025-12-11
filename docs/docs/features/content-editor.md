@@ -4,307 +4,255 @@ sidebar_position: 4
 
 # Content Editor
 
-The Content Editor allows you to design engaging in-app content for your journeys without writing code. Create modals, banners, tooltips, and more with a visual editor and live preview.
+The Content Editor is where you design what users see in your nudges. It's a visual, no-code interface that lets you create engaging content for Tooltips, BottomSheets, and Popups with a live preview.
 
 ## Overview
 
-The Content Editor consists of three main areas:
+The Content Editor has three main areas:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Toolbar                               │
-├─────────────────┬─────────────────────┬─────────────────────┤
-│                 │                     │                     │
-│    Templates    │    Canvas/Editor    │    Properties       │
-│    & Elements   │                     │    Panel            │
-│                 │                     │                     │
-└─────────────────┴─────────────────────┴─────────────────────┘
-```
+1. **Preview Panel** (Left) - See your nudge as users will see it
+2. **Content Configuration** (Center) - Select templates and add elements
+3. **Properties Panel** (Right) - Customize text, colors, spacing, and behavior
 
-## Templates
+## Getting Started
 
-### Available Templates
+When you create a journey and select an engagement type (Tooltip, BottomSheet, or Popup), the Content Editor opens automatically. You'll work through three tabs:
 
-| Template | Use Case |
-|----------|----------|
-| **Modal** | Important announcements, feature highlights |
-| **Banner** | Promotions, alerts, updates |
-| **Tooltip** | Feature tours, onboarding tips |
-| **Slideout** | Surveys, feedback forms |
-| **Fullscreen** | Welcome screens, onboarding flows |
+### Template Tab
 
-### Template Structure
+Choose from pre-built template designs:
 
-```typescript
-interface Template {
-  id: string;
-  name: string;
-  type: TemplateType;
-  layout: LayoutConfig;
-  defaultElements: Element[];
-  thumbnail: string;
-}
+**For Tooltips:**
+- Basic tooltip with title and subtitle
+- Position options (top, bottom, left, right)
 
-type TemplateType = 'modal' | 'banner' | 'tooltip' | 'slideout' | 'fullscreen';
-```
+**For BottomSheets:**
+- Basic bottom sheet
+- Bottom sheet with call-to-action button
+- Custom layouts
 
-## Elements
+**For Popups:**
+- Basic popup
+- Popup with single button
+- Popup with multiple buttons
 
-### Element Types
+:::tip
+Start with a template that's close to what you need, then customize it. You can always add or remove elements later.
+:::
 
-Build content by adding elements to your template. Use the **"Add Element"** button to select and add elements:
+### Content Tab
 
-1. Click **"Add Element"** button
-2. Select element type from dropdown menu:
-   - Vertical Stack
-   - Horizontal Stack
-   - Text
-   - Image
-3. Element is added to your layout
+Customize the visual appearance and messaging of your nudge:
+
+#### Text Configuration
+
+- **Title** - Main heading text (e.g., "Welcome to Raven!")
+- **Sub Title** - Supporting text or description
+- **Font Size** - Control how large the text appears
+- **Font Family** - Choose typography (Roboto, etc.)
+- **Font Weight** - Make text bold or regular
+- **Color** - Set text colors using hex codes
+- **Alignment** - Left, center, or right align text
+
+#### Behavior Settings
+
+Control how the nudge interacts with users:
+
+- **Auto Dismiss** - Automatically close after a set time (in milliseconds)
+  - Example: `5000` = closes after 5 seconds
+- **Dismiss On Outside Touch** - Allow users to close by tapping outside
+- **Trigger Delay** - Wait before showing the nudge (in milliseconds)
+  - Example: `2000` = shows 2 seconds after trigger
+
+#### Layout & Styling
+
+Make your nudge visually appealing:
+
+- **Spacing** - Control margins and padding
+  - Set top, right, bottom, and left spacing individually
+  - Measured in dp (density-independent pixels)
+- **Dimensions** - Set corner radius, height, and width
+- **Background Color** - Choose the background color (hex codes)
+  - Example: `#FFFFFF` for white, `#000000` for black
+
+#### Advanced Options
+
+- **Arrow Size** - For tooltips, control the size of the pointing arrow
+- **Child Elements** - Add nested elements like:
+  - **Vertical Stack** - Arrange elements vertically
+  - **Horizontal Stack** - Arrange elements side by side
+  - **Text** - Additional text elements
+  - **Image** - Add images to your nudge
+
+### Location Tab
+
+Specify where the nudge appears (primarily for Tooltips):
+
+- **Target Screen** - The screen or page where the nudge should appear
+- **Target ID** - The specific element ID to attach the tooltip to
+
+## Working with Elements
+
+### Adding Elements
+
+1. Click the **"Add Element"** button
+2. Select an element type from the dropdown:
+   - **Vertical Stack** - Stack elements vertically
+   - **Horizontal Stack** - Arrange elements in a row
+   - **Text** - Add text content
+   - **Image** - Insert images
+3. The element appears in your layout
 4. Expand the element to configure its properties
-5. Use delete button to remove elements
 
-#### Text Element
+### Configuring Elements
 
-```typescript
-interface TextElement {
-  type: 'text';
-  content: string;
-  style: {
-    fontSize: number;
-    fontWeight: number;
-    color: string;
-    textAlign: 'left' | 'center' | 'right';
-  };
-}
-```
+Each element has its own properties:
 
-#### Button Element
+**Text Elements:**
+- Content text
+- Font size, weight, color
+- Alignment
 
-```typescript
-interface ButtonElement {
-  type: 'button';
-  label: string;
-  action: ButtonAction;
-  style: {
-    backgroundColor: string;
-    textColor: string;
-    borderRadius: number;
-    size: 'small' | 'medium' | 'large';
-  };
-}
+**Image Elements:**
+- Image URL
+- Alt text (for accessibility)
+- Size and positioning
+- Border radius
 
-type ButtonAction = 
-  | { type: 'dismiss' }
-  | { type: 'navigate'; url: string }
-  | { type: 'deep_link'; path: string }
-  | { type: 'custom'; eventName: string };
-```
+**Stack Elements:**
+- Spacing between items
+- Alignment
+- Background color
 
-#### Image Element
+### Removing Elements
 
-```typescript
-interface ImageElement {
-  type: 'image';
-  src: string;
-  alt: string;
-  style: {
-    width: number | 'auto';
-    height: number | 'auto';
-    objectFit: 'cover' | 'contain' | 'fill';
-    borderRadius: number;
-  };
-}
-```
-
-#### Form Element
-
-```typescript
-interface FormElement {
-  type: 'form';
-  fields: FormField[];
-  submitAction: ButtonAction;
-  submitLabel: string;
-}
-
-interface FormField {
-  name: string;
-  type: 'text' | 'email' | 'number' | 'select' | 'rating';
-  label: string;
-  required: boolean;
-  placeholder?: string;
-  options?: string[]; // for select type
-}
-```
-
-## Properties Panel
-
-### Element Properties
-
-Each element has configurable properties:
-
-#### Style Properties
-
-```typescript
-interface BaseStyle {
-  margin: Spacing;
-  padding: Spacing;
-  backgroundColor?: string;
-  borderRadius?: number;
-  border?: BorderConfig;
-  shadow?: ShadowConfig;
-}
-
-interface Spacing {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-}
-```
-
-#### Actions
-
-Configure element interactions:
-
-```typescript
-interface ElementActions {
-  onClick?: Action;
-  onHover?: Action;
-  onDismiss?: Action;
-}
-
-interface Action {
-  type: ActionType;
-  payload?: Record<string, unknown>;
-  trackEvent?: boolean;
-}
-```
+Click the delete button (trash icon) on any element to remove it from your nudge.
 
 ## Live Preview
 
-### Device Frame
+The preview panel on the left shows exactly how your nudge will appear to users:
 
-Preview content on different devices:
+- **Real-time updates** - Changes reflect immediately
+- **Device frame** - See how it looks on mobile devices
+- **Interactive preview** - Test how elements interact
 
-```tsx
-<DeviceFrame 
-  device="iphone" // 'iphone' | 'android' | 'tablet' | 'desktop'
-  orientation="portrait" // 'portrait' | 'landscape'
->
-  <ContentPreview elements={elements} />
-</DeviceFrame>
-```
-
-### Preview Modes
-
-| Mode | Description |
-|------|-------------|
-| **Edit** | Interactive editing with element selection |
-| **Preview** | See how content appears to users |
-| **Responsive** | Test at different breakpoints |
-
-## Component Definitions
-
-Content elements are defined in component definitions:
-
-```json
-// constants/componentDefinitions.json
-{
-  "components": [
-    {
-      "type": "text",
-      "name": "Text",
-      "icon": "TextFields",
-      "defaultProps": {
-        "content": "Enter text here",
-        "fontSize": 16,
-        "color": "#000000"
-      },
-      "editableProps": ["content", "fontSize", "color", "textAlign"]
-    }
-  ]
-}
-```
-
-## Usage Example
-
-### Creating Content
-
-```tsx
-import { ContentEditor } from './components/ContentEditor';
-
-function JourneyContentStep() {
-  const [content, setContent] = useState<ContentConfig>({
-    template: 'modal',
-    elements: [],
-  });
-
-  return (
-    <ContentEditor
-      value={content}
-      onChange={setContent}
-      onPreview={() => openPreviewModal(content)}
-    />
-  );
-}
-```
-
-### Element Editor Component
-
-```tsx
-function ElementPropsEditor({ element, onChange }) {
-  return (
-    <div className="props-panel">
-      <TextField
-        label="Content"
-        value={element.content}
-        onChange={(e) => onChange({ ...element, content: e.target.value })}
-      />
-      
-      <ColorPicker
-        label="Color"
-        value={element.style.color}
-        onChange={(color) => onChange({
-          ...element,
-          style: { ...element.style, color }
-        })}
-      />
-      
-      <Slider
-        label="Font Size"
-        value={element.style.fontSize}
-        min={12}
-        max={48}
-        onChange={(size) => onChange({
-          ...element,
-          style: { ...element.style, fontSize: size }
-        })}
-      />
-    </div>
-  );
-}
-```
+:::tip
+Always check the preview after making changes to ensure everything looks good on mobile devices.
+:::
 
 ## Best Practices
 
 ### Content Design
 
-1. **Keep it concise** - Users have short attention spans
-2. **Clear CTA** - One primary action per content piece
-3. **Consistent branding** - Match your app's design system
-4. **Mobile-first** - Design for smallest screen first
+1. **Keep messages short** - Users have limited attention spans
+   - Tooltips: 5-10 words
+   - BottomSheets: 1-2 sentences
+   - Popups: Clear, concise messaging
 
-### Performance
+2. **One clear action** - Each nudge should have one primary goal
+   - Don't overwhelm users with multiple CTAs
 
-1. **Optimize images** - Use appropriate sizes and formats
-2. **Limit animations** - Keep them subtle and purposeful
-3. **Test loading** - Ensure content loads quickly
+3. **Match your brand** - Use colors and fonts consistent with your app
+   - Maintain visual consistency across all nudges
 
-### Accessibility
+4. **Mobile-first** - Design for the smallest screen first
+   - Test on actual mobile devices when possible
 
-1. **Color contrast** - Ensure readable text
-2. **Alt text** - Add descriptions to images
-3. **Button labels** - Use descriptive action text
-4. **Focus states** - Support keyboard navigation
+### Text Guidelines
+
+- **Tooltips**: Be brief and helpful
+  - ✅ "Tap to create contest"
+  - ❌ "This button allows you to create a new contest by tapping on it"
+
+- **BottomSheets**: Provide context and value
+  - ✅ "Join this contest now and win big prizes!"
+  - ❌ "Contest"
+
+- **Popups**: Be clear and direct
+  - ✅ "Your session has expired. Please log in again."
+  - ❌ "Error occurred"
+
+### Visual Design
+
+- **Contrast** - Ensure text is readable against backgrounds
+- **Spacing** - Use adequate padding and margins
+- **Colors** - Use your brand colors consistently
+- **Images** - Optimize images for mobile (small file sizes)
+
+### Behavior Settings
+
+- **Auto dismiss** - Set appropriate times:
+  - Tooltips: 3-5 seconds
+  - BottomSheets: 5-10 seconds (or let users dismiss)
+  - Popups: Usually require user action (no auto-dismiss)
+
+- **Trigger delay** - Give users time to see the screen before showing nudges
+  - 1-2 seconds is usually sufficient
+
+## Common Workflows
+
+### Creating a Simple Tooltip
+
+1. Select **Tooltip** engagement type
+2. Choose **Basic Tooltip** template
+3. In Content tab:
+   - Enter title: "New Feature"
+   - Enter subtitle: "Tap here to explore"
+4. In Location tab:
+   - Set target screen
+   - Set target element ID
+5. Preview and adjust as needed
+
+### Creating a Promotional BottomSheet
+
+1. Select **BottomSheet** engagement type
+2. Choose **BottomSheet with CTA** template
+3. In Content tab:
+   - Enter title: "Special Offer!"
+   - Enter subtitle: "Get 50% off your next contest"
+   - Customize button text: "Claim Offer"
+   - Set background color to match brand
+4. Configure behavior:
+   - Enable "Dismiss on outside touch"
+   - Set auto dismiss to 10 seconds
+5. Preview and test
+
+### Creating a Confirmation Popup
+
+1. Select **Popup** engagement type
+2. Choose **Popup with Single Button** template
+3. In Content tab:
+   - Enter title: "Confirm Action"
+   - Enter subtitle: "Are you sure you want to proceed?"
+   - Customize button text: "Confirm"
+4. Configure behavior:
+   - Disable auto dismiss (require user action)
+   - Disable "Dismiss on outside touch" (if critical)
+5. Preview and adjust
+
+## Troubleshooting
+
+### Changes Not Showing in Preview
+
+- Switch tabs and come back
+- Check if you're editing the correct element
+- Refresh the page if issue persists
+
+### Element Not Appearing
+
+- Verify the element was added successfully
+- Check if it's hidden behind other elements
+- Ensure spacing isn't pushing it off-screen
+
+### Text Too Small or Large
+
+- Adjust font size in the Content tab
+- Check preview on actual device if possible
+- Use standard sizes (14-18px for body, 20-24px for titles)
+
+## Next Steps
+
+- **[Engagement Types](./engagement-types)** - Learn when to use each type
+- **[Create Journey](./create-journey)** - Complete journey setup
+- **[Scheduling](./scheduling)** - Control when nudges appear
 
