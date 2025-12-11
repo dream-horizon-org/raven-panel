@@ -324,7 +324,7 @@ Test different engagement types for the same message to see which performs bette
 
 ## Next Steps
 
-- **[Create a Journey](./create-journey)** - Learn how to set up engagements
+- **[Creating a Journey](./creating-journey)** - Learn how to set up engagements
 - **[Content Editor](./content-editor)** - Design your engagement content
 - **[Scheduling](./scheduling)** - Control when engagements appear
 - **[Event Triggers](./event-triggers)** - Configure triggers for engagements

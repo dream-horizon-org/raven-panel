@@ -253,6 +253,6 @@ Always check the preview after making changes to ensure everything looks good on
 ## Next Steps
 
 - **[Engagement Types](./engagement-types)** - Learn when to use each type
-- **[Create Journey](./create-journey)** - Complete journey setup
+- **[Creating a Journey](./creating-journey)** - Complete journey setup
 - **[Scheduling](./scheduling)** - Control when nudges appear
 
