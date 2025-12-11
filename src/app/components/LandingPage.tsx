@@ -33,6 +33,7 @@ import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
 import { buildPathWithTenant } from "@/app/utils/tenant.utils";
 
 export default function LandingPage() {
+  console.log("Jfrog deprecation");
   const theme = useTheme();
   const router = useRouter();
   const { setUserEmailFromOutside } = usePermissions();
