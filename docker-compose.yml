@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  raven-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/healthcheck.txt"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
