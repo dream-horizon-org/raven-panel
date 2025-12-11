@@ -24,7 +24,7 @@ function HomepageHeader() {
             </Link>
             <Link
               className="button button--outline button--lg"
-              to="https://github.com/your-org/raven-panel">
+              to="https://github.com/dream-horizon-org/raven-panel">
               View on GitHub
             </Link>
           </div>
@@ -46,7 +46,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🚀',
     description: (
       <>
-        Create sophisticated user journeys with an intuitive visual editor.
+        Create user journeys with an intuitive visual editor.
         Define triggers, set schedules, and design engaging content.
       </>
     ),
@@ -56,8 +56,7 @@ const FeatureList: FeatureItem[] = [
     icon: '👥',
     description: (
       <>
-        Target specific user segments with precision. Import cohorts from 
-        your analytics platform or define custom audiences.
+        Target specific user segments with precision.
       </>
     ),
   },
@@ -67,7 +66,6 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Trigger journeys based on user actions, page views, or custom events.
-        Set up complex filter conditions for precise targeting.
       </>
     ),
   },
@@ -86,8 +84,8 @@ const FeatureList: FeatureItem[] = [
     icon: '📅',
     description: (
       <>
-        Schedule journeys with flexible timing options. Set recurring schedules,
-        active hours, and timezone-aware delivery.
+        Schedule journeys with flexible timing options. Set recurring schedules and
+        active hours.
       </>
     ),
   },
@@ -96,8 +94,7 @@ const FeatureList: FeatureItem[] = [
     icon: '🏢',
     description: (
       <>
-        Manage multiple organizations from a single platform. Switch between
-        tenants seamlessly with full data isolation.
+        Manage multiple organizations from a single platform.
       </>
     ),
   },
@@ -177,8 +174,8 @@ function HomepageCTA() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/features/journeys">
-            Explore Features
+            to="/docs/journeys/overview">
+            Explore Journeys
           </Link>
         </div>
       </div>

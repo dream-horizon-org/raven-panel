@@ -3,29 +3,17 @@ sidebar_position: 1
 slug: /
 ---
 
-# Raven - Real-Time Nudge Platform
+# Raven
 
 ## Introduction
 
-Raven is an innovative tool designed to significantly enhance user experience by providing timely and relevant guidance to end-users through in-app nudges. These nudges are dynamically triggered by specific events and conditions in real-time, ensuring that users receive the right prompts precisely when they need them.
+Raven is an innovative tool designed to significantly enhance user experience by providing timely and relevant guidance to end-users through in-app nudges such as bottomsheet, popup and tooltip. These nudges are dynamically triggered by specific events, ensuring that users receive the right prompts precisely when they need them.
 
-By leveraging real-time data and event-driven triggers, Raven helps users make better decisions, engage more effectively with the application, and ultimately boosts business performance. This tool integrates seamlessly into the user interface, offering subtle yet effective guidance without interrupting the user's workflow, thus creating a more intuitive and supportive user journey.
 
 ## What is a Nudge?
 
-A nudge is a subtle prompt or suggestion aimed at influencing user behaviour without being forceful or intrusive. It's commonly used in digital platforms to encourage users to take specific actions, such as completing a task, making a purchase, or engaging with content. Nudges are often triggered by user behaviour or system events and are designed to be timely and relevant.
+A nudge is a subtle, non-intrusive prompt designed to guide users toward specific actions. These contextual in-app messages are triggered by system events or predefined conditions, appearing at optimal moments for maximum effectiveness. Common examples include welcoming new users with onboarding tips, highlighting special offers during checkout, reminding users about abandoned shopping carts, or celebrating milestone achievements.
 
-Nudges are gentle in-app prompts aimed at guiding users to take specific actions, such as joining contests, updating their profiles, or completing important tasks. These nudges are triggered based on user behaviour or key events. The goal is to improve engagement and enhance the user experience by offering timely reminders or suggestions without being intrusive.
-
-## Problem Statement
-
-When there's a need to nudge users to boost business outcomes or provide critical information, this traditionally requires significant development effort across multiple teams (product, design, development). Each requirement goes through the entire Software Development Life Cycle (SDLC) including planning, design, development, testing, and deployment.
-
-**Key Challenges:**
-- Significant overhead for developers each time a nudge requirement arises
-- Multiple stages and coordination across different teams
-- Delays in responding to real-time user behavior
-- Missed opportunities due to lack of timely, relevant prompts
 
 ## How Raven Solves This
 
@@ -58,18 +46,33 @@ Raven streamlines the nudge creation process by offering:
 </tbody>
 </table>
 
-## Features
+## Journeys
 
-Raven includes the following capabilities:
+Journeys are the core of Raven—complete user engagement flows that deliver timely nudges to users. Each journey combines content design, user targeting, event triggers, and configuration settings.
 
-- ✅ **[Engagement Types](./features/engagement-types)** - Choose the right nudge format (Tooltip, BottomSheet, Popup)
-- ✅ **[Journeys Listing](./features/journeys)** - View, filter, and manage all user journeys
-- ✅ **[Create Journey](./features/create-journey)** - Build new journeys with intuitive interface
-- ✅ **[User Segments](./features/cohorts)** - Target specific user segments
-- ✅ **[Event Triggers](./features/events)** - Configure event-based triggers
-- ✅ **[Content Editor](./features/content-editor)** - Design in-app content with live preview
-- ✅ **[Scheduling](./features/scheduling)** - Schedule journeys with flexible timing
-- ✅ **Status Management** - Manage journey lifecycle (Draft → Live → Paused, etc.)
+**Key capabilities:**
+- **[Journey Overview](./journeys/overview)** - Understand what journeys are and how to navigate the panel
+- **[Creating a Journey](./journeys/creating-journey)** - Build new journeys with an intuitive interface
+- **[User Segments](./journeys/user-segments)** - Target specific user groups (cohorts)
+- **[Event Triggers](./journeys/event-triggers)** - Configure when journeys activate
+- **[Content Editor](./journeys/content-editor)** - Design in-app content with live preview
+- **[Scheduling](./journeys/scheduling)** - Set timing and frequency rules
+- **[Engagement Types](./journeys/engagement-types)** - Choose the right nudge format (Tooltip, BottomSheet, Popup)
+
+## Interface Overview
+
+### Sidebar Navigation
+
+The left sidebar provides access to:
+- **Journeys** - Main journey management page
+- **Dark Mode Toggle** - Switch between light and dark themes
+- **User Profile** - View your account details
+
+### Header Actions
+
+The header contains:
+- **Search Bar** - Search journeys by name
+- **Create Journey Button** - Start creating a new journey
 
 ## Tech Stack
 
@@ -81,29 +84,9 @@ Raven includes the following capabilities:
 | **TanStack Query** | Server state management |
 | **TypeScript** | Type safety |
 
-## Quick Start
-
-Get up and running with Raven in minutes:
-
-```bash
-# Clone the repository
-git clone https://github.com/dream-horizon-org/raven-panel.git
-
-# Navigate to the project
-cd raven-panel
-
-# Install dependencies
-yarn install
-
-# Start the development server
-yarn dev
-```
-
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
-
 ## Next Steps
 
 - [Getting Started](./getting-started) - Set up your development environment
-- [Journeys](./features/journeys) - Learn about journey management and the listing page
-- [Content Editor](./features/content-editor) - Design in-app content
-- [Scheduling](./features/scheduling) - Configure journey schedules
+- [Journeys Overview](./journeys/overview) - Learn about journeys and the panel interface
+- [Creating a Journey](./journeys/creating-journey) - Build your first journey
+- [User Segments](./journeys/user-segments) - Target specific user groups

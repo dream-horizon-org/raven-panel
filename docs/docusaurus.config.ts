@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Raven',
-  tagline: 'Real-Time Nudge Platform for User Engagement',
+  tagline: '*Tagline to be added',
   favicon: 'img/favicon.ico',
 
   url: 'https://dream-horizon-org.github.io',
@@ -71,20 +71,24 @@ const config: Config = {
             },
             {
               label: 'Journeys',
-              to: '/docs/features/journeys',
+              to: '/docs/journeys/overview',
             },
           ],
         },
         {
-          title: 'Features',
+          title: 'Journeys',
           items: [
             {
-              label: 'Journeys',
-              to: '/docs/features/journeys',
+              label: 'Overview',
+              to: '/docs/journeys/overview',
             },
             {
-              label: 'Cohorts',
-              to: '/docs/features/cohorts',
+              label: 'Creating a Journey',
+              to: '/docs/journeys/creating-journey',
+            },
+            {
+              label: 'User Segments',
+              to: '/docs/journeys/user-segments',
             },
           ],
         },

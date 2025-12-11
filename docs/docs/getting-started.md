@@ -47,68 +47,26 @@ This starts the Next.js development server with Turbopack for fast refresh. Open
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `yarn dev` | Start development server with Turbopack |
-| `yarn build` | Create production build |
-| `yarn start` | Start production server |
-| `yarn lint` | Run ESLint |
-| `yarn lint:fix` | Fix ESLint errors automatically |
-| `yarn test` | Run Jest tests |
-| `yarn test:coverage` | Run tests with coverage report |
-| `yarn test:watch` | Run tests in watch mode |
-| `yarn app:check` | TypeScript type checking |
+The following commands are available in the project:
 
-## Project Structure
-
-```
-raven-panel/
-├── src/
-│   ├── __tests__/          # Test files
-│   ├── api/
-│   │   └── services/       # API service functions
-│   ├── app/
-│   │   ├── Auth/           # Authentication module
-│   │   ├── components/     # App-level components
-│   │   ├── dashboard/      # Dashboard pages & features
-│   │   ├── providers/      # React context providers
-│   │   └── utils/          # App utilities
-│   ├── components/         # Shared components
-│   ├── config/             # Configuration files
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # External library configs
-│   ├── theme/              # MUI theme configuration
-│   └── ui/                 # Base UI components
-├── public/                 # Static assets
-├── docs/                   # Documentation (Docusaurus)
-└── coverage/               # Test coverage reports
-```
-
-## Interface Overview
-
-### Sidebar Navigation
-
-The left sidebar provides access to:
-- **Journeys** - Main journey management page
-- **Dark Mode Toggle** - Switch between light and dark themes
-- **User Profile** - View your account details
-
-### Header Actions
-
-The header contains:
-- **Search Bar** - Search journeys by name
-- **Create Journey Button** - Start creating a new journey
+- **`yarn dev`** - Start development server with Turbopack
+- **`yarn build`** - Create production build
+- **`yarn start`** - Start production server
+- **`yarn lint`** - Run ESLint
+- **`yarn lint:fix`** - Fix ESLint errors automatically
+- **`yarn test`** - Run Jest tests
+- **`yarn test:coverage`** - Run tests with coverage report
+- **`yarn test:watch`** - Run tests in watch mode
+- **`yarn app:check`** - TypeScript type checking
 
 ## Browser Support
 
 Raven works best on modern browsers:
 
-| Browser | Minimum Version |
-|---------|-----------------|
-| Chrome | 90+ |
-| Firefox | 88+ |
-| Safari | 14+ |
-| Edge | 90+ |
+- **Chrome** - 90+
+- **Firefox** - 88+
+- **Safari** - 14+
+- **Edge** - 90+
 
 ## IDE Setup
 
@@ -165,6 +123,6 @@ yarn app:check
 
 Now that you have Raven running locally:
 
-1. **[Learn about Journeys](./features/journeys)** - Understand the core feature and listing page
-2. **[Create a Journey](./features/create-journey)** - Design your first nudge
-3. **[Set up Scheduling](./features/scheduling)** - Configure when journeys go live
+1. **[Journeys Overview](./journeys/overview)** - Understand what journeys are and the panel interface
+2. **[Creating a Journey](./journeys/creating-journey)** - Design your first nudge
+3. **[Scheduling](./journeys/scheduling)** - Configure when journeys go live

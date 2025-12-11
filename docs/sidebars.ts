@@ -6,14 +6,15 @@ const sidebars: SidebarsConfig = {
     'getting-started',
     {
       type: 'category',
-      label: 'Features',
+      label: 'Journeys',
       items: [
-        'features/journeys',
-        'features/create-journey',
-        'features/cohorts',
-        'features/events',
-        'features/content-editor',
-        'features/scheduling',
+        'journeys/overview',
+        'journeys/creating-journey',
+        'journeys/user-segments',
+        'journeys/event-triggers',
+        'journeys/content-editor',
+        'journeys/scheduling',
+        'journeys/engagement-types',
       ],
     },
     {
