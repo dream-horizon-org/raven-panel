@@ -123,7 +123,7 @@ If you encounter deployment issues:
 1. Check application logs
 2. Verify environment configuration
 3. Contact your DevOps team
-4. Review the [Getting Started](./getting-started) guide
+4. Review the [Getting Started](../getting-started) guide
 
 ---
 
