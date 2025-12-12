@@ -3,12 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+        - NEXT_PUBLIC_PRODUCTION_URL=${NEXT_PUBLIC_PRODUCTION_URL}
+        - NEXT_PUBLIC_UAT_URL=${NEXT_PUBLIC_UAT_URL}
+        - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+    env_file:
+      - .env.local
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/healthcheck.txt', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]

@@ -17,8 +17,19 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the Next.js app
-# Disable telemetry during build
+# Accept build arguments for NEXT_PUBLIC_* variables
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ARG NEXT_PUBLIC_PRODUCTION_URL
+ARG NEXT_PUBLIC_UAT_URL
+ARG NEXT_PUBLIC_ENV=production
+
+# Set environment variables for build
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+ENV NEXT_PUBLIC_PRODUCTION_URL=${NEXT_PUBLIC_PRODUCTION_URL}
+ENV NEXT_PUBLIC_UAT_URL=${NEXT_PUBLIC_UAT_URL}
+ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
 ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN yarn build
 
 # Production image, copy all the files and run next
