@@ -1,34 +1,15 @@
 import {
   CreateJourneyFormData,
+  DeeplinkParams,
   ElementDataTypeValues,
   NextStateTransition,
   NudgeEvent,
+  ReactNativeAction,
   ReactNativeJson,
+  TemplateNode,
 } from "../types/journey.interface";
 import { NudgeType } from "../types/journey.interface";
 import { GetJourneyResponse } from "@/api/services/types/getJourney.interface";
-
-// Helper type for template transformation (allows index signature for dynamic properties)
-type TemplateNode = ReactNativeJson & Record<string, unknown>;
-
-// Type for action in ReactNativeJson actions array
-type ReactNativeAction =
-  | {
-      type: string;
-      name: string;
-      params: ElementDataTypeValues;
-    }
-  | {
-      type: "analyticsEvent";
-      name: "analyticsEvent";
-      params: NudgeEvent;
-    };
-
-// Type for deeplink params (can have androidUrl and iosUrl as arrays or strings)
-type DeeplinkParams = ElementDataTypeValues & {
-  androidUrl?: string | Array<{ value?: string } | string>;
-  iosUrl?: string | Array<{ value?: string } | string>;
-};
 
 export const parseJourneyDataToFormData = (
   apiResponse: GetJourneyResponse
@@ -201,7 +182,6 @@ export const parseJourneyDataToFormData = (
     let template: ReactNativeJson | null = null;
     if (action.template) {
       try {
-        // Template is already ReactNativeJson from GetJourneyResponse
         const parsedTemplate = action.template as ReactNativeJson;
         template = (transformDeeplinkParamsForForm(
           parsedTemplate as TemplateNode
@@ -211,7 +191,6 @@ export const parseJourneyDataToFormData = (
       }
     }
 
-    // Extract variant from action.variant or template.props.templateVariantId
     let variant: string | undefined = action.variant;
     if (!variant && template?.props?.templateVariantId) {
       variant = String(template.props.templateVariantId);
@@ -255,14 +234,99 @@ export const parseJourneyDataToFormData = (
       };
     }
 
-    const onState =
-      Object.entries(stateToAction).find(
-        ([, actionId]) => actionId === action.actionId
-      )?.[0] || "1";
+    const onState = Object.entries(stateToAction).find(
+      ([, actionId]) => actionId === action.actionId
+    )?.[0];
+
+    let originalEventName: string | undefined;
+    if (onState) {
+      const eventsWithState = eventInfo.filter((info) => {
+        return info.currentState.some(
+          (cs) => String(cs.currentState) === onState
+        );
+      });
+
+      if (eventsWithState.length === 1) {
+        // Only one event has this state - this is the correct match
+        originalEventName = eventsWithState[0].eventname;
+      } else if (eventsWithState.length > 1) {
+        // Multiple events have this state - this shouldn't happen but could after deletions
+        // Try to find the one that matches the stateToAction mapping more closely
+        // For now, use the first one but log a warning
+        console.warn(
+          `[parseJourneyData] Multiple events found with state ${onState} for action ${action.actionId}. Using first match: ${eventsWithState[0].eventname}`
+        );
+        originalEventName = eventsWithState[0].eventname;
+      } else {
+        const eventsTransitioningToState = Object.entries(
+          stateTransition
+        ).filter(([, transitions]) => {
+          return Object.values(transitions).some((nextStates) => {
+            if (Array.isArray(nextStates)) {
+              return nextStates.some(
+                (ns) => String(ns.transitionTo) === onState
+              );
+            }
+            return false;
+          });
+        });
+
+        if (eventsTransitioningToState.length > 0) {
+          const nonEntryEvents = eventsTransitioningToState.filter(
+            ([eventName]) => {
+              const eventInfoEntry = eventInfo.find(
+                (info) => info.eventname === eventName
+              );
+              if (eventInfoEntry) {
+                return !eventInfoEntry.currentState.some(
+                  (cs) => cs.currentState === 0
+                );
+              }
+              const transitions = stateTransition[eventName];
+              return transitions && !Object.keys(transitions).includes("0");
+            }
+          );
+
+          if (nonEntryEvents.length > 0) {
+            originalEventName = nonEntryEvents[0][0];
+          } else {
+            originalEventName = eventsTransitioningToState[0][0];
+          }
+        } else {
+          const eventWithStateInTransition = Object.entries(
+            stateTransition
+          ).find(([, transitions]) => {
+            return Object.keys(transitions).includes(onState);
+          });
+
+          if (eventWithStateInTransition) {
+            originalEventName = eventWithStateInTransition[0];
+          } else if (onState === "0") {
+            const entryEvents = eventInfo.filter((info) => {
+              return info.currentState.some((cs) => cs.currentState === 0);
+            });
+            if (entryEvents.length > 0) {
+              originalEventName = entryEvents[0].eventname;
+            }
+          } else {
+            const entryEvents = eventInfo.filter((info) => {
+              return info.currentState.some((cs) => cs.currentState === 0);
+            });
+            if (entryEvents.length > 0) {
+              console.warn(
+                `[parseJourneyData] Action ${action.actionId} mapped to state ${onState} which doesn't exist. Assigning to entry node: ${entryEvents[0].eventname}`
+              );
+              originalEventName = entryEvents[0].eventname;
+            }
+          }
+        }
+      }
+    }
 
     return {
       config: {
         triggerDelay: Number(action.config?.triggerDelay) || 0,
+        originalEventName: originalEventName,
       },
       onState,
       actionId: String(action.actionId || ""),

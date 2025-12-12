@@ -25,8 +25,8 @@ import {
   DynamicTextValueType,
   DynamicTextStaticType,
   CreateJourneyFormData,
+  ComponentDefinition,
 } from "../../types/journey.interface";
-import { ComponentDefinition } from "../../utils/componentDefinitions";
 import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
 import { useFormContext } from "react-hook-form";
 

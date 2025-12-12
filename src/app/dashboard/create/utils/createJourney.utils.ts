@@ -300,7 +300,13 @@ export const transformFormDataToApiFormat = (
     const nextState = action.onState || "1";
     const actionId = actionIds[index];
     if (nextState && actionId) {
-      stateToAction[nextState] = actionId;
+      if (!stateToAction[nextState]) {
+        stateToAction[nextState] = actionId;
+      } else {
+        console.warn(
+          `[createJourney] Multiple actions found for state ${nextState}. Keeping first action: ${stateToAction[nextState]}, skipping: ${actionId}`
+        );
+      }
     }
   });
 

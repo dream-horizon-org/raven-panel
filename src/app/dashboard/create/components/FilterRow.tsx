@@ -28,10 +28,7 @@ import {
   getInputType,
   isNumericType,
   normalizePropertyType,
-} from "../utils/propertyTypeUtils";
-
-// Helper type for accessing nested filter errors (unused but kept for future use)
-// type FilterErrorPath = `ruleEngine.eventInfo.${number}.currentState.${number}.nextState.${number}.filters.filter.${number}`;
+} from "../utils/propertyType.utils";
 
 interface FilterRowProps {
   control: Control<CreateJourneyFormData>;
@@ -41,7 +38,7 @@ interface FilterRowProps {
   availableProperties: string[];
   isLoadingFilters: boolean;
   propertyTypeMap: Map<string, string>;
-  filterPath: string; // Path to the filters array
+  filterPath: string;
 }
 
 export default function FilterRow({
@@ -62,7 +59,6 @@ export default function FilterRow({
   const [propertyFieldWidth, setPropertyFieldWidth] = useState(250);
   const [valueFieldWidth, setValueFieldWidth] = useState(250);
 
-  // Get selected property name to determine input type
   const selectedPropertyObj = useWatch({
     control,
     name: `${filterPath}.filter.${index}.propertyName` as Path<
@@ -71,13 +67,10 @@ export default function FilterRow({
   }) as { label: string; isLocal: boolean } | undefined;
   const selectedProperty = selectedPropertyObj?.label || "";
 
-  // Get property type from map (source of truth when property is selected)
   const propertyTypeFromMap = selectedProperty
     ? propertyTypeMap.get(selectedProperty) || "string"
     : "string";
 
-  // Use propertyTypeFromMap if we have a selected property (source of truth)
-  // Otherwise, use form value as fallback
   const formPropertyType = useWatch({
     control,
     name: `${filterPath}.filter.${index}.propertyType` as Path<
@@ -85,16 +78,12 @@ export default function FilterRow({
     >,
   }) as string | undefined;
 
-  // Determine the actual property type to use for rendering
-  // Priority: propertyTypeFromMap (if property selected) > formPropertyType > "string"
   const propertyType = selectedProperty
     ? propertyTypeFromMap
     : formPropertyType || "string";
 
-  // Get input type based on property type
   const inputType = getInputType(propertyType);
 
-  // Get current comparison value to check if conversion is needed
   const currentComparisonValue = useWatch({
     control,
     name: `${filterPath}.filter.${index}.comparisonValue` as Path<
@@ -102,7 +91,6 @@ export default function FilterRow({
     >,
   }) as string | number | boolean | undefined;
 
-  // Adjust width based on selected property name
   useEffect(() => {
     if (selectedProperty && propertyInputRef.current) {
       const canvas = document.createElement("canvas");
@@ -119,7 +107,6 @@ export default function FilterRow({
     }
   }, [selectedProperty]);
 
-  // Adjust width based on comparison value
   useEffect(() => {
     if (currentComparisonValue && valueInputRef.current) {
       const valueStr = String(currentComparisonValue);
@@ -137,13 +124,10 @@ export default function FilterRow({
     }
   }, [currentComparisonValue]);
 
-  // Update propertyType when propertyName changes and convert value if needed
   useEffect(() => {
     if (selectedProperty && propertyTypeFromMap) {
-      // Normalize the property type before storing in form
       const normalizedType = normalizePropertyType(propertyTypeFromMap);
-      // Always set the propertyType from the map when property changes
-      // This ensures the correct type is stored in the form
+
       setValue(
         `${filterPath}.filter.${index}.propertyType` as Path<
           CreateJourneyFormData
@@ -154,7 +138,6 @@ export default function FilterRow({
         }
       );
 
-      // Convert existing comparisonValue to number if property type is numeric
       if (isNumericType(propertyTypeFromMap) && currentComparisonValue) {
         const numValue = parseFloat(String(currentComparisonValue));
         if (!isNaN(numValue)) {
@@ -187,7 +170,6 @@ export default function FilterRow({
     return searchTerm ? filtered : filtered.slice(0, 10);
   }, [availableProperties, searchTerm]);
 
-  // Helper function to safely access nested filter errors
   const getFilterError = (
     field: "propertyName" | "comparisonValue"
   ): string | undefined => {
@@ -382,7 +364,6 @@ export default function FilterRow({
               );
             }
 
-            // Render number or text input
             const isNumeric = isNumericType(propertyType);
             return (
               <TextField

@@ -105,3 +105,16 @@ export interface JourneyNodeData extends Record<string, unknown> {
   // Indicates if this is the entry node
   isEntry?: boolean;
 }
+
+export interface CheckTemplateErrorsParams {
+  formStateErrors?: {
+    nudgeSelection?: {
+      actions?: unknown;
+    };
+  };
+  errors?: {
+    nudgeSelection?: {
+      actions?: unknown;
+    };
+  };
+}

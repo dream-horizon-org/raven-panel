@@ -2,6 +2,7 @@ export const journeyHeaderStyles = {
   header: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: 1.5,
     px: 3,
     py: 2,
