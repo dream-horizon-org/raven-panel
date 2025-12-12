@@ -3,21 +3,16 @@ import {
   CreateJourneyFormData,
   ReactNativeJson,
 } from "../types/journey.interface";
-import {
-  ComponentDefinition,
-  getComponentDefinition,
-} from "./componentDefinitions";
+import { ComponentDefinition } from "../types/journey.interface";
+import { getComponentDefinition } from "./componentDefinitions.utils";
 
-// Map form template types to component definition types
 const getComponentTypeForValidation = (type: string): string => {
-  // NUDGE_UI in form maps to BottomSheet in component definitions
   if (type === "NUDGE_UI" || type === "BOTTOMSHEET") {
     return "BottomSheet";
   }
   return type;
 };
 
-// Helper to check if a value is empty
 export const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
   if (typeof value === "string") return value.trim() === "";
@@ -32,7 +27,6 @@ export const isEmptyValue = (value: unknown): boolean => {
   return false;
 };
 
-// Helper to extract actual value from prop
 export const getPropValue = (propValue: unknown): unknown => {
   if (Array.isArray(propValue) && propValue.length > 0) {
     const firstItem = propValue[0];
@@ -44,14 +38,12 @@ export const getPropValue = (propValue: unknown): unknown => {
   return propValue;
 };
 
-// Validate hex color format
 export const isValidColor = (color: string): boolean => {
   if (!color || typeof color !== "string") return false;
   const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
   return hexColorRegex.test(color.trim());
 };
 
-// Validate URL format
 export const isValidUrl = (url: string): boolean => {
   if (!url || typeof url !== "string") return false;
   try {
@@ -62,7 +54,6 @@ export const isValidUrl = (url: string): boolean => {
   }
 };
 
-// Get style type based on style name
 export const getStyleType = (
   styleName: string
 ): "number" | "string" | "color" | "enum" => {
@@ -87,7 +78,6 @@ export const getStyleType = (
   return "number";
 };
 
-// Get enum values for style
 export const getStyleEnumValues = (styleName: string): string[] | undefined => {
   if (styleName === "flexDirection") {
     return ["row", "column", "row-reverse", "column-reverse"];
@@ -111,24 +101,20 @@ export const getStyleEnumValues = (styleName: string): string[] | undefined => {
   return undefined;
 };
 
-// Validate a single prop value
 export const validatePropValue = (
   prop: NonNullable<ComponentDefinition["props"]>[number],
   propValue: unknown
 ): { isValid: boolean; message?: string } => {
   const actualValue = getPropValue(propValue);
 
-  // Check required
   if (prop.isRequired && isEmptyValue(propValue)) {
     return { isValid: false, message: `${prop.name} is required` };
   }
 
-  // Skip validation if empty and not required
   if (isEmptyValue(propValue)) {
     return { isValid: true };
   }
 
-  // Validate by type
   switch (prop.type) {
     case "color":
       if (typeof actualValue !== "string" || !isValidColor(actualValue)) {
@@ -177,12 +163,10 @@ export const validatePropValue = (
   return { isValid: true };
 };
 
-// Validate a single style value
 export const validateStyleValue = (
   styleName: string,
   styleValue: unknown
 ): { isValid: boolean; message?: string } => {
-  // Skip if null/undefined or empty string (styles are optional)
   if (styleValue === null || styleValue === undefined || styleValue === "") {
     return { isValid: true };
   }
@@ -223,17 +207,13 @@ export const validateStyleValue = (
     case "number": {
       if (typeof styleValue === "string") {
         const trimmedValue = styleValue.trim();
-        // If empty string, treat as optional
         if (trimmedValue === "") {
           return { isValid: true };
         }
-        // For width/height, allow percentage strings like "100%"
         if (styleName === "width" || styleName === "height") {
-          // Check if it's a percentage string (e.g., "100%", "50%")
           if (/^\d+(\.\d+)?%$/.test(trimmedValue)) {
             return { isValid: true };
           }
-          // Check if it's a valid number string
           const numValue = Number(trimmedValue);
           if (!isNaN(numValue)) {
             return { isValid: true };
@@ -243,7 +223,6 @@ export const validateStyleValue = (
             message: `Expected a number or percentage value (e.g., 100 or "100%")`,
           };
         }
-        // For other number styles, only accept numeric strings
         const numValue = Number(trimmedValue);
         if (isNaN(numValue)) {
           return { isValid: false, message: `Expected a number value` };
@@ -265,7 +244,6 @@ export const validateStyleValue = (
   return { isValid: true };
 };
 
-// Validate props for an element
 export const validateElementProps = (
   elementProps: Record<string, unknown> | undefined,
   componentDef: ComponentDefinition | undefined,
@@ -291,12 +269,6 @@ export const validateElementProps = (
     if (validation.isValid) {
       clearErrors(fieldPath);
     } else {
-      console.log(`[Validation] Prop error at ${fieldPath}:`, {
-        propName: prop.name,
-        propValue,
-        error: validation.message,
-        basePath,
-      });
       setError(fieldPath, {
         type: validation.message?.includes("required")
           ? "required"
@@ -310,7 +282,6 @@ export const validateElementProps = (
   return !hasErrors;
 };
 
-// Validate styles for an element
 export const validateElementStyles = (
   elementStyles: Record<string, unknown> | undefined,
   componentDef: ComponentDefinition | undefined,
@@ -332,8 +303,6 @@ export const validateElementStyles = (
       CreateJourneyFormData
     >;
 
-    // Skip if not present or empty (styles are optional)
-    // Also check for empty string after trimming if it's a string
     if (
       styleValue === undefined ||
       styleValue === null ||
@@ -349,12 +318,6 @@ export const validateElementStyles = (
     if (validation.isValid) {
       clearErrors(stylePath);
     } else {
-      console.log(`[Validation] Style error at ${stylePath}:`, {
-        styleName,
-        styleValue,
-        error: validation.message,
-        basePath,
-      });
       setError(stylePath, {
         type: "validation",
         message: validation.message || "Invalid value",
@@ -476,7 +439,6 @@ export const validateElementActions = (
   return !hasErrors;
 };
 
-// Validate an element (props + styles) recursively
 export const validateElement = (
   element: ReactNativeJson | undefined,
   basePath: string,
@@ -487,39 +449,21 @@ export const validateElement = (
   clearErrors: (path: Path<CreateJourneyFormData>) => void
 ): boolean => {
   if (!element || typeof element !== "object") {
-    console.log(`[Validation] Skipping invalid element at ${basePath}`);
     return true;
   }
 
-  // NUDGE_UI (bottomsheet) and POPUP are container types without component definitions
-  // TOOLTIP has props/styles at template level, so it has a component definition
-  // Note: In form data, bottomsheet is stored as "NUDGE_UI", but in component definitions it's "BottomSheet"
   const isContainerType =
     element.type === "NUDGE_UI" ||
     element.type === "POPUP" ||
     element.type === "BOTTOMSHEET" ||
     element.type === "BottomSheet";
 
-  // Map form type to component definition type (NUDGE_UI -> BottomSheet)
   const componentType = getComponentTypeForValidation(element.type);
   const componentDef = getComponentDefinition(componentType);
 
-  console.log(`[Validation] Validating element at ${basePath}:`, {
-    type: element.type,
-    componentType,
-    isContainerType,
-    hasComponentDef: !!componentDef,
-    hasProps: !!element.props,
-    hasStyles: !!element.styles,
-    childrenCount: element.children?.length || 0,
-  });
-
   let hasErrors = false;
 
-  // Only validate props/styles if we have a component definition
-  // Template containers (NUDGE_UI, POPUP) don't have component definitions
   if (componentDef) {
-    // Validate props
     const propsValid = validateElementProps(
       element.props,
       componentDef,
@@ -528,11 +472,9 @@ export const validateElement = (
       clearErrors
     );
     if (!propsValid) {
-      console.log(`[Validation] Props validation failed at ${basePath}`);
       hasErrors = true;
     }
 
-    // Validate styles
     const stylesValid = validateElementStyles(
       element.styles,
       componentDef,
@@ -541,14 +483,9 @@ export const validateElement = (
       clearErrors
     );
     if (!stylesValid) {
-      console.log(`[Validation] Styles validation failed at ${basePath}`);
       hasErrors = true;
     }
   } else if (!isContainerType) {
-    // If no component def and it's not a known container type, log a warning
-    console.log(
-      `[Validation] No component definition found for type "${element.type}" at ${basePath}`
-    );
   }
 
   if (element.actions && Array.isArray(element.actions)) {
@@ -559,16 +496,11 @@ export const validateElement = (
       clearErrors
     );
     if (!actionsValid) {
-      console.log(`[Validation] Actions validation failed at ${basePath}`);
       hasErrors = true;
     }
   }
 
-  // Always validate children recursively (even for container types like NUDGE_UI/POPUP)
   if (element.children && Array.isArray(element.children)) {
-    console.log(
-      `[Validation] Validating ${element.children.length} children at ${basePath}`
-    );
     element.children.forEach((child, index: number) => {
       const childBasePath = `${basePath}.children.${index}`;
       const childValid = validateElement(
@@ -578,22 +510,19 @@ export const validateElement = (
         clearErrors
       );
       if (!childValid) {
-        console.log(`[Validation] Child validation failed at ${childBasePath}`);
         hasErrors = true;
       }
     });
   }
 
   if (hasErrors) {
-    console.log(`[Validation] Element validation FAILED at ${basePath}`);
-  } else {
-    console.log(`[Validation] Element validation PASSED at ${basePath}`);
+    return false;
   }
+  return true;
 
   return !hasErrors;
 };
 
-// Validate entire template
 export const validateTemplate = (
   template: ReactNativeJson | undefined,
   basePath: string,
@@ -604,23 +533,10 @@ export const validateTemplate = (
   clearErrors: (path: Path<CreateJourneyFormData>) => void
 ): boolean => {
   if (!template) {
-    console.log(`[Validation] Template is undefined at ${basePath}`);
     return false;
   }
 
-  console.log(`[Validation] Starting template validation at ${basePath}:`, {
-    templateType: template.type,
-    hasChildren: !!template.children,
-    childrenCount: template.children?.length || 0,
-  });
-
   const isValid = validateElement(template, basePath, setError, clearErrors);
-
-  console.log(
-    `[Validation] Template validation ${
-      isValid ? "PASSED" : "FAILED"
-    } at ${basePath}`
-  );
 
   return isValid;
 };

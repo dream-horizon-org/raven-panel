@@ -1,49 +1,9 @@
+import {
+  ClickActionDefinition,
+  ComponentDefinition,
+} from "../types/journey.interface";
+import { ComponentDefinitionsData } from "../types/journey.interface";
 import componentDefinitionsData from "../constants/componentDefinitions.json";
-
-export interface ComponentDefinition {
-  id: number;
-  componentVariant: string;
-  type: string;
-  display: string;
-  description: string;
-  maxAllowedChildren: number;
-  props?: Array<{
-    name: string;
-    type: string;
-    isTemplate?: boolean;
-    isRequired?: boolean;
-    default?: string | number | boolean | null;
-    acceptedValues?: string[];
-    display?: string;
-  }>;
-  styles?: string[];
-  actions?: Array<{
-    name: string;
-  }>;
-  config?: Record<string, unknown>;
-}
-
-export interface ClickActionDefinition {
-  id: string;
-  type: string;
-  name: string;
-  display: string;
-  category: "toggle" | "dropdown";
-  executionOrder: number;
-  params?: Array<{
-    name: string;
-    type: string;
-    isTemplate?: boolean | null;
-    default?: string | number | boolean | null;
-    acceptedValues?: string[] | null;
-    isRequired?: boolean;
-  }>;
-}
-
-export interface ComponentDefinitionsData {
-  components: ComponentDefinition[];
-  clickActions: ClickActionDefinition[];
-}
 
 const componentDefinitions = componentDefinitionsData as ComponentDefinitionsData;
 

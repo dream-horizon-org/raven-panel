@@ -141,6 +141,7 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
             <Tooltip
               title={JOURNEY_TEXT.SECTIONS.COHORT.TOOLTIP}
               placement="top"
+              arrow
             >
               <HelpOutlineIcon sx={cohortSectionStyles.fieldInfoIcon} />
             </Tooltip>

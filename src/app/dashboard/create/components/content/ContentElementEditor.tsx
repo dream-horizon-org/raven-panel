@@ -31,7 +31,7 @@ import { contentElementEditorStyles } from "./styles/contentElementEditorStyles"
 import {
   getComponentDefinition,
   getComponentDefinitionByDisplay,
-} from "../../utils/componentDefinitions";
+} from "../../utils/componentDefinitions.utils";
 import ElementPropsEditor from "./ElementPropsEditor";
 import ElementStylesEditor from "./ElementStylesEditor";
 import ElementActionsEditor from "./ElementActionsEditor";

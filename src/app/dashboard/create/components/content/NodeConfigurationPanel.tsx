@@ -21,6 +21,7 @@ import {
   DialogActions,
   Autocomplete,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -32,6 +33,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import {
   JourneyNodeData,
   Condition,
@@ -43,8 +45,9 @@ import {
   getInputType,
   isNumericType,
   normalizePropertyType,
-} from "../../utils/propertyTypeUtils";
+} from "../../utils/propertyType.utils";
 import { FormControl, InputLabel, Select } from "@mui/material";
+import JourneyTutorialDialog from "./JourneyTutorialDialog";
 
 interface NodeConfigurationPanelProps {
   node: Node<JourneyNodeData>;
@@ -137,6 +140,8 @@ export default function NodeConfigurationPanel({
   const eventName = watch("eventName") || "";
 
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
+  const [showHelpTooltip, setShowHelpTooltip] = useState(true);
   const [newlyAddedBranchId, setNewlyAddedBranchId] = useState<string | null>(
     null
   );
@@ -159,6 +164,15 @@ export default function NodeConfigurationPanel({
 
   // Ref to track the previous node ID to detect node changes
   const previousNodeIdRef = useRef<string>(node.id);
+
+  // Show tooltip on mount and hide after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowHelpTooltip(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Track if connection highlight was already dismissed (to prevent re-highlighting when new branch is added)
   const connectionHighlightDismissedRef = useRef(false);
@@ -993,13 +1007,42 @@ export default function NodeConfigurationPanel({
           )}
           <Typography sx={styles.headerTitleStyles}>{headerLabel}</Typography>
         </Box>
-        <IconButton
-          size="small"
-          onClick={handleCloseClick}
-          sx={styles.closeButtonStyles}
-        >
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Tooltip
+            title="Learn How Journeys Work"
+            placement="bottom"
+            arrow
+            open={showHelpTooltip}
+            onClose={() => setShowHelpTooltip(false)}
+            disableHoverListener
+            disableFocusListener
+            disableTouchListener
+          >
+            <IconButton
+              size="small"
+              onClick={() => {
+                setTutorialDialogOpen(true);
+                setShowHelpTooltip(false);
+              }}
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  color: "primary.main",
+                  bgcolor: "action.hover",
+                },
+              }}
+            >
+              <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <IconButton
+            size="small"
+            onClick={handleCloseClick}
+            sx={styles.closeButtonStyles}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       <Box
@@ -1050,8 +1093,8 @@ export default function NodeConfigurationPanel({
                   }}
                   renderInput={(params: unknown) => {
                     const fieldError = errors.eventName;
-                    const hasError =
-                      (node.data.isEntry && !field.value) || !!fieldError;
+                    // Only show error if there's a validation error (from save attempt)
+                    const hasError = !!fieldError;
                     return (
                       <TextField
                         {...(params as Record<string, unknown>)}
@@ -1061,9 +1104,7 @@ export default function NodeConfigurationPanel({
                         focused={hasError}
                         helperText={
                           fieldError?.message ||
-                          (node.data.isEntry && !field.value
-                            ? "⚠️ Please select an event first to enable transitions and engagements"
-                            : "The event that triggers this node. Conditions on transitions are evaluated on this event's properties.")
+                          "Choose what user action starts this step. This determines when your journey moves forward."
                         }
                         sx={styles.eventNameInputStyles(
                           node.data.isEntry || false,
@@ -1091,7 +1132,7 @@ export default function NodeConfigurationPanel({
 
         <Divider sx={styles.sectionDividerStyles} />
 
-        {/* In-App Presentations */}
+        {/* In-App Engagements */}
         <Box sx={styles.engagementContainerStyles}>
           <Box sx={styles.sectionHeaderStyles}>
             <Box>
@@ -1100,10 +1141,10 @@ export default function NodeConfigurationPanel({
                 fontWeight={600}
                 sx={styles.sectionTitleStyles}
               >
-                In-App Presentations
+                In-App Engagements
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Show nudge when journey reaches this node
+                Show an engagement to users when they reach this step.
               </Typography>
             </Box>
             <Button
@@ -1232,7 +1273,7 @@ export default function NodeConfigurationPanel({
               >
                 {node.data.isEntry && !eventName
                   ? "Select an event first to add engagements"
-                  : "No engagements. Add an in-app presentation to show when this node is reached."}
+                  : "No engagements set up yet. Click 'Add Engagement' to show users an engagement at this step."}
               </Typography>
             </Box>
           )}
@@ -1248,7 +1289,7 @@ export default function NodeConfigurationPanel({
                 Transitions
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Define when and where the journey moves next
+                Set up what happens next in your journey. Choose where users go after this step and add rules to control the flow.
               </Typography>
             </Box>
             <Button
@@ -1274,9 +1315,8 @@ export default function NodeConfigurationPanel({
               sx={{ mb: 2 }}
             >
               <Typography variant="caption">
-                <strong>How it works:</strong> When the{" "}
-                <strong>{eventName || "selected event"}</strong> occurs and all
-                conditions pass, the journey transitions to the target node.
+                <strong>How it works:</strong> When a user performs{" "}
+                <strong>'{eventName || "selected event"}'</strong> and meets all your rules, they move to the next step.
               </Typography>
             </Alert>
           )}
@@ -1336,7 +1376,7 @@ export default function NodeConfigurationPanel({
                               color="text.secondary"
                               display="block"
                             >
-                              AND conditions pass
+                              All rules are met
                             </Typography>
                             <Typography
                               variant="body2"
@@ -1428,7 +1468,7 @@ export default function NodeConfigurationPanel({
                                   {...(params as Record<string, unknown>)}
                                   label="Target Node"
                                   size="small"
-                                  helperText="Where the journey moves to when conditions are met"
+                                  helperText="Choose the next step users will see. Select 'Exit' to end the journey."
                                 />
                               )}
                               filterOptions={(
@@ -1593,7 +1633,7 @@ export default function NodeConfigurationPanel({
               >
                 {node.data.isEntry && !eventName
                   ? "Select an event first to add transitions"
-                  : "No transitions. Add a transition to define where the journey moves next."}
+                  : "No next steps set up yet. Click 'Add Transition' to define where the journey goes next."}
               </Typography>
             </Box>
           )}
@@ -1673,6 +1713,11 @@ export default function NodeConfigurationPanel({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <JourneyTutorialDialog
+        open={tutorialDialogOpen}
+        onClose={() => setTutorialDialogOpen(false)}
+      />
     </Box>
   );
 }

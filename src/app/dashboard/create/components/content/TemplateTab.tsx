@@ -771,7 +771,7 @@ export const generateTemplate = (
         testID: `testID-${timestamp}`,
         title: "Lifetime free card for you!",
         subTitle: "Experience life unlimited",
-        position: "top",
+        position: "center",
         titleFontSize: 14,
         subTitleFontSize: 10,
         autoDismissMs: 0,
