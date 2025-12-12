@@ -39,7 +39,6 @@ export default function LandingPage() {
 
   const handleOrganizationChange = (value: string) => {
     setOrganization(value);
-    // Store organization in localStorage and set tenant
     if (value.trim()) {
       localStorage.setItem("organization", value.trim());
       setTenantData({ name: value.trim() });
