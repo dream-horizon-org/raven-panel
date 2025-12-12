@@ -300,14 +300,9 @@ export const transformFormDataToApiFormat = (
     const nextState = action.onState || "1";
     const actionId = actionIds[index];
     if (nextState && actionId) {
-      // CRITICAL: Only set if not already set to preserve the first action for each state
-      // This prevents overwriting when multiple actions have the same onState
-      // The API's stateToAction is one-to-one, so we keep the first action encountered
       if (!stateToAction[nextState]) {
-      stateToAction[nextState] = actionId;
+        stateToAction[nextState] = actionId;
       } else {
-        // If state already has an action, log a warning but keep the first one
-        // This ensures all states have at least one action mapped, even if multiple exist
         console.warn(
           `[createJourney] Multiple actions found for state ${nextState}. Keeping first action: ${stateToAction[nextState]}, skipping: ${actionId}`
         );

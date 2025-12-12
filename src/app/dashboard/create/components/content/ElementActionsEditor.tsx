@@ -16,17 +16,21 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { ReactNativeJson, NudgeType } from "../../types/journey.interface";
 import {
-  getAvailableActions,
-  getAllClickActions,
-  getClickActionDefinition,
+  ReactNativeJson,
+  NudgeType,
   ClickActionDefinition,
-} from "../../utils/componentDefinitions";
+} from "../../types/journey.interface";
+
 import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
 import { useFormContext } from "react-hook-form";
 import { CreateJourneyFormData } from "../../types/journey.interface";
 import FormHelperText from "@mui/material/FormHelperText";
+import {
+  getAllClickActions,
+  getAvailableActions,
+  getClickActionDefinition,
+} from "../../utils/componentDefinitions.utils";
 
 interface ElementActionsEditorProps {
   element: ReactNativeJson;

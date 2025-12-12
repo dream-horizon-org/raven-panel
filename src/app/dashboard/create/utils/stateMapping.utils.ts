@@ -2,36 +2,20 @@ import { Node, Edge } from "@xyflow/react";
 import { JourneyNodeData, Branch } from "../types/JourneyNode.interface";
 import { EventInfo, Filter } from "../types/journey.interface";
 
-/**
- * Maps event names to their state numbers
- * Key: eventName, Value: stateNumber (as string)
- */
 export type EventStateMap = Map<string, string>;
 
-/**
- * Maps node IDs to their state numbers
- * Key: nodeId, Value: stateNumber (as string)
- */
 export type NodeStateMap = Map<string, string>;
 
-/**
- * Builds a map of eventName -> stateNumber by analyzing the flow
- * Entry node always gets state "0"
- * Other nodes get state numbers based on which transitionTo reaches them
- */
 export function buildEventStateMap(
   nodes: Node<JourneyNodeData>[]
 ): EventStateMap {
   const eventStateMap: EventStateMap = new Map();
   const nodeStateMap: NodeStateMap = new Map();
 
-  // Find entry node
   let entryNode = nodes.find(
     (n) => n.type === "state" && n.data.isEntry && n.data.eventName
   );
 
-  // If no entry node found, use the first node with an eventName as entry
-  // This handles cases where entry node was deleted but other nodes remain
   if (!entryNode) {
     entryNode = nodes.find((n) => n.type === "state" && n.data.eventName);
   }
@@ -40,38 +24,31 @@ export function buildEventStateMap(
     return eventStateMap;
   }
 
-  // Entry node always has state "0"
   eventStateMap.set(entryNode.data.eventName, "0");
   nodeStateMap.set(entryNode.id, "0");
 
-  // Build a graph to traverse and assign states
   const visited = new Set<string>();
 
   visited.add(entryNode.id);
 
-  // Note: queue was removed as it was unused
-
-  // Track all transitions to determine next state numbers
   const allTransitions: Array<{
     sourceState: string;
     targetEvent: string;
     sourceNodeId: string;
   }> = [];
 
-  // First pass: collect all transitions (even if source doesn't have state yet)
   nodes.forEach((node) => {
     if (node.type === "state" && node.data.branches) {
       const sourceEvent = node.data.eventName;
       if (!sourceEvent) return;
 
-      // Get source state - it might not be assigned yet, so we'll assign it later
       const sourceState =
         eventStateMap.get(sourceEvent) || nodeStateMap.get(node.id);
 
       node.data.branches.forEach((branch) => {
         if (branch.targetNodeId !== "exit") {
           allTransitions.push({
-            sourceState: sourceState || "", // Will be assigned if empty
+            sourceState: sourceState || "",
             targetEvent: branch.targetNodeId,
             sourceNodeId: node.id,
           });
@@ -80,20 +57,13 @@ export function buildEventStateMap(
     }
   });
 
-  // Second pass: assign state numbers
-  // If target event already exists, reuse its state
-  // Otherwise, assign next sequential number
   let nextStateNumber = 1;
   const usedStates = new Set<string>(["0"]);
 
-  // First, ensure all nodes with eventName have a state assigned
-  // This handles cases where nodes are created dynamically
   nodes.forEach((node) => {
     if (node.type === "state" && node.data.eventName) {
       const eventName = node.data.eventName;
       if (!eventStateMap.has(eventName)) {
-        // This node doesn't have a state yet, but it's not the entry node
-        // Check if it's referenced as a target in any branch
         const isReferencedAsTarget = nodes.some((n) => {
           if (n.type !== "state" || !n.data.branches) return false;
           return n.data.branches.some(
@@ -102,10 +72,7 @@ export function buildEventStateMap(
         });
 
         if (isReferencedAsTarget) {
-          // Assign next available state number
           let assignedState = String(nextStateNumber);
-
-          // Make sure state number is unique
           while (usedStates.has(assignedState)) {
             nextStateNumber++;
             assignedState = String(nextStateNumber);
@@ -119,11 +86,9 @@ export function buildEventStateMap(
     }
   });
 
-  // Process transitions in order
   allTransitions.forEach((transition) => {
     const { sourceState, targetEvent, sourceNodeId } = transition;
 
-    // If source state is not assigned yet, assign it first
     let actualSourceState = sourceState;
     if (!actualSourceState) {
       const sourceNode = nodes.find((n) => n.id === sourceNodeId);
@@ -153,23 +118,16 @@ export function buildEventStateMap(
 
     if (!actualSourceState) return;
 
-    // Check if target event already has a state assigned
     if (eventStateMap.has(targetEvent)) {
-      // Reuse existing state
       return;
     }
 
-    // Check if we need to assign a new state
-    // Find the target node
     const targetNode = nodes.find(
       (n) => n.type === "state" && n.data.eventName === targetEvent
     );
 
     if (targetNode && !nodeStateMap.has(targetNode.id)) {
-      // Assign next available state number
       let assignedState = String(nextStateNumber);
-
-      // Make sure state number is unique
       while (usedStates.has(assignedState)) {
         nextStateNumber++;
         assignedState = String(nextStateNumber);
@@ -185,9 +143,6 @@ export function buildEventStateMap(
   return eventStateMap;
 }
 
-/**
- * Builds nodeId -> stateNumber map
- */
 export function buildNodeStateMap(
   nodes: Node<JourneyNodeData>[],
   eventStateMap: EventStateMap
@@ -206,9 +161,6 @@ export function buildNodeStateMap(
   return nodeStateMap;
 }
 
-/**
- * Converts flow nodes/edges to ruleEngine.eventInfo format
- */
 export function convertFlowToEventInfo(
   nodes: Node<JourneyNodeData>[],
   edges: Edge[],
@@ -217,12 +169,10 @@ export function convertFlowToEventInfo(
 ): EventInfo[] {
   const eventInfoMap = new Map<string, EventInfo>();
 
-  // Find entry node to determine which node should be state "0"
   const entryNode = nodes.find(
     (n) => n.type === "state" && n.data.isEntry && n.data.eventName
   );
 
-  // Track the highest state number to assign next incremental state for exit branches
   let maxStateNumber = 0;
   eventStateMap.forEach((state) => {
     const stateNum = Number(state);
@@ -232,15 +182,11 @@ export function convertFlowToEventInfo(
   });
   let nextIncrementalState = maxStateNumber + 1;
 
-  // First, assign state numbers to all nodes with eventNames that don't have one yet
-  // This ensures we can process all nodes even if entry node is missing
   nodes.forEach((node) => {
     if (node.type !== "state" || !node.data.eventName) return;
 
     const eventName = node.data.eventName;
-    // If node doesn't have a state yet, assign one
     if (!eventStateMap.has(eventName)) {
-      // Check if it's the entry node (or first node if no entry exists)
       const isEntry =
         node.data.isEntry ||
         (!entryNode &&
@@ -250,7 +196,6 @@ export function convertFlowToEventInfo(
         eventStateMap.set(eventName, "0");
         nodeStateMap.set(node.id, "0");
       } else {
-        // Assign next available state number
         let maxState = 0;
         eventStateMap.forEach((state) => {
           const stateNum = Number(state);
@@ -265,7 +210,6 @@ export function convertFlowToEventInfo(
     }
   });
 
-  // Now process all nodes to create transitions
   nodes.forEach((node) => {
     if (node.type !== "state" || !node.data.eventName) return;
 
@@ -274,14 +218,12 @@ export function convertFlowToEventInfo(
       nodeStateMap.get(node.id) || eventStateMap.get(eventName);
 
     if (!currentStateNumber) {
-      // If still no state number, skip this node but log a warning
       console.warn(
         `[convertFlowToEventInfo] Node ${node.id} with event ${eventName} has no state number, skipping`
       );
       return;
     }
 
-    // Get or create EventInfo for this event
     let eventInfo = eventInfoMap.get(eventName);
     if (!eventInfo) {
       eventInfo = {
@@ -291,7 +233,6 @@ export function convertFlowToEventInfo(
       eventInfoMap.set(eventName, eventInfo);
     }
 
-    // Find or create CurrentState entry
     let currentStateEntry = eventInfo.currentState.find(
       (cs) => String(cs.currentState) === currentStateNumber
     );
@@ -304,16 +245,11 @@ export function convertFlowToEventInfo(
       eventInfo.currentState.push(currentStateEntry);
     }
 
-    // Convert branches to nextState entries
     if (node.data.branches && node.data.branches.length > 0) {
       node.data.branches.forEach((branch) => {
-        // Handle exit branches: add to resetStates AND create nextState with incremental value
         if (branch.targetNodeId === "exit") {
-          // Check if this state already has a nextState entry for exit
-          // We'll create one with the next incremental state number if not already present
           const exitTransitionIndex = currentStateEntry.nextState.findIndex(
             (ns) => {
-              // Check if this transitionTo value is higher than max state (likely an exit transition)
               const transitionToNum = Number(ns.transitionTo);
               return (
                 !isNaN(transitionToNum) &&
@@ -322,10 +258,8 @@ export function convertFlowToEventInfo(
             }
           );
 
-          // Check if the next incremental state already exists in event map
           let exitStateNumber = nextIncrementalState;
 
-          // Keep incrementing until we find a state that doesn't exist in the event map
           const eventMapStates = new Set(Array.from(eventStateMap.values()));
           while (eventMapStates.has(String(exitStateNumber))) {
             exitStateNumber++;
@@ -351,10 +285,8 @@ export function convertFlowToEventInfo(
               transitionTo: exitStateNumber,
               filters,
             });
-            // Increment for next exit branch (use the assigned state + 1)
             nextIncrementalState = exitStateNumber + 1;
           } else {
-            // Update existing exit transition with new filters
             currentStateEntry.nextState[exitTransitionIndex] = {
               transitionTo:
                 currentStateEntry.nextState[exitTransitionIndex].transitionTo,
@@ -364,18 +296,13 @@ export function convertFlowToEventInfo(
           return;
         }
 
-        // Find target node's state
         const targetNode = nodes.find(
           (n) => n.type === "state" && n.data.eventName === branch.targetNodeId
         );
 
         if (!targetNode) {
-          // If target node doesn't exist (was deleted), try to find its state in eventStateMap
-          // This preserves transitions even when target nodes are deleted
           const targetStateFromMap = eventStateMap.get(branch.targetNodeId);
           if (targetStateFromMap) {
-            // Create a transition even if the node doesn't exist in the nodes array
-            // This ensures the transition is preserved in the form data when nodes are deleted
             const filters = {
               operator: "AND" as const,
               filter: branch.filters.map((condition) => ({
@@ -401,16 +328,12 @@ export function convertFlowToEventInfo(
                 filters,
               });
             } else {
-              // Update existing transition with new filters
               currentStateEntry.nextState[existingTransitionIndex] = {
                 transitionTo: Number(targetStateFromMap),
                 filters,
               };
             }
           } else {
-            // Target node was deleted and its state is not in the map
-            // This means it was likely the entry node or a node that was never assigned a state
-            // Skip this transition to avoid creating invalid state references
             console.warn(
               `[convertFlowToEventInfo] Target node ${branch.targetNodeId} not found and has no state mapping. Skipping transition from ${eventName} state ${currentStateNumber}.`
             );
@@ -424,8 +347,6 @@ export function convertFlowToEventInfo(
           eventStateMap.get(branch.targetNodeId);
 
         if (!targetState) {
-          // If target state is not found, the target node might not have been processed yet
-          // Try to find it in eventStateMap by eventName
           const targetStateFromEventName = eventStateMap.get(
             branch.targetNodeId
           );
@@ -449,13 +370,11 @@ export function convertFlowToEventInfo(
             );
 
             if (existingTransitionIndex === -1) {
-              // Add new transition
               currentStateEntry.nextState.push({
                 transitionTo: Number(targetStateFromEventName),
                 filters,
               });
             } else {
-              // Update existing transition with new filters
               currentStateEntry.nextState[existingTransitionIndex] = {
                 transitionTo: Number(targetStateFromEventName),
                 filters,
@@ -465,7 +384,6 @@ export function convertFlowToEventInfo(
           return;
         }
 
-        // Convert filters
         const filters = {
           operator: "AND" as const,
           filter: branch.filters.map((condition) => ({
@@ -480,19 +398,16 @@ export function convertFlowToEventInfo(
           })),
         };
 
-        // Check if this transition already exists
         const existingTransitionIndex = currentStateEntry.nextState.findIndex(
           (ns) => String(ns.transitionTo) === targetState
         );
 
         if (existingTransitionIndex === -1) {
-          // Add new transition
           currentStateEntry.nextState.push({
             transitionTo: Number(targetState),
             filters,
           });
         } else {
-          // Update existing transition with new filters
           currentStateEntry.nextState[existingTransitionIndex] = {
             transitionTo: Number(targetState),
             filters,
@@ -505,9 +420,6 @@ export function convertFlowToEventInfo(
   return Array.from(eventInfoMap.values());
 }
 
-/**
- * Converts ruleEngine.eventInfo to flow nodes/edges
- */
 export function convertEventInfoToFlow(
   eventInfo: EventInfo[],
   existingNodes?: Node<JourneyNodeData>[],
@@ -525,19 +437,16 @@ export function convertEventInfoToFlow(
   const eventStateMap: EventStateMap = new Map();
   const nodeStateMap: NodeStateMap = new Map();
 
-  // Build state maps from eventInfo
   eventInfo.forEach((info) => {
     info.currentState.forEach((cs) => {
       const stateStr = String(cs.currentState);
       eventStateMap.set(info.eventname, stateStr);
 
-      // Find or create node for this event
       let node = nodes.find(
         (n) => n.type === "state" && n.data.eventName === info.eventname
       );
 
       if (!node) {
-        // Create new node
         const nodeId = `state-${Date.now()}-${Math.random()}`;
         node = {
           id: nodeId,
@@ -557,10 +466,8 @@ export function convertEventInfoToFlow(
 
       nodeStateMap.set(node.id, stateStr);
 
-      // Convert nextState to branches
       if (cs.nextState && cs.nextState.length > 0) {
         node.data.branches = cs.nextState.map((ns) => {
-          // Find target event by state number
           const targetStateStr = String(ns.transitionTo);
           const targetEventInfo = eventInfo.find((ei) =>
             ei.currentState.some(
@@ -570,7 +477,6 @@ export function convertEventInfoToFlow(
 
           const targetEventName = targetEventInfo?.eventname || "";
 
-          // Convert filters - only handle Filter type, skip FilterGroup and FilterFunction for now
           const conditions = (ns.filters?.filter || [])
             .filter(
               (f): f is Filter =>
@@ -608,7 +514,6 @@ export function convertEventInfoToFlow(
     });
   });
 
-  // Build edges from branches
   nodes.forEach((node) => {
     if (node.type === "state" && node.data.branches) {
       node.data.branches.forEach((branch) => {
@@ -634,10 +539,6 @@ export function convertEventInfoToFlow(
   return { nodes, edges, eventStateMap, nodeStateMap };
 }
 
-/**
- * Validates that all nodes are connected (have at least one edge)
- * Returns array of unconnected node IDs
- */
 export function findUnconnectedNodes(
   nodes: Node<JourneyNodeData>[],
   edges: Edge[]
@@ -647,9 +548,7 @@ export function findUnconnectedNodes(
   nodes.forEach((node) => {
     if (node.type !== "state") return;
 
-    // Entry node doesn't need incoming edges
     if (node.data.isEntry) {
-      // Check if it has outgoing edges
       const hasOutgoing = edges.some((e) => e.source === node.id);
       if (!hasOutgoing) {
         unconnected.push(node.id);
@@ -657,7 +556,6 @@ export function findUnconnectedNodes(
       return;
     }
 
-    // Non-entry nodes need at least one incoming or outgoing edge
     const hasIncoming = edges.some((e) => e.target === node.id);
     const hasOutgoing = edges.some((e) => e.source === node.id);
 
@@ -669,10 +567,6 @@ export function findUnconnectedNodes(
   return unconnected;
 }
 
-/**
- * Finds unconnected engagement nodes (engagement nodes without a source state node)
- * Returns array of unconnected engagement node IDs
- */
 export function findUnconnectedEngagementNodes(
   nodes: Node[],
   edges: Edge[]
@@ -682,7 +576,6 @@ export function findUnconnectedEngagementNodes(
   nodes.forEach((node) => {
     if (node.type !== "engagement") return;
 
-    // Check if this engagement node has an incoming edge from a state node
     const hasIncomingFromState = edges.some(
       (e) => e.target === node.id && e.sourceHandle === "engagement-source"
     );

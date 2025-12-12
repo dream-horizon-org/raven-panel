@@ -3,6 +3,7 @@ import type {
   JourneyNodeData,
   Engagement,
 } from "./JourneyNode.interface";
+import { Path } from "react-hook-form";
 
 /**
  * Property type utilities for filter value inputs
@@ -274,7 +275,7 @@ export interface NudgeSelectionHookForm {
     config: {
       triggerDelay: number;
     };
-    onState: string;
+    onState: string | undefined;
     actionId: string;
     type: NudgeType;
     variant?: NudgeSelectionPopupMenu | NudgeSelectionTooltipMenu;
@@ -371,3 +372,86 @@ export  interface FilterInput {
   operator?: string;
   filter?: FilterInput[];
 };
+
+
+
+export interface ComponentDefinition {
+  id: number;
+  componentVariant: string;
+  type: string;
+  display: string;
+  description: string;
+  maxAllowedChildren: number;
+  props?: Array<{
+    name: string;
+    type: string;
+    isTemplate?: boolean;
+    isRequired?: boolean;
+    default?: string | number | boolean | null;
+    acceptedValues?: string[];
+    display?: string;
+  }>;
+  styles?: string[];
+  actions?: Array<{
+    name: string;
+  }>;
+  config?: Record<string, unknown>;
+}
+
+export interface ClickActionDefinition {
+  id: string;
+  type: string;
+  name: string;
+  display: string;
+  category: "toggle" | "dropdown";
+  executionOrder: number;
+  params?: Array<{
+    name: string;
+    type: string;
+    isTemplate?: boolean | null;
+    default?: string | number | boolean | null;
+    acceptedValues?: string[] | null;
+    isRequired?: boolean;
+  }>;
+}
+
+export interface ComponentDefinitionsData {
+  components: ComponentDefinition[];
+  clickActions: ClickActionDefinition[];
+}
+
+// Helper type for template transformation (allows index signature for dynamic properties)
+export type TemplateNode = ReactNativeJson & Record<string, unknown>;
+
+export type ReactNativeAction =
+  | {
+      type: string;
+      name: string;
+      params: ElementDataTypeValues;
+    }
+  | {
+      type: "analyticsEvent";
+      name: "analyticsEvent";
+      params: NudgeEvent;
+    };
+
+// Type for deeplink params (can have androidUrl and iosUrl as arrays or strings)
+ export type DeeplinkParams = ElementDataTypeValues & {
+  androidUrl?: string | Array<{ value?: string } | string>;
+  iosUrl?: string | Array<{ value?: string } | string>;
+};
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+}
+
+export interface ValidationError {
+  type: "schedule" | "template" | "actions";
+  message: string;
+  fieldErrors?: Array<{
+    path: Path<CreateJourneyFormData>;
+    type: string;
+    message: string;
+  }>;
+}

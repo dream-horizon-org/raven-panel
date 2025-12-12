@@ -35,6 +35,7 @@ import {
   DEFAULT_VALUES,
   TABLE_CONFIG,
 } from "./DashboardConstants";
+import { Status } from "./StatusTab";
 
 export default function JourneysTable({
   journeys,
@@ -48,6 +49,7 @@ export default function JourneysTable({
   pageNumber,
   handlePageSizeChange,
   pageSize,
+  status,
 }: {
   journeys: GetListOfCTAsResponse | undefined;
   isLoading: boolean;
@@ -60,6 +62,7 @@ export default function JourneysTable({
   pageNumber: number;
   handlePageSizeChange: (size: number) => void;
   pageSize: number;
+  status: Status;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -125,11 +128,21 @@ export default function JourneysTable({
   };
 
   const handleEdit = (journeyId: number) => {
-    router.push(ROUTE_PATHS.edit(journeyId));
+    const params = new URLSearchParams();
+    if (status !== "ALL") {
+      params.set("status", status.toLowerCase());
+    }
+    const queryString = params.toString();
+    router.push(`${ROUTE_PATHS.edit(journeyId)}${queryString ? `?${queryString}` : ""}`);
   };
 
   const handleClone = (journeyId: number) => {
-    router.push(ROUTE_PATHS.clone(journeyId));
+    const params = new URLSearchParams();
+    if (status !== "ALL") {
+      params.set("status", status.toLowerCase());
+    }
+    const queryString = params.toString();
+    router.push(`${ROUTE_PATHS.clone(journeyId)}${queryString ? `?${queryString}` : ""}`);
   };
 
   const handleCopyJourneyId = async (journeyId: number) => {

@@ -13,7 +13,7 @@ import {
   ReactNativeJson,
   CreateJourneyFormData,
 } from "../../types/journey.interface";
-import { ComponentDefinition } from "../../utils/componentDefinitions";
+import { ComponentDefinition } from "../../types/journey.interface";
 import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
 import { useFormContext, Path } from "react-hook-form";
 
@@ -24,7 +24,7 @@ interface ElementStylesEditorProps {
     styleName: string,
     value: string | number | undefined
   ) => void;
-  basePath?: string; // e.g., "nudgeSelection.actions.0.template" or "nudgeSelection.actions.0.template.children.0"
+  basePath?: string;
 }
 
 const SPACING_STYLES = [
@@ -62,14 +62,6 @@ const JUSTIFY_CONTENT_VALUES = [
   "space-around",
   "space-evenly",
 ];
-// Unused constants - kept for potential future use
-// const ALIGN_ITEMS_VALUES = [
-//   "flex-start",
-//   "flex-end",
-//   "center",
-//   "stretch",
-//   "baseline",
-// ];
 
 const TEXT_ALIGN_VALUES = ["left", "center", "right"];
 

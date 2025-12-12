@@ -4,7 +4,7 @@ import {
   CreateJourneyFormData,
   NudgeType,
 } from "@/app/dashboard/create/types/journey.interface";
-import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney";
+import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney.utils";
 
 export const createJourney = async (
   formData: CreateJourneyFormData

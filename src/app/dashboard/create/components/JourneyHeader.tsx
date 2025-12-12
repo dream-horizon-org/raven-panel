@@ -1,11 +1,18 @@
 "use client";
 
-import { Box, TextField, Typography, IconButton, Tooltip, Button } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Typography,
+  IconButton,
+  Tooltip,
+  Button,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SchoolIcon from "@mui/icons-material/School";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { journeyHeaderStyles } from "./content/styles/journeyHeaderStyles";
@@ -28,12 +35,23 @@ export default function JourneyHeader({
   const router = useRouter();
   const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
 
+  const searchParams = useSearchParams();
+
+  const handleBack = () => {
+    const statusParam = searchParams?.get("status");
+    if (statusParam) {
+      router.push(`/dashboard?status=${statusParam}`);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <>
       <Box sx={journeyHeaderStyles.header}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <IconButton
-            onClick={() => router.back()}
+            onClick={handleBack}
             sx={journeyHeaderStyles.backButton}
             size="small"
           >

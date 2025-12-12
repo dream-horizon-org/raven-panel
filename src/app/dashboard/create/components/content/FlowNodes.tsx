@@ -12,15 +12,11 @@ import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
 
-// Type aliases to work around React Flow's NodeProps constraint
 // @ts-expect-error - NodeProps constraint requires Node type, but we only have data types
 type JourneyNodeProps = NodeProps<Record<string, unknown>>;
 // @ts-expect-error - NodeProps constraint requires Node type, but we only have data types
 type EngagementNodeProps = NodeProps<Record<string, unknown>>;
 
-// nodeStyle will be created with theme inside component
-
-// State Node (represents a node/state in the journey)
 export const StateNode = memo((props: JourneyNodeProps) => {
   const theme = useTheme();
   const data = props.data as JourneyNodeData;
