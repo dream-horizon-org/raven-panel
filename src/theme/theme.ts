@@ -164,6 +164,21 @@ export const getTheme = (mode: "light" | "dark") => {
           root: { borderRadius: "9999px", fontWeight: 500 },
         },
       },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            backgroundColor: "rgba(99, 102, 241, 0.95)",
+            color: "#ffffff",
+            fontSize: "0.75rem",
+            padding: "8px 12px",
+            borderRadius: "0.5rem",
+            fontWeight: 400,
+          },
+          arrow: {
+            color: "rgba(99, 102, 241, 0.95)",
+          },
+        },
+      },
     },
   });
 };

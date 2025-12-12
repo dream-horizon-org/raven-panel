@@ -45,6 +45,7 @@ export default function JourneyFrequencySection({
             <Tooltip
               title={JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.TOOLTIP}
               placement="top"
+              arrow
             >
               <HelpOutlineIcon
                 sx={journeyFrequencySectionStyles.fieldInfoIcon}

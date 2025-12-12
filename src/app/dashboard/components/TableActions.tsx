@@ -28,7 +28,7 @@ export default function TableActions({
 }: TableActionsProps) {
   return (
     <Box sx={tableActionsContainerStyles}>
-      <Tooltip title={TOOLTIP_LABELS.editJourney} placement="top">
+      <Tooltip title={TOOLTIP_LABELS.editJourney} placement="top" arrow>
         <span>
           <IconButton
             sx={actionButtonStyles}
@@ -40,7 +40,7 @@ export default function TableActions({
           </IconButton>
         </span>
       </Tooltip>
-      <Tooltip title={TOOLTIP_LABELS.cloneJourney} placement="top">
+      <Tooltip title={TOOLTIP_LABELS.cloneJourney} placement="top" arrow>
         <span>
           <IconButton
             sx={actionButtonStyles}
@@ -52,7 +52,7 @@ export default function TableActions({
           </IconButton>
         </span>
       </Tooltip>
-      <Tooltip title={TOOLTIP_LABELS.moreOptions} placement="top">
+      <Tooltip title={TOOLTIP_LABELS.moreOptions} placement="top" arrow>
         <IconButton
           sx={actionButtonStyles}
           size="small"
