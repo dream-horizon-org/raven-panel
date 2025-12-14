@@ -6,14 +6,60 @@ sidebar_position: 1
 
 ## What is a Journey?
 
-A **journey** is a complete user engagement flow that delivers timely nudges to users through in-app messages. Each journey consists of:
+A **journey** is a visual flow that maps user behavior through a series of steps (nodes) connected by transitions. Each journey represents a user's path through your application, from entry points to specific events, with optional rules and conditions that determine progression, ultimately leading to engagement moments where users receive targeted messages.
 
-- **Content** - The nudge design (Tooltip, BottomSheet, or Popup) that users see
-- **Targeting** - Which users receive the journey (user segments/cohorts)
-- **Triggers** - When the journey activates (events, page views, scheduled times)
-- **Configuration** - Frequency rules, scheduling, and behavior settings
+Journeys are the core of Raven, allowing you to create, manage, and monitor user engagement flows that deliver contextual nudges at the right moments based on user actions and behaviors.
 
-Journeys are the core of Raven, allowing you to create, manage, and monitor user engagement flows that deliver contextual nudges at the right moments.
+## Example Journey
+
+Here's an example of an E-Commerce Shopping Journey:
+
+```
+┌─────────────────────┐
+│   Entry Node        │
+│  User Opens App     │
+└─────────────────────┘
+         │
+         │ Transition: "User is logged in"
+         ▼
+┌─────────────────────┐
+│  Event Node         │
+│  User Clicks Product│
+└─────────────────────┘
+         │
+         │ Transition: "Product price > $50"
+         ▼
+┌─────────────────────┐
+│  Event Node         │
+│  User Adds to Cart  │
+└─────────────────────┘
+         │
+         │ Transition: "Cart value > $100"
+         ▼
+┌─────────────────────┐
+│  Event Node         │
+│  User Returns to    │
+│  Home               │
+└─────────────────────┘
+         │
+         │ Transition
+         ▼
+┌─────────────────────┐
+│  Engagement Node    │
+│  Bottom Sheet       │
+│  "Checkout          │
+│   Suggestion"       │
+└─────────────────────┘
+```
+
+**How it works:**
+- A user opens the app (Entry Node)
+- If the user is logged in, they progress to the "User Clicks Product" node
+- When they click a product, if the product price is greater than $50, they move to "User Adds to Cart"
+- When they add to cart, if the cart value exceeds $100, they move to "User Returns to Home"
+- Finally, when they return home, they see a Bottom Sheet engagement suggesting checkout
+
+**Key insight:** A transition from Node A to Node B occurs when Node A's event happens (not Node B's event). Once at Node B, the next transition will be triggered when Node B's event occurs.
 
 ## Panel Interface
 
@@ -150,6 +196,59 @@ When a user lacks the required permission, the corresponding action buttons are 
 
 ## Key Concepts
 
+Understanding these fundamental concepts is essential for building effective journeys:
+
+### Node & Event
+
+A **node** represents a step in a journey. Each node is identified by an event name, such as "User Opens App" or "User Clicks Product". 
+
+**Important:** Conceptually, a node and its event are the same thing - the node is named after the event that triggers it. When that event occurs in your application, the user progresses to that node in the journey.
+
+**Examples:**
+- Entry Node: "User Opens App"
+- Event Node: "User Clicks Product"
+- Event Node: "User Adds to Cart"
+
+### Transition
+
+A **transition** is the act of moving from one node to another in the journey flow.
+
+**Critical Understanding:** A transition from Node A (associated with event "ABC") to Node B occurs specifically when event "ABC" happens in the application, **not** when Node B's event occurs.
+
+**Example:**
+- If you have a transition from "User Clicks Product" (Node A) to "User Adds to Cart" (Node B)
+- The transition happens when the "User Clicks Product" event fires
+- Once the user is at Node B ("User Adds to Cart"), the subsequent transition will be triggered when the "User Adds to Cart" event occurs
+
+### Rule/Condition
+
+**Rules** (also called **conditions**) are optional checks that can be added to transitions. They appear visually on the arrows between nodes in the journey diagram.
+
+For a transition to occur, **all specified rules must pass**. If any rule fails, the user remains at the current node.
+
+**Examples:**
+- "User is logged in"
+- "Product price > $50"
+- "Cart value > $100"
+- "User has premium subscription"
+
+Rules allow you to create conditional flows where users only progress if certain criteria are met.
+
+### Engagement
+
+An **engagement** is a message shown to users when they reach a specific node in the journey. Engagements are the actual nudges that users see and interact with.
+
+**Engagement Types:**
+- **Popup** - Modal dialogs for critical messages
+- **Tooltip** - Small contextual hints for feature discovery
+- **Bottom Sheet** - Slide-up panels for promotions and CTAs
+
+Engagements are displayed to users when they reach the engagement node, making it the perfect place to deliver targeted messages based on their journey progress.
+
+---
+
+## Journey Components
+
 ### Engagement Types
 
 Journeys can use three types of nudges:
@@ -157,7 +256,7 @@ Journeys can use three types of nudges:
 - **BottomSheet** - Slide-up panels for promotions and CTAs
 - **Popup** - Modal dialogs for critical messages
 
-See **[Engagement Types](./engagement-types)** for detailed guidance.
+See **[Engagements](./engagements)** for detailed guidance.
 
 ### User Segments
 
@@ -165,8 +264,6 @@ Target specific user groups using cohorts:
 - Import cohorts from analytics platforms
 - Target all users or specific segments
 - Combine multiple segments for precise targeting
-
-See **[User Segments](./user-segments)** for more information.
 
 ### Event Triggers
 
@@ -176,8 +273,6 @@ Journeys activate based on:
 - Custom events
 - Scheduled times
 
-See **[Event Triggers](./event-triggers)** for configuration details.
-
 ### Content Configuration
 
 Design your nudges with:
@@ -186,7 +281,7 @@ Design your nudges with:
 - Interactive buttons and CTAs
 - Live preview while editing
 
-See **[Content Editor](./content-editor)** for design options.
+See **[Engagements](./engagements)** for detailed design options.
 
 ### Scheduling & Frequency
 
@@ -195,13 +290,9 @@ Control when and how often journeys appear:
 - Configure frequency rules (lifetime, session, period-based)
 - Schedule future activations
 
-See **[Scheduling](./scheduling)** for advanced options.
-
 ## Next Steps
 
 - **[Creating a Journey](./creating-journey)** - Step-by-step guide to build your first journey
-- **[User Segments](./user-segments)** - Learn about targeting specific user groups
-- **[Event Triggers](./event-triggers)** - Configure when journeys activate
-- **[Content Editor](./content-editor)** - Design engaging nudge content
-- **[Scheduling](./scheduling)** - Set timing and frequency rules
+- **[Transitions & Rules](./transitions-rules)** - Connect nodes with transitions and rules
+- **[Engagements](./engagements)** - Learn about engagement types and how to add them
 

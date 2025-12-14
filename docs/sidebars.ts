@@ -10,11 +10,9 @@ const sidebars: SidebarsConfig = {
       items: [
         'journeys/overview',
         'journeys/creating-journey',
-        'journeys/user-segments',
-        'journeys/event-triggers',
-        'journeys/content-editor',
-        'journeys/scheduling',
-        'journeys/engagement-types',
+        'journeys/journey-configuration',
+        'journeys/transitions-rules',
+        'journeys/engagements',
       ],
     },
     {

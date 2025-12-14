@@ -125,4 +125,4 @@ Now that you have Raven running locally:
 
 1. **[Journeys Overview](./journeys/overview)** - Understand what journeys are and the panel interface
 2. **[Creating a Journey](./journeys/creating-journey)** - Design your first nudge
-3. **[Scheduling](./journeys/scheduling)** - Configure when journeys go live
+3. **[Journey Configuration](./journeys/journey-configuration)** - Configure cohorts, frequency, and scheduling

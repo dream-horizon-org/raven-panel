@@ -190,6 +190,5 @@ Control how often users see the nudge:
 ## Next Steps
 
 - **[Engagement Types](./engagement-types)** - When to use each type
-- **[Content Editor](./content-editor)** - Content design guide
 - **[Scheduling](./scheduling)** - Advanced scheduling
 - **[Events](./events)** - Event configuration
