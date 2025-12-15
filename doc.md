@@ -182,12 +182,6 @@ export interface PermissionsResponse {
 
 **Format**: Comma-separated string of organization names
 
-**Example**:
-
-```env
-NEXT_PUBLIC_ORGANIZATIONS="dream11,criq"
-```
-
 ### TypeScript Interfaces
 
 ```typescript
