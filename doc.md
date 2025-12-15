@@ -173,8 +173,20 @@ export interface PermissionsResponse {
 
 ## 5. Tenant Configuration Structure
 
-**Type**: Dropdown Options (Code Configuration)  
-**Location**: `src/app/components/TenantSync.tsx`
+**Type**: Environment Variable (`.env.local`)  
+**Location**: `src/app/components/constants.ts` and `src/app/components/TenantSync.tsx`
+
+### Environment Variable
+
+**Variable Name**: `NEXT_PUBLIC_ORGANIZATIONS`
+
+**Format**: Comma-separated string of organization names
+
+**Example**:
+
+```env
+NEXT_PUBLIC_ORGANIZATIONS="dream11,criq"
+```
 
 ### TypeScript Interfaces
 
@@ -182,9 +194,29 @@ export interface PermissionsResponse {
 interface TenantOption {
   name: string;
 }
-
-type TenantData = {
-  id?: string | number;
-  name?: string;
-};
 ```
+
+### Required Structure
+
+The environment variable should contain a comma-separated list of organization names:
+
+```env
+# Single organization
+NEXT_PUBLIC_ORGANIZATIONS="dream11"
+
+# Multiple organizations
+NEXT_PUBLIC_ORGANIZATIONS="dream11,criq"
+```
+
+### Implementation Details
+
+- **Location**: `src/app/components/constants.ts`
+- **Export**: `export const ORGANIZATIONS = getOrganizations();`
+- **Usage**: Used in `OrganizationField.tsx` for the dropdown options
+- **Fallback**: Defaults to `["dream11"]` if environment variable is not set
+
+### Notes
+
+- The app parses the comma-separated string and trims whitespace
+- Empty values are filtered out
+- Used in both the landing page organization dropdown and tenant synchronization
