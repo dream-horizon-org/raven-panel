@@ -1,12 +1,12 @@
 "use client";
 
-import { Box, Typography, Badge } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import TuneIcon from "@mui/icons-material/Tune";
 import ErrorIcon from "@mui/icons-material/Error";
 import { useTheme } from "@mui/material/styles";
-import { journeyTabsStyles } from "../styles/journeyTabsStyles";
+import { journeyTabsStyles } from "./content/styles/journeyTabsStyles";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 
 interface JourneyTabsProps {
@@ -28,7 +28,7 @@ export default function JourneyTabs({
         sx={journeyTabsStyles.customTab(activeTab === "ui", theme)}
         onClick={() => onTabChange("ui")}
       >
-        <TuneIcon sx={journeyTabsStyles.tabIcon(activeTab === "ui")} />
+        <TuneIcon sx={journeyTabsStyles.tabIcon()} />
         <Typography
           sx={{
             ...journeyTabsStyles.tabText(activeTab === "ui"),
@@ -55,7 +55,7 @@ export default function JourneyTabs({
         sx={journeyTabsStyles.customTab(activeTab === "setup", theme)}
         onClick={() => onTabChange("setup")}
       >
-        <PersonIcon sx={journeyTabsStyles.tabIcon(activeTab === "setup")} />
+        <PersonIcon sx={journeyTabsStyles.tabIcon()} />
         <Typography sx={journeyTabsStyles.tabText(activeTab === "setup")}>
           {JOURNEY_TEXT.TABS.SETUP}
         </Typography>

@@ -17,9 +17,9 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
-import { scheduleSectionStyles } from "../styles/scheduleSectionStyles";
+import { scheduleSectionStyles } from "./content/styles/scheduleSectionStyles";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
 interface ScheduleSectionProps {
@@ -37,7 +37,7 @@ export default function ScheduleSection({
     CreateJourneyFormData
   >();
 
-  const enableImmediateStart = useWatch({
+  useWatch({
     control,
     name: "schedule.enableImmediateStart",
   });
@@ -130,7 +130,6 @@ export default function ScheduleSection({
   return (
     <Box sx={scheduleSectionStyles.formCard(theme)}>
       <Box sx={scheduleSectionStyles.formSection}>
-        {/* Start date/time */}
         <Box sx={scheduleSectionStyles.dateTimeSection}>
           <Box sx={scheduleSectionStyles.fieldHeader}>
             <Box sx={scheduleSectionStyles.fieldHeaderContent}>
@@ -144,8 +143,6 @@ export default function ScheduleSection({
             </Typography>
           </Box>
 
-          {/* Checkboxes for Start Date/Time options */}
-          {/* As soon as journey is published */}
           <Box sx={scheduleSectionStyles.frequencyRow}>
             <Controller
               name="schedule.enableImmediateStart"
@@ -180,7 +177,6 @@ export default function ScheduleSection({
             />
           </Box>
 
-          {/* At specific date/time */}
           <Box sx={scheduleSectionStyles.frequencyRow}>
             <Controller
               name="schedule.enableScheduledStart"
@@ -306,7 +302,6 @@ export default function ScheduleSection({
           </Box>
         </Box>
 
-        {/* End date/time */}
         <Box sx={scheduleSectionStyles.dateTimeSection}>
           <Box sx={scheduleSectionStyles.fieldHeader}>
             <Box sx={scheduleSectionStyles.fieldHeaderContent}>
@@ -320,8 +315,6 @@ export default function ScheduleSection({
             </Typography>
           </Box>
 
-          {/* Checkboxes for End Date/Time options */}
-          {/* At specific date/time */}
           <Box sx={scheduleSectionStyles.frequencyRow}>
             <Controller
               name="schedule.enableScheduledEnd"

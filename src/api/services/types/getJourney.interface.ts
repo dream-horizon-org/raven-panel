@@ -1,4 +1,4 @@
-import { ReactNativeJson } from "@/app/dashboard/create/types/journeyTypes";
+import { ReactNativeJson } from "@/app/dashboard/create/types/journey.interface";
 
 export interface GetJourneyResponse {
   data: {

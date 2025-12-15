@@ -13,8 +13,8 @@ import { useTheme } from "@mui/material/styles";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { useState, useMemo, useEffect } from "react";
-import { cohortSectionStyles } from "../styles/cohortSectionStyles";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { cohortSectionStyles } from "./content/styles/cohortSectionStyles";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 import { useCohortsList } from "@/hooks/useCohortsList";
 
@@ -141,6 +141,7 @@ export default function CohortSection({ control, errors }: CohortSectionProps) {
             <Tooltip
               title={JOURNEY_TEXT.SECTIONS.COHORT.TOOLTIP}
               placement="top"
+              arrow
             >
               <HelpOutlineIcon sx={cohortSectionStyles.fieldInfoIcon} />
             </Tooltip>
