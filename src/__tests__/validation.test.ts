@@ -5,11 +5,7 @@ import {
   isValidUrl,
   getStyleType,
   getStyleEnumValues,
-<<<<<<< HEAD
-} from "../app/dashboard/create/utils/validation";
-=======
 } from "../app/dashboard/create/utils/validation.utils.";
->>>>>>> 00f1f890a77e5ad8d210243937c6bb33c4d771c3
 
 describe("validation utilities", () => {
   describe("isEmptyValue", () => {
