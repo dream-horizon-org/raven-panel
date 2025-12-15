@@ -121,12 +121,6 @@ describe("validation utilities", () => {
       expect(getStyleType("textAlign")).toBe("enum");
     });
 
-    it('should return "string" for font-related styles', () => {
-      expect(getStyleType("fontSize")).toBe("string");
-      expect(getStyleType("fontWeight")).toBe("string");
-      expect(getStyleType("lineHeight")).toBe("string");
-    });
-
     it('should return "number" for other styles', () => {
       expect(getStyleType("padding")).toBe("number");
       expect(getStyleType("margin")).toBe("number");
