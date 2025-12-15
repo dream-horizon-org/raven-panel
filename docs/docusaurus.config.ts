@@ -37,6 +37,12 @@ const config: Config = {
     ],
   ],
 
+  themes: ['@docusaurus/theme-mermaid'],
+
+  markdown: {
+    mermaid: true,
+  },
+
   themeConfig: {
     image: 'img/raven-social-card.png',
     navbar: {
@@ -87,8 +93,8 @@ const config: Config = {
               to: '/docs/journeys/creating-journey',
             },
             {
-              label: 'User Segments',
-              to: '/docs/journeys/user-segments',
+              label: 'Engagements',
+              to: '/docs/journeys/engagements',
             },
           ],
         },

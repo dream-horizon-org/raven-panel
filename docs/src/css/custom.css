@@ -164,6 +164,28 @@ table {
   border-radius: var(--ifm-global-radius);
   overflow: hidden;
   border: 1px solid rgba(139, 92, 246, 0.2);
+  width: 100% !important;
+  max-width: 100% !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  display: table;
+  table-layout: auto;
+}
+
+table td,
+table th {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ensure table container uses full width */
+.markdown table {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 th {
