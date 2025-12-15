@@ -137,8 +137,8 @@ export const tableRowStyles: SxProps<Theme> = (theme) => ({
 
 export const tableCellStyles: SxProps<Theme> = {
   color: "text.primary",
-  fontSize: "0.8125rem",
-  fontWeight: 400,
+  fontSize: "0.875rem",
+  fontWeight: 500,
   padding: "12px 16px",
   verticalAlign: "middle",
 };

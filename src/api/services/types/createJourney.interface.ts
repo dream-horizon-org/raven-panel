@@ -1,7 +1,7 @@
 import {
   NudgeType,
   ReactNativeJson,
-} from "@/app/dashboard/create/types/journeyTypes";
+} from "@/app/dashboard/create/types/journey.interface";
 
 export interface CreateCtaInput {
   name: string;

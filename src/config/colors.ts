@@ -1,9 +1,9 @@
 export const THEME_COLORS = {
   PRIMARY: {
-    light: "#1E293B",
-    dark: "#64748B",
-    lightVariant: "#334155",
-    darkVariant: "#475569",
+    light: "#1E293B", // Raven-inspired deep slate blue - sophisticated, professional, and engaging
+    dark: "#64748B", // Lighter slate for dark mode (better contrast and visibility)
+    lightVariant: "#334155", // Medium slate variant for light mode
+    darkVariant: "#475569", // Medium-dark slate for dark mode variant
   },
 
   SECONDARY: {

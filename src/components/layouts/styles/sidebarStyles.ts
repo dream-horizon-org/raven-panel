@@ -35,7 +35,7 @@ export const sidebarLogoContainerStyles = (
   width: "100%",
 });
 
-export const sidebarLogoStyles: SxProps<Theme> = (theme) => ({
+export const sidebarLogoStyles: SxProps<Theme> = () => ({
   width: 32,
   height: 32,
   bgcolor: "primary.main",
@@ -109,19 +109,13 @@ export const sidebarNavItemInactiveStyles = (
   },
 });
 
-export const sidebarNavIconStyles = (
-  isActive: boolean,
-  isCollapsed: boolean
-): SxProps<Theme> => ({
+export const sidebarNavIconStyles = (isActive: boolean): SxProps<Theme> => ({
   fontSize: "1.25rem",
   color: isActive ? "primary.main" : "text.primary",
   minWidth: "24px",
 });
 
-export const sidebarNavTextStyles = (
-  isActive: boolean,
-  isCollapsed: boolean
-): SxProps<Theme> => ({
+export const sidebarNavTextStyles = (isActive: boolean): SxProps<Theme> => ({
   fontSize: "0.875rem",
   fontWeight: isActive ? 600 : 400,
   color: isActive ? "primary.main" : "text.primary",
@@ -143,7 +137,7 @@ export const sidebarBottomContainerStyles = (
   alignItems: "center",
 });
 
-export const sidebarCollapseButtonStyles: SxProps<Theme> = (theme) => ({
+export const sidebarCollapseButtonStyles: SxProps<Theme> = () => ({
   minWidth: "auto",
   width: "32px",
   height: "32px",

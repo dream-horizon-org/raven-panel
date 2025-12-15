@@ -10,8 +10,6 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
-  ListItemIcon,
-  ListItemText,
   ButtonGroup,
   Button,
 } from "@mui/material";
@@ -27,13 +25,10 @@ import {
   DynamicTextValueType,
   DynamicTextStaticType,
   CreateJourneyFormData,
-} from "../../types/journeyTypes";
-import {
-  getComponentDefinition,
   ComponentDefinition,
-} from "../../utils/componentDefinitions";
-import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
-import { useFormContext, Path } from "react-hook-form";
+} from "../../types/journey.interface";
+import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
+import { useFormContext } from "react-hook-form";
 
 interface ElementPropsEditorProps {
   element: ReactNativeJson;
@@ -62,6 +57,7 @@ export default function ElementPropsEditor({
 
     // Navigate through the errors object using the path
     const pathParts = fieldPath.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = errors;
 
     for (let i = 0; i < pathParts.length; i++) {

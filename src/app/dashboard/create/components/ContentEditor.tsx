@@ -3,10 +3,10 @@
 import { Box, Tabs, Tab } from "@mui/material";
 import { useState } from "react";
 import { Control, FieldErrors } from "react-hook-form";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import TemplateTab from "./content/TemplateTab";
 import PreviewPanel from "./content/PreviewPanel";
-import { contentEditorStyles } from "../styles/contentEditorStyles";
+import { contentEditorStyles } from "./content/styles/contentEditorStyles";
 import ContentTab from "./content/ContentTab";
 
 interface ContentEditorProps {

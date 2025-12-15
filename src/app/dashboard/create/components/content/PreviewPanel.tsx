@@ -1,27 +1,91 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { Control } from "react-hook-form";
+import { Control, useFormContext } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
   NudgeType,
-} from "../../types/journeyTypes";
-import { previewPanelStyles } from "../../styles/previewPanelStyles";
+} from "../../types/journey.interface";
+import { previewPanelStyles } from "./styles/previewPanelStyles";
 import { useMemo, useEffect } from "react";
 import DeviceFrame from "./DeviceFrame";
 import { useElementLocator } from "../../contexts/ElementLocatorContext";
 
 interface PreviewPanelProps {
   control: Control<CreateJourneyFormData>;
+  engagementId?: string | null;
 }
 
-export default function PreviewPanel({ control }: PreviewPanelProps) {
+/**
+ * React Native dp/pt to CSS px conversion for accurate device preview.
+ *
+ * React Native stores values in dp (Android) or pt (iOS).
+ * On devices, these are converted to physical pixels:
+ * - @1x devices: 1dp/pt = 1px
+ * - @2x devices: 1dp/pt = 2px
+ * - @3x devices: 1dp/pt = 3px (modern iPhones)
+ *
+ * For web preview: The DeviceFrame (360px) represents logical dimensions.
+ * To match device visual appearance, we use 1dp = 1px since the frame
+ * already represents logical dimensions. This ensures the preview matches
+ * what users see on devices (where visual size is consistent across densities).
+ */
+const DEVICE_PIXEL_RATIO = 0.7; // Preview frame represents logical dimensions
+
+/**
+ * Converts dp/pt to CSS pixels matching React Native device rendering.
+ */
+const dpToPx = (dp: number): number => {
+  return dp * DEVICE_PIXEL_RATIO;
+};
+
+/**
+ * Converts style values from dp/pt to CSS pixels.
+ * Preserves string values (percentages, colors) as-is.
+ */
+const convertStyleValue = (
+  value: string | number | undefined | null
+): string => {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  // Preserve string values (percentages, colors, etc.)
+  if (typeof value === "string") {
+    return value;
+  }
+
+  // Convert numeric dp/pt values to px using device pixel ratio
+  return `${dpToPx(value)}px`;
+};
+
+export default function PreviewPanel({
+  control,
+  engagementId,
+}: PreviewPanelProps) {
   const { selectedTestID, setSelectedTestID } = useElementLocator();
+  const { getValues } = useFormContext<CreateJourneyFormData>();
+
+  // Find the correct action index based on engagementId
+  const actionIndex = useMemo(() => {
+    if (!engagementId) return 0;
+
+    const formActions = getValues("nudgeSelection.actions") || [];
+    const index = formActions.findIndex((action) => {
+      const actionIdPrefix = action.actionId.includes("_")
+        ? action.actionId.split("_")[0]
+        : action.actionId;
+      return actionIdPrefix === engagementId;
+    });
+
+    return index >= 0 ? index : 0;
+  }, [engagementId, getValues]);
+
   const template = useWatch({
     control,
-    name: "nudgeSelection.actions.0.template",
+    name: `nudgeSelection.actions.${actionIndex}.template` as any,
   }) as ReactNativeJson | undefined;
 
   const actions = useWatch({
@@ -29,7 +93,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     name: "nudgeSelection.actions",
   });
 
-  const engagementType = actions?.[0]?.type;
+  const engagementType = actions?.[actionIndex]?.type;
 
   // Auto-dismiss highlight after 3 seconds
   useEffect(() => {
@@ -56,6 +120,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     if (!node) return null;
 
     const { type, props = {}, styles = {}, children: nodeChildren } = node;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodeProps = props as Record<string, any>;
     const nodeTestID = nodeProps.testID as string | undefined;
     const isHighlighted = nodeTestID && selectedTestID === nodeTestID;
@@ -77,10 +142,19 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       nudgeTypeStr === "BOTTOMSHEET";
 
     // Convert styles to CSS (only what's in template)
+    // Note: textAlign is handled separately to ensure it works correctly
     const cssStyles: Record<string, string | number> = {};
+    let textAlignValue: string | undefined = undefined;
+
     if (styles) {
       Object.entries(styles).forEach(([k, v]) => {
         if (v !== undefined && v !== null) {
+          // Handle textAlign separately - don't convert to kebab-case
+          if (k === "textAlign") {
+            textAlignValue = String(v);
+            return;
+          }
+
           const cssKey = k.replace(/([A-Z])/g, "-$1").toLowerCase();
 
           if (
@@ -89,12 +163,15 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             k === "borderRadius" &&
             typeof v === "number"
           ) {
-            cssStyles["border-top-left-radius"] = `${v}px`;
-            cssStyles["border-top-right-radius"] = `${v}px`;
+            // Convert dp/pt to px for borderRadius
+            const borderRadiusPx = convertStyleValue(v);
+            cssStyles["border-top-left-radius"] = borderRadiusPx;
+            cssStyles["border-top-right-radius"] = borderRadiusPx;
             cssStyles["border-bottom-left-radius"] = "0px";
             cssStyles["border-bottom-right-radius"] = "0px";
           } else {
-            cssStyles[cssKey] = typeof v === "number" ? `${v}px` : String(v);
+            // Convert dp/pt to px for all numeric values (matches React Native device rendering)
+            cssStyles[cssKey] = convertStyleValue(v);
           }
         }
       });
@@ -120,14 +197,16 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           ? "500"
           : undefined;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ai = (styles as any)?.alignItems as
         | "center"
         | "flex-start"
         | "flex-end"
         | undefined;
 
+      // Determine text alignment: prioritize explicit textAlign, then map from alignItems
       const mappedTextAlign =
-        (styles as any)?.textAlign ??
+        textAlignValue ??
         (ai === "center"
           ? "center"
           : ai === "flex-end"
@@ -139,9 +218,22 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       const textStyles: React.CSSProperties = {
         ...cssStyles,
         ...(weight ? { fontWeight: weight } : {}),
+        // Convert fontSize from props (dp/pt to px)
+        ...(nodeProps.fontSize !== undefined && nodeProps.fontSize !== null
+          ? { fontSize: convertStyleValue(nodeProps.fontSize) }
+          : {}),
+        // Apply fontFamily from props if present (with fallback fonts)
+        ...(nodeProps.fontFamily
+          ? { fontFamily: `${nodeProps.fontFamily}, sans-serif` }
+          : {}),
+        // Apply text alignment - ensure it's set correctly
         ...(mappedTextAlign
           ? {
-              textAlign: mappedTextAlign,
+              textAlign: mappedTextAlign as
+                | "left"
+                | "center"
+                | "right"
+                | "justify",
               ...(cssStyles.width ? {} : { display: "block", width: "100%" }),
             }
           : {}),
@@ -199,14 +291,16 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           ? "500"
           : undefined;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ai = (styles as any)?.alignItems as
         | "center"
         | "flex-start"
         | "flex-end"
         | undefined;
 
+      // Determine text alignment: prioritize explicit textAlign, then map from alignItems
       const mappedTextAlign =
-        (styles as any)?.textAlign ??
+        textAlignValue ??
         (ai === "center"
           ? "center"
           : ai === "flex-end"
@@ -222,7 +316,24 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           style={{
             ...cssStyles,
             ...(weight ? { fontWeight: weight } : {}),
-            ...(mappedTextAlign ? { textAlign: mappedTextAlign } : {}),
+            // Convert fontSize from props if present (dp/pt to px)
+            ...(nodeProps.fontSize !== undefined && nodeProps.fontSize !== null
+              ? { fontSize: convertStyleValue(nodeProps.fontSize) }
+              : {}),
+            // Apply fontFamily from props if present (with fallback fonts)
+            ...(nodeProps.fontFamily
+              ? { fontFamily: `${nodeProps.fontFamily}, sans-serif` }
+              : {}),
+            // Apply text alignment - ensure it's set correctly
+            ...(mappedTextAlign
+              ? {
+                  textAlign: mappedTextAlign as
+                    | "left"
+                    | "center"
+                    | "right"
+                    | "justify",
+                }
+              : {}),
             border: "none",
             cursor: "default",
             ...(isHighlighted
@@ -269,19 +380,30 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     if (type === "View") {
       const hasFlexProps =
         (styles as any).flexDirection ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flex ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flexGrow ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flexShrink ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).flexBasis ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).justifyContent ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).alignItems;
 
       // NEW: detect any radius
+
       const hasRadius =
         (styles as any).borderRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderTopLeftRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderTopRightRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderBottomLeftRadius != null ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderBottomRightRadius != null;
 
       const viewStyles = {
@@ -407,6 +529,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
     if (nudgeTypeStr === "TOOLTIP" || nudgeType === NudgeType.TOOLTIP) {
       if (!template) return null;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tooltipProps = (template.props || {}) as Record<string, any>;
       const tooltipStyles = template.styles || {};
 
@@ -418,12 +541,13 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
       const isTooltipHighlighted =
         tooltipTestID && selectedTestID === tooltipTestID;
 
-      // Convert styles to CSS
+      // Convert styles to CSS (dp/pt to px conversion matching React Native)
       const cssStyles: Record<string, string | number> = {};
       Object.entries(tooltipStyles).forEach(([k, v]) => {
         if (v !== undefined && v !== null) {
           const cssKey = k.replace(/([A-Z])/g, "-$1").toLowerCase();
-          cssStyles[cssKey] = typeof v === "number" ? `${v}px` : String(v);
+          // Convert dp/pt to px for numeric values
+          cssStyles[cssKey] = convertStyleValue(v);
         }
       });
 
@@ -443,10 +567,10 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           ? String(tooltipProps.subTitle[0].value)
           : "";
 
-      // Apply text styles from props
+      // Apply text styles from props (convert dp/pt to px)
       const titleStyle: React.CSSProperties = {
         fontSize: tooltipProps.titleFontSize
-          ? `${tooltipProps.titleFontSize}px`
+          ? convertStyleValue(tooltipProps.titleFontSize)
           : undefined,
         color: tooltipProps.titleColor || undefined,
         fontFamily: tooltipProps.titleFontFamily || undefined,
@@ -463,7 +587,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
       const subTitleStyle: React.CSSProperties = {
         fontSize: tooltipProps.subTitleFontSize
-          ? `${tooltipProps.subTitleFontSize}px`
+          ? convertStyleValue(tooltipProps.subTitleFontSize)
           : undefined,
         color: tooltipProps.subTitleColor || undefined,
         fontFamily: tooltipProps.subTitleFontFamily || undefined,
@@ -476,11 +600,12 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
             : tooltipProps.subTitleAlignment === "right"
             ? "right"
             : undefined,
-        marginTop: subTitle ? "4px" : undefined,
+        marginTop: subTitle ? convertStyleValue(4) : undefined,
       };
 
-      // Get arrow size and position
-      const arrowSize = tooltipProps.arrowSize || 16;
+      // Get arrow size and position (convert dp/pt to px)
+      const arrowSizeDp = tooltipProps.arrowSize || 16;
+      const arrowSizePx = convertStyleValue(arrowSizeDp);
       const position = tooltipProps.position || "top";
       const backgroundColor = tooltipStyles.backgroundColor || "#0096C7";
 
@@ -521,7 +646,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
 
       // Calculate arrow position styles
       const getArrowStyles = () => {
-        const arrowSizePx = `${arrowSize}px`;
+        const arrowSizePxStr = arrowSizePx;
         const baseArrowStyle: React.CSSProperties = {
           position: "absolute",
           width: 0,
@@ -532,49 +657,49 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
           case "top":
             return {
               ...baseArrowStyle,
-              bottom: `calc(-${arrowSizePx} + 1px)`,
-              left: `${arrowSize}px`,
-              borderLeft: `${arrowSizePx} solid transparent`,
-              borderRight: `${arrowSizePx} solid transparent`,
-              borderTop: `${arrowSizePx} solid ${backgroundColor}`,
+              bottom: `calc(-${arrowSizePxStr} + 1px)`,
+              left: arrowSizePxStr,
+              borderLeft: `${arrowSizePxStr} solid transparent`,
+              borderRight: `${arrowSizePxStr} solid transparent`,
+              borderTop: `${arrowSizePxStr} solid ${backgroundColor}`,
             };
           case "bottom":
             return {
               ...baseArrowStyle,
-              top: `calc(-${arrowSizePx} + 1px)`,
-              left: `${arrowSize}px`,
-              borderLeft: `${arrowSizePx} solid transparent`,
-              borderRight: `${arrowSizePx} solid transparent`,
-              borderBottom: `${arrowSizePx} solid ${backgroundColor}`,
+              top: `calc(-${arrowSizePxStr} + 1px)`,
+              left: arrowSizePxStr,
+              borderLeft: `${arrowSizePxStr} solid transparent`,
+              borderRight: `${arrowSizePxStr} solid transparent`,
+              borderBottom: `${arrowSizePxStr} solid ${backgroundColor}`,
             };
           case "left":
             return {
               ...baseArrowStyle,
-              right: `-${arrowSizePx}`,
+              right: `-${arrowSizePxStr}`,
               top: "50%",
               transform: "translateY(-50%)",
-              borderTop: `${arrowSizePx} solid transparent`,
-              borderBottom: `${arrowSizePx} solid transparent`,
-              borderLeft: `${arrowSizePx} solid ${backgroundColor}`,
+              borderTop: `${arrowSizePxStr} solid transparent`,
+              borderBottom: `${arrowSizePxStr} solid transparent`,
+              borderLeft: `${arrowSizePxStr} solid ${backgroundColor}`,
             };
           case "right":
             return {
               ...baseArrowStyle,
-              left: `-${arrowSizePx}`,
+              left: `-${arrowSizePxStr}`,
               top: "50%",
               transform: "translateY(-50%)",
-              borderTop: `${arrowSizePx} solid transparent`,
-              borderBottom: `${arrowSizePx} solid transparent`,
-              borderRight: `${arrowSizePx} solid ${backgroundColor}`,
+              borderTop: `${arrowSizePxStr} solid transparent`,
+              borderBottom: `${arrowSizePxStr} solid transparent`,
+              borderRight: `${arrowSizePxStr} solid ${backgroundColor}`,
             };
           default:
             return {
               ...baseArrowStyle,
-              bottom: `calc(-${arrowSizePx} + 1px)`,
-              left: `${arrowSize}px`,
-              borderLeft: `${arrowSizePx} solid transparent`,
-              borderRight: `${arrowSizePx} solid transparent`,
-              borderTop: `${arrowSizePx} solid ${backgroundColor}`,
+              bottom: `calc(-${arrowSizePxStr} + 1px)`,
+              left: arrowSizePxStr,
+              borderLeft: `${arrowSizePxStr} solid transparent`,
+              borderRight: `${arrowSizePxStr} solid transparent`,
+              borderTop: `${arrowSizePxStr} solid ${backgroundColor}`,
             };
         }
       };
@@ -631,7 +756,7 @@ export default function PreviewPanel({ control }: PreviewPanelProps) {
               </Typography>
             )}
             {/* Arrow indicator */}
-            {arrowSize > 0 && (
+            {arrowSizeDp > 0 && (
               <Box
                 sx={{
                   ...getArrowStyles(),
