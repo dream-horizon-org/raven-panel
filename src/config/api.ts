@@ -15,7 +15,7 @@ const getBaseUrlForCohorts = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
   const baseUrl = getBaseUrl();
 
-  let cohortPath: string | undefined
+  let cohortPath: string | undefined;
   if (env === "production") {
     cohortPath = process.env.NEXT_PUBLIC_COHORT_URL_PROD;
   } else if (env === "uat") {
@@ -35,15 +35,40 @@ const getBaseUrlForCohorts = () => {
   return `${baseUrl}${cohortPath}`;
 };
 
+const getBaseUrlForEvents = () => {
+  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+  const baseUrl = getBaseUrl();
+
+  let eventPath: string | undefined;
+  if (env === "production") {
+    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+  } else if (env === "uat") {
+    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+  } else {
+    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+  }
+
+  if (!eventPath) {
+    return;
+  }
+
+  if (!baseUrl) {
+    return;
+  }
+
+  return `${baseUrl}${eventPath}`;
+};
+
 export const API_BASE_URLS = {
   THUNDER: getBaseUrl(),
   USER_COHORTS: getBaseUrlForCohorts(),
+  EVENTS: getBaseUrlForEvents(),
   CONCORD: getBaseUrl(),
 };
 
 export const API_ENDPOINTS = {
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
-  EVENTS_SCHEMA: `${API_BASE_URLS.CONCORD}/${process.env.NEXT_PUBLIC_EVENT_URL}`,
+  EVENTS_SCHEMA: API_BASE_URLS.EVENTS,
   SYSTEM_PROPERTIES: `${API_BASE_URLS.THUNDER}/${process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL}`,
   COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
 };

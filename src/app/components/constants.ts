@@ -39,6 +39,11 @@ export const ORGANIZATIONS = getOrganizations();
 
 export const TENANTS = ORGANIZATIONS.map((name) => ({ name }));
 
+export const isTenantEnabled = () => {
+  const enableTenant = process.env.NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT;
+  return enableTenant === "true";
+};
+
 // Landing page text constants
 export const LANDING_PAGE_TEXT = {
   greeting: "Hi, Welcome Back!",
