@@ -1,61 +1,41 @@
-/**
- * Determines the base URL based on the environment.
- */
 const getBaseUrl = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-
+  
   if (env === "production") {
-    return "https://kong.dream11.com/thunder";
+    return process.env.NEXT_PUBLIC_BASE_URL_PROD;
   }
   if (env === "uat") {
-    return "https://kong-uat.dream11.com/thunder";
+    return process.env.NEXT_PUBLIC_BASE_URL_UAT;
   }
 
-  return "/thunder";
+  return process.env.NEXT_PUBLIC_BASE_URL_PROD;
 };
 
 const getBaseUrlForCohorts = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-  if (process.env.NODE_ENV === "development") {
-    return "https://kong.dream11.com/v1/destinations/UserCohortService/cohorts";
+  if (process.env.NODE_ENV === "production") {
+    return process.env.NEXT_PUBLIC_COHORT_URL;
   }
   if (env === "uat") {
-    return "https://kong-uat.dream11.com/v1/destinations/UserCohortService/cohorts";
+    return process.env.NEXT_PUBLIC_COHORT_URL_UAT;
   }
 
-  return "https://kong.dream11.com/v1/destinations/UserCohortService/cohorts";
-};
-
-/**
-
- * Gets the base URL for Concord service
- */
-const getConcordBaseUrl = () => {
-  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-
-  if (env === "production") {
-    return "https://kong.dream11.com";
-  }
-  if (env === "uat") {
-    return "https://kong-uat.dream11.com";
-  }
-  // Development: use local kong
-  return "https://kong.dream11.com";
+  return process.env.NEXT_PUBLIC_COHORT_URL;
 };
 
 export const API_BASE_URLS = {
   THUNDER: getBaseUrl(),
   USER_COHORTS: getBaseUrlForCohorts(),
-  CONCORD: getConcordBaseUrl(),
+  CONCORD: getBaseUrl(),
 };
 
 export const API_ENDPOINTS = {
-  FILTERS_LIST: `${API_BASE_URLS.THUNDER}/filters`,
-  JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/ctas`,
-  EVENTS_SCHEMA: `${API_BASE_URLS.CONCORD}/schema`,
-  SYSTEM_PROPERTIES: `${API_BASE_URLS.CONCORD}/getSystemProperties`,
-  COHORTS_REALTIME: `${API_BASE_URLS.USER_COHORTS}?pageSize=999999`,
+  JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
+  EVENTS_SCHEMA: `${API_BASE_URLS.CONCORD}/${process.env.NEXT_PUBLIC_EVENT_URL}`,
+  SYSTEM_PROPERTIES: `${API_BASE_URLS.THUNDER}/${process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL}`,
+  COHORTS_REALTIME: `${API_BASE_URLS.THUNDER}/${API_BASE_URLS.USER_COHORTS}`,
 };
+
 export const API_AXIOS_CONFIG = {
   timeout: 60000,
   headers: {
