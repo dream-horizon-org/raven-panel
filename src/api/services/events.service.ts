@@ -10,7 +10,7 @@ export const getAnalyticsEventsForCTA = async ({
     {
       params: { limit: 10000, companyName: "dream11", branchId: 0 },
       headers: { "x-tenant-id": "dream11", "x-skip-validation": "false" },
-      signal, 
+      signal,
     }
   );
   return res.data;

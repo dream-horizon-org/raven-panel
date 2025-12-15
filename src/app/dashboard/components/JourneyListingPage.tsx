@@ -16,24 +16,56 @@ import {
   searchContainerWrapperStyles,
 } from "./styles/bodyStyles";
 import { BUTTON_TEXT, PAGE_TITLES } from "@/config/constants";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useJourneysList } from "@/hooks/useJourneysList";
-import { useRouter } from "next/navigation";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
 export default function JourneyListingPage() {
-  const router = useRouter();
   const { hasEditAccess, isLoading: isPermissionsLoading } = usePermissions();
-
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const statusFromUrl = searchParams.get("status")?.toUpperCase() as Status | null;
+  const validStatuses: Status[] = ["ALL", "DRAFT", "LIVE", "SCHEDULED", "PAUSED", "CONCLUDED", "TERMINATED"];
+  const initialStatus = statusFromUrl && validStatuses.includes(statusFromUrl) ? statusFromUrl : "ALL";
+  
   const [searchTerm, setSearchTerm] = useState("");
-  const [status, setStatus] = useState<Status>("ALL");
+  const [status, setStatus] = useState<Status>(initialStatus);
 
   const [pageNumber, setPageNumber] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => setPageNumber(0), [searchTerm, status]);
 
-  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+
+  useEffect(() => {
+    const urlStatus = searchParams.get("status")?.toUpperCase() as Status | null;
+    const expectedStatus = urlStatus && validStatuses.includes(urlStatus) ? urlStatus : "ALL";
+    if (expectedStatus !== status) {
+      setStatus(expectedStatus);
+    }
+  }, [searchParams]);
+
+
+  useEffect(() => {
+    const urlStatus = searchParams.get("status")?.toUpperCase();
+    const expectedUrlStatus = status === "ALL" ? null : status.toLowerCase();
+    const currentUrlStatus = urlStatus?.toLowerCase() || null;
+    
+    if (currentUrlStatus !== expectedUrlStatus) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (status === "ALL") {
+        params.delete("status");
+      } else {
+        params.set("status", status.toLowerCase());
+      }
+      const newUrl = params.toString() 
+        ? `/dashboard?${params.toString()}`
+        : "/dashboard";
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [status, router, searchParams]);
 
   const {
     data: journeys,
@@ -71,14 +103,22 @@ export default function JourneyListingPage() {
     return mappedCounts ?? lastCountsRef.current;
   }, [mappedCounts]);
 
-  const handlePreviousPage = () =>
-    setPageNumber((prev) => Math.max(prev - 1, 0));
-  const handleNextPage = () => setPageNumber((prev) => prev + 1);
-  const handlePageChange = (newPage: number) => setPageNumber(newPage);
-  const handlePageSizeChange = (newPageSize: number) => {
+  const handlePreviousPage = useCallback(
+    () => setPageNumber((prev) => Math.max(prev - 1, 0)),
+    []
+  );
+  const handleNextPage = useCallback(
+    () => setPageNumber((prev) => prev + 1),
+    []
+  );
+  const handlePageChange = useCallback(
+    (newPage: number) => setPageNumber(newPage),
+    []
+  );
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
     setPageSize(newPageSize);
     setPageNumber(0);
-  };
+  }, []);
 
   return (
     <Box sx={bodyContainerStyles}>
@@ -101,7 +141,14 @@ export default function JourneyListingPage() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 sx={createButtonStyles}
-                onClick={() => router.push("/dashboard/create")}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (status !== "ALL") {
+                    params.set("status", status.toLowerCase());
+                  }
+                  const queryString = params.toString();
+                  router.push(`/dashboard/create${queryString ? `?${queryString}` : ""}`);
+                }}
                 disabled={!hasEditAccess || isPermissionsLoading}
               >
                 {BUTTON_TEXT.CREATE_JOURNEY}
@@ -123,6 +170,7 @@ export default function JourneyListingPage() {
             pageNumber={pageNumber}
             handlePageSizeChange={handlePageSizeChange}
             pageSize={pageSize}
+            status={status}
           />
         </Box>
       </Box>

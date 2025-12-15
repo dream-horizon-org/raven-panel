@@ -22,17 +22,16 @@ import {
   useWatch as useWatchHook,
   useFormContext,
 } from "react-hook-form";
-import ErrorIcon from "@mui/icons-material/Error";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
   DynamicTextValueType,
-} from "../../types/journeyTypes";
-import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
+} from "../../types/journey.interface";
+import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
 import {
   getComponentDefinition,
   getComponentDefinitionByDisplay,
-} from "../../utils/componentDefinitions";
+} from "../../utils/componentDefinitions.utils";
 import ElementPropsEditor from "./ElementPropsEditor";
 import ElementStylesEditor from "./ElementStylesEditor";
 import ElementActionsEditor from "./ElementActionsEditor";
@@ -42,8 +41,9 @@ interface ContentElementEditorProps {
   errors: FieldErrors<CreateJourneyFormData>;
   index: number;
   onRemove: () => void;
-  parentPath?: number[]; // For nested children, e.g., [0, 0] means children[0].children[0]
+  parentPath?: number[];
   isChild?: boolean;
+  actionIndex?: number;
 }
 
 export default function ContentElementEditor({
@@ -53,6 +53,7 @@ export default function ContentElementEditor({
   onRemove,
   parentPath = [],
   isChild = false,
+  actionIndex = 0,
 }: ContentElementEditorProps) {
   const { setValue } = useFormContext<CreateJourneyFormData>();
   const { setSelectedTestID } = useElementLocator();
@@ -64,14 +65,14 @@ export default function ContentElementEditor({
 
   const template = useWatchHook({
     control,
-    name: "nudgeSelection.actions.0.template",
+    name: `nudgeSelection.actions.${actionIndex}.template` as any,
   }) as ReactNativeJson | undefined;
 
   const actions = useWatchHook({
     control,
     name: "nudgeSelection.actions",
   });
-  const engagementType = actions?.[0]?.type;
+  const engagementType = actions?.[actionIndex]?.type;
 
   // Get the element at the current path
   const { element, templateObj, elementPath } = useMemo(() => {
@@ -161,7 +162,10 @@ export default function ContentElementEditor({
       ...templateObj,
       children: updateChildren(templateObj.children || [], elementPath),
     };
-    setValue("nudgeSelection.actions.0.template", updatedTemplate);
+    setValue(
+      `nudgeSelection.actions.${actionIndex}.template` as any,
+      updatedTemplate
+    );
   };
 
   // Update a prop field
@@ -202,15 +206,15 @@ export default function ContentElementEditor({
     });
   };
 
-  // Update margin/padding (now in styles)
-  const updateSpacing = (
-    type: "margin" | "padding",
-    side: "Top" | "Right" | "Bottom" | "Left",
-    value: number
-  ) => {
-    const styleKey = `${type}${side}`;
-    updateStyle(styleKey, value);
-  };
+  // Update margin/padding (now in styles) - unused but kept for potential future use
+  // const updateSpacing = (
+  //   type: "margin" | "padding",
+  //   side: "Top" | "Right" | "Bottom" | "Left",
+  //   value: number
+  // ) => {
+  //   const styleKey = `${type}${side}`;
+  //   updateStyle(styleKey, value);
+  // };
 
   const handleAddChildElement = (
     type: "View" | "Text" | "Image" | "Button"
@@ -285,23 +289,25 @@ export default function ContentElementEditor({
     updateElement({ children: currentChildren });
   };
 
-  const getElementLabel = () => {
-    if (!element) return "Element";
-
-    const displayName = componentDef?.display || element.type;
-
-    if (element.type === "Text") {
-      const textContent =
-        element.props?.title || element.props?.textContent || "Empty";
-      return `${displayName}: ${textContent}`;
-    }
-
-    return displayName;
-  };
+  // Unused function - kept for potential future use
+  // const getElementLabel = () => {
+  //   if (!element) return "Element";
+  //
+  //   const displayName = componentDef?.display || element.type;
+  //
+  //   if (element.type === "Text") {
+  //     const textContent =
+  //       element.props?.title || element.props?.textContent || "Empty";
+  //     return `${displayName}: ${textContent}`;
+  //   }
+  //
+  //   return displayName;
+  // };
 
   // Helper to check if a specific path has errors
   const checkPathForErrors = (path: string): boolean => {
     const pathParts = path.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = errors;
 
     for (const part of pathParts) {
@@ -342,8 +348,8 @@ export default function ContentElementEditor({
   const hasElementErrors = (): boolean => {
     if (!elementPath || elementPath.length === 0) return false;
 
-    // Build the path string: nudgeSelection.actions.0.template.children.0.children.1...
-    let pathString = "nudgeSelection.actions.0.template";
+    // Build the path string: nudgeSelection.actions.{actionIndex}.template.children.0.children.1...
+    let pathString = `nudgeSelection.actions.${actionIndex}.template`;
     for (let i = 0; i < elementPath.length; i++) {
       pathString += `.children.${elementPath[i]}`;
     }
@@ -360,7 +366,7 @@ export default function ContentElementEditor({
       return false;
     }
 
-    let basePathString = "nudgeSelection.actions.0.template";
+    let basePathString = `nudgeSelection.actions.${actionIndex}.template`;
     for (let i = 0; i < elementPath.length; i++) {
       basePathString += `.children.${elementPath[i]}`;
     }
@@ -382,7 +388,7 @@ export default function ContentElementEditor({
     }
 
     // Build the base path for this element's children
-    let basePathString = "nudgeSelection.actions.0.template";
+    let basePathString = `nudgeSelection.actions.${actionIndex}.template`;
     for (let i = 0; i < elementPath.length; i++) {
       basePathString += `.children.${elementPath[i]}`;
     }
@@ -397,6 +403,7 @@ export default function ContentElementEditor({
 
       // Navigate to the path in errors object
       const pathParts = path.split(".");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let current: any = errors;
       for (const part of pathParts) {
         if (!current || typeof current !== "object") return false;
@@ -435,6 +442,7 @@ export default function ContentElementEditor({
 
             const childActionsPath = `${childPath}.actions`;
             const childActionsParts = childActionsPath.split(".");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let childActionsCurrent: any = errors;
             for (const part of childActionsParts) {
               if (
@@ -580,8 +588,8 @@ export default function ContentElementEditor({
             onPropChange={updateProp}
             basePath={
               elementPath.length === 0
-                ? "nudgeSelection.actions.0.template"
-                : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                ? `nudgeSelection.actions.${actionIndex}.template`
+                : `nudgeSelection.actions.${actionIndex}.template.children.${elementPath.join(
                     ".children."
                   )}`
             }
@@ -594,8 +602,8 @@ export default function ContentElementEditor({
             onStyleChange={updateStyle}
             basePath={
               elementPath.length === 0
-                ? "nudgeSelection.actions.0.template"
-                : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                ? `nudgeSelection.actions.${actionIndex}.template`
+                : `nudgeSelection.actions.${actionIndex}.template.children.${elementPath.join(
                     ".children."
                   )}`
             }
@@ -675,6 +683,7 @@ export default function ContentElementEditor({
                         onRemove={() => handleRemoveChild(childIndex)}
                         parentPath={[...elementPath]}
                         isChild={true}
+                        actionIndex={actionIndex}
                       />
                     )
                   )}

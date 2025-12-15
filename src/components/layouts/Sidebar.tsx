@@ -55,32 +55,6 @@ const getUserInfo = (): UserInfo | null => {
   return null;
 };
 
-const getUserInitials = (user: UserInfo | null): string => {
-  if (!user) return "";
-
-  if (user.name) {
-    const names = user.name.trim().split(" ");
-    if (names.length >= 2) {
-      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-    }
-    return names[0][0].toUpperCase();
-  }
-
-  if (user.given_name && user.family_name) {
-    return (user.given_name[0] + user.family_name[0]).toUpperCase();
-  }
-
-  if (user.given_name) {
-    return user.given_name[0].toUpperCase();
-  }
-
-  if (user.email) {
-    return user.email[0].toUpperCase();
-  }
-
-  return "U";
-};
-
 interface NavItem {
   label: string;
   icon: React.ComponentType<SvgIconProps>;
@@ -197,13 +171,9 @@ export default function Sidebar() {
                 style={{ cursor: "pointer" }}
               >
                 <Box sx={sidebarNavItemStyles(isCollapsed)}>
-                  <IconComponent
-                    sx={sidebarNavIconStyles(isActive, isCollapsed)}
-                  />
+                  <IconComponent sx={sidebarNavIconStyles(isActive)} />
                   {!isCollapsed && (
-                    <Typography
-                      sx={sidebarNavTextStyles(isActive, isCollapsed)}
-                    >
+                    <Typography sx={sidebarNavTextStyles(isActive)}>
                       {item.label}
                     </Typography>
                   )}
