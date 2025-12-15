@@ -3,36 +3,36 @@
 import { Box, CircularProgress } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import { useEventsList } from "@/hooks/useEventsList";
-import { useFiltersList } from "@/hooks/useFiltersList";
 import { useSystemProperties } from "@/hooks/useSystemProperties";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createJourneyPageStyles } from "../styles/createJourneyPageStyles";
-import { generateRandomJourneyName } from "../utils/journeyUtils";
-import { CreateJourneyFormData } from "../types/journeyTypes";
+import { createJourneyPageStyles } from "./content/styles/createJourneyPageStyles";
 import {
-  JOURNEY_TEXT,
-  getJourneyFormDefaults,
-} from "../constants/journeyConstants";
+  generateRandomJourneyName,
+  findMatchingEvent,
+  createEventSelection,
+} from "../utils/journey.utils";
+import { CreateJourneyFormData } from "../types/journey.interface";
+import { getJourneyFormDefaults } from "../constants/journeyConstants";
 import JourneyHeader from "./JourneyHeader";
 import JourneyTabs from "./JourneyTabs";
 import CohortSection from "./CohortSection";
 import ScheduleSection from "./ScheduleSection";
 import JourneyFrequencySection from "./JourneyFrequencySection";
 import JourneyActions from "./JourneyActions";
-import EngagementSelector from "./EngagementSelector";
 import EngagementSidePanel from "./EngagementSidePanel";
 import JourneyFlowBuilderIntegrated from "./JourneyFlowBuilderIntegrated";
-import { createJourney } from "@/api/services/createJourney.service";
-import { updateJourney } from "@/api/services/updateJourney.service";
 import { getJourneyById } from "@/api/services/getJourney.service";
-import { updateJourneyStatus } from "@/api/services/journeyStatus.service";
 import { toast } from "sonner";
-import { parseJourneyDataToFormData } from "../utils/parseJourneyData";
+import { parseJourneyDataToFormData } from "../utils/parseJourneyData.utils";
 import { useWatch, Path } from "react-hook-form";
-import { validateTemplate } from "../utils/validation";
-import { usePermissions } from "@/app/providers/PermissionProvider";
-import { AxiosError } from "axios";
+import { extractSystemProperties } from "../utils/propertyType.utils";
+import { submitJourney } from "../utils/journeySubmission.utils";
+import {
+  hasTemplateErrors as checkTemplateErrors,
+  hasTemplate as checkHasTemplate,
+  validateEngagementsBeforeTabChange,
+} from "../utils/templateValidation.utils";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -47,83 +47,7 @@ export default function CreateJourneyPage({
   const searchParams = useSearchParams();
   const journeyIdFromQuery = searchParams?.get("id");
   const journeyId = journeyIdProp || journeyIdFromQuery || undefined;
-  const { hasEditAccess } = usePermissions();
 
-  // Redirect if user doesn't have edit access
-
-  const { data: filtersData, isLoading: isLoadingFilters } = useFiltersList();
-  const {
-    data: eventsData,
-    isLoading: isLoadingEvents,
-    isFetching: isFetchingEvents,
-  } = useEventsList();
-  const {
-    data: systemPropertiesData,
-    isLoading: isLoadingSystemProperties,
-    isFetching: isFetchingSystemProperties,
-  } = useSystemProperties();
-  const availableProperties = filtersData?.data?.names || [];
-  const { systemPropertyNames, systemPropertyTypes } = useMemo(() => {
-    if (!systemPropertiesData) {
-      return {
-        systemPropertyNames: [],
-        systemPropertyTypes: new Map<string, string>(),
-      };
-    }
-    const data = systemPropertiesData.data;
-    if (!data) {
-      return {
-        systemPropertyNames: [],
-        systemPropertyTypes: new Map<string, string>(),
-      };
-    }
-    const names: string[] = [];
-    const types = new Map<string, string>();
-    if (Array.isArray(data)) {
-      data.forEach((item) => {
-        if (item?.propertyName) {
-          names.push(item.propertyName);
-          if (item.type) {
-            const normalizedType = item.type.toLowerCase();
-            types.set(item.propertyName, normalizedType);
-          }
-        }
-      });
-    } else if (Array.isArray(data.names)) {
-      data.names.forEach((name: string) => {
-        names.push(name);
-      });
-    } else if (Array.isArray(data.properties)) {
-      data.properties.forEach(
-        (prop: string | { propertyName: string; type?: string }) => {
-          if (typeof prop === "string") {
-            names.push(prop);
-          } else if (prop?.propertyName) {
-            names.push(prop.propertyName);
-            if (prop.type) {
-              const normalizedType = prop.type.toLowerCase();
-              types.set(prop.propertyName, normalizedType);
-            }
-          }
-        }
-      );
-    } else if (Array.isArray(data.systemProperties)) {
-      data.systemProperties.forEach(
-        (prop: string | { propertyName: string; type?: string }) => {
-          if (typeof prop === "string") {
-            names.push(prop);
-          } else if (prop?.propertyName) {
-            names.push(prop.propertyName);
-            if (prop.type) {
-              const normalizedType = prop.type.toLowerCase();
-              types.set(prop.propertyName, normalizedType);
-            }
-          }
-        }
-      );
-    }
-    return { systemPropertyNames: names, systemPropertyTypes: types };
-  }, [systemPropertiesData]);
   const methods = useForm<CreateJourneyFormData, object, CreateJourneyFormData>(
     {
       defaultValues: {
@@ -142,22 +66,10 @@ export default function CreateJourneyPage({
     }
   );
 
-  // Watch journey frequency checkboxes to clear error when any is checked
-  const enableTimesInSession = useWatch({
-    control: methods.control,
-    name: "journeyFrequency.enableTimesInSession",
-  });
-  const enableMaxTimesInPeriod = useWatch({
-    control: methods.control,
-    name: "journeyFrequency.enableMaxTimesInPeriod",
-  });
-  const enableMaxTimesInLifetime = useWatch({
-    control: methods.control,
-    name: "journeyFrequency.enableMaxTimesInLifetime",
-  });
   const {
     control,
     handleSubmit,
+    formState,
     formState: { errors },
     trigger,
     reset,
@@ -166,9 +78,50 @@ export default function CreateJourneyPage({
     setValue,
     getValues,
   } = methods;
+
+  const {
+    data: eventsData,
+    isLoading: isLoadingEvents,
+    isFetching: isFetchingEvents,
+  } = useEventsList();
+
+  const {
+    data: systemPropertiesData,
+    isFetching: isFetchingSystemProperties,
+  } = useSystemProperties();
+
+  const { systemPropertyNames, systemPropertyTypes } = useMemo(
+    () => extractSystemProperties(systemPropertiesData),
+    [systemPropertiesData]
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);
   const hasFetchedJourneyRef = useRef<string | undefined>(undefined);
+  const [validationKey, setValidationKey] = useState(0);
+  const [activeTab, setActiveTab] = useState<"setup" | "ui">("ui");
+  const [sidePanelOpen, setSidePanelOpen] = useState(false);
+  const [currentEngagementId, setCurrentEngagementId] = useState<string | null>(
+    null
+  );
+
+  const watchedActions = useWatch({
+    control,
+    name: "nudgeSelection.actions",
+  });
+
+  useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableTimesInSession",
+  });
+  useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableMaxTimesInPeriod",
+  });
+  useWatch({
+    control: methods.control,
+    name: "journeyFrequency.enableMaxTimesInLifetime",
+  });
 
   useEffect(() => {
     const fetchJourneyData = async () => {
@@ -178,9 +131,8 @@ export default function CreateJourneyPage({
         setIsLoadingJourney(true);
         hasFetchedJourneyRef.current = journeyId;
         const journeyResponse = await getJourneyById(Number(journeyId));
-        const formData = parseJourneyDataToFormData(journeyResponse);
 
-        // Match event with events list if available
+        const formData = parseJourneyDataToFormData(journeyResponse);
         if (
           formData.ruleEngine.currentDropdownSelectedEvent &&
           eventsData?.data?.eventList &&
@@ -188,15 +140,16 @@ export default function CreateJourneyPage({
         ) {
           const eventName =
             formData.ruleEngine.currentDropdownSelectedEvent.label;
-          const matchingEvent = eventsData.data.eventList.find(
-            (event) => event.metadata.eventName === eventName
+          const matchingEvent = findMatchingEvent(
+            eventName,
+            eventsData.data.eventList
           );
           if (matchingEvent) {
-            const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
-            formData.ruleEngine.currentDropdownSelectedEvent = {
-              id: eventIndex + 1,
-              label: eventName,
-            };
+            formData.ruleEngine.currentDropdownSelectedEvent = createEventSelection(
+              matchingEvent,
+              eventsData.data.eventList,
+              eventName
+            );
           }
         }
 
@@ -213,10 +166,8 @@ export default function CreateJourneyPage({
     if (journeyId) {
       fetchJourneyData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journeyId, isCloneMode, eventsData]);
 
-  // Update event ID when events list loads after journey data
   useEffect(() => {
     if (
       journeyId &&
@@ -226,374 +177,116 @@ export default function CreateJourneyPage({
     ) {
       const currentEvent = getValues("ruleEngine.currentDropdownSelectedEvent");
       if (currentEvent?.label && (currentEvent.id === 0 || !currentEvent.id)) {
-        const matchingEvent = eventsData.data.eventList.find(
-          (event) => event.metadata.eventName === currentEvent.label
+        const matchingEvent = findMatchingEvent(
+          currentEvent.label,
+          eventsData.data.eventList
         );
         if (matchingEvent) {
-          const eventIndex = eventsData.data.eventList.indexOf(matchingEvent);
-          setValue("ruleEngine.currentDropdownSelectedEvent", {
-            id: eventIndex + 1,
-            label: currentEvent.label,
-          });
+          setValue(
+            "ruleEngine.currentDropdownSelectedEvent",
+            createEventSelection(
+              matchingEvent,
+              eventsData.data.eventList,
+              currentEvent.label
+            )
+          );
         }
       }
     }
   }, [journeyId, isLoadingJourney, eventsData, setValue, getValues]);
+
   const onFormSubmit = async (data: CreateJourneyFormData) => {
-    console.log("data", data);
-
-    if (data.schedule?.enableScheduledStart) {
-      if (!data.schedule.startDate || !data.schedule.startTime) {
-        if (!data.schedule.startDate) {
-          setError("schedule.startDate", {
-            type: "required",
-            message:
-              "Start date is required when 'At specific date/time' is selected",
-          });
+    await submitJourney({
+      data,
+      errors,
+      setError,
+      clearErrors,
+      journeyId,
+      isCloneMode,
+      searchParams,
+      setIsSubmitting,
+      onSuccess: (statusParam) => {
+        const params = new URLSearchParams();
+        if (statusParam) {
+          params.set("status", statusParam);
         }
-        if (!data.schedule.startTime) {
-          setError("schedule.startTime", {
-            type: "required",
-            message:
-              "Start time is required when 'At specific date/time' is selected",
-          });
-        }
-        toast.error(
-          "Please fill in both start date and time when 'At specific date/time' is selected"
-        );
-        return;
-      }
-
-      const startDateTime = new Date(
-        `${data.schedule.startDate}T${data.schedule.startTime}`
-      );
-      const now = new Date();
-      if (startDateTime < now) {
-        setError("schedule.startDate", {
-          type: "validation",
-          message: "Start date and time cannot be in the past",
-        });
-        setError("schedule.startTime", {
-          type: "validation",
-          message: "Start date and time cannot be in the past",
-        });
-        toast.error("Start date and time cannot be in the past");
-        return;
-      }
-    }
-
-    if (data.schedule?.enableScheduledEnd) {
-      if (!data.schedule.endDate || !data.schedule.endTime) {
-        if (!data.schedule.endDate) {
-          setError("schedule.endDate", {
-            type: "required",
-            message:
-              "End date is required when 'At specific date/time' is selected",
-          });
-        }
-        if (!data.schedule.endTime) {
-          setError("schedule.endTime", {
-            type: "required",
-            message:
-              "End time is required when 'At specific date/time' is selected",
-          });
-        }
-        toast.error(
-          "Please fill in both end date and time when 'At specific date/time' is selected"
-        );
-        return;
-      }
-
-      const endDateTime = new Date(
-        `${data.schedule.endDate}T${data.schedule.endTime}`
-      );
-      const now = new Date();
-      if (endDateTime < now) {
-        setError("schedule.endDate", {
-          type: "validation",
-          message: "End date and time cannot be in the past",
-        });
-        setError("schedule.endTime", {
-          type: "validation",
-          message: "End date and time cannot be in the past",
-        });
-        toast.error("End date and time cannot be in the past");
-        return;
-      }
-    }
-
-    const hasScheduleErrors =
-      errors.schedule?.startDate ||
-      errors.schedule?.startTime ||
-      errors.schedule?.endDate ||
-      errors.schedule?.endTime ||
-      errors.schedule?.enableScheduledStart ||
-      errors.schedule?.enableScheduledEnd;
-
-    if (hasScheduleErrors) {
-      console.error("Error: Schedule validation failed");
-      toast.error(
-        "Please fix all schedule errors before creating/updating the journey."
-      );
-      return;
-    }
-
-    // Validate that templates are present
-    if (
-      !data.nudgeSelection?.actions ||
-      data.nudgeSelection.actions.length === 0
-    ) {
-      console.error("Error: No actions/templates configured");
-      toast.error(
-        "Please configure at least one engagement template before creating the journey."
-      );
-      return;
-    }
-    // Validate that each action has a template
-    const actionsWithoutTemplate = data.nudgeSelection.actions.filter(
-      (action) => !action.template
-    );
-    if (actionsWithoutTemplate.length > 0) {
-      console.error("Error: Some actions are missing templates");
-      toast.error(
-        "Please ensure all actions have templates configured before creating the journey."
-      );
-      return;
-    }
-
-    // Validate template structure, props, and styles
-    let hasTemplateErrors = false;
-    for (let i = 0; i < data.nudgeSelection.actions.length; i++) {
-      const action = data.nudgeSelection.actions[i];
-      if (action.template) {
-        const basePath = `nudgeSelection.actions.${i}.template` as Path<
-          CreateJourneyFormData
-        >;
-        const isValid = validateTemplate(
-          action.template,
-          basePath,
-          setError,
-          clearErrors
-        );
-        if (!isValid) {
-          hasTemplateErrors = true;
-        }
-      }
-    }
-
-    // If template validation failed, stop submission
-    if (hasTemplateErrors) {
-      console.error("Error: Template validation failed");
-      toast.error(
-        "Please fix all template errors before creating the journey."
-      );
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      let createdOrUpdatedJourneyId: number | null = null;
-
-      // Step 1: Create or Update journey first
-      if (journeyId && !isCloneMode) {
-        // Update existing journey
-        try {
-          await updateJourney(Number(journeyId), data);
-          createdOrUpdatedJourneyId = Number(journeyId);
-          toast.success("Journey updated successfully!");
-        } catch (updateError) {
-          const error = updateError as AxiosError<{
-            error: { message: string };
-          }>;
-          const errorMessage =
-            error.response?.data?.error?.message ||
-            error.message ||
-            "Failed to update journey";
-          toast.error(errorMessage);
-          return;
-        }
-      } else {
-        try {
-          const response = await createJourney(data);
-
-          if (typeof response === "number") {
-            createdOrUpdatedJourneyId = response;
-          } else if (response?.data) {
-            if (typeof response.data === "number") {
-              createdOrUpdatedJourneyId = response.data;
-            } else if (response.data?.id) {
-              createdOrUpdatedJourneyId = response.data.id;
-            }
-          } else if (response?.id) {
-            createdOrUpdatedJourneyId = response.id;
-          }
-
-          toast.success(
-            isCloneMode
-              ? "Journey cloned successfully!"
-              : "Journey created successfully!"
-          );
-        } catch (createError) {
-          const error = createError as AxiosError<{
-            error: { message: string };
-          }>;
-          const errorMessage =
-            error.response?.data?.error?.message ||
-            error.message ||
-            "Failed to create journey";
-          toast.error(errorMessage);
-          return;
-        }
-      }
-
-      let statusUpdateSuccess = true;
-
-      if (createdOrUpdatedJourneyId) {
-        if (data.schedule?.enableImmediateStart === true) {
-          try {
-            const statusResponse = await updateJourneyStatus(
-              createdOrUpdatedJourneyId,
-              "live"
-            );
-            toast.success("Journey is now live!");
-            statusUpdateSuccess = true;
-          } catch (statusError) {
-            const error = statusError as AxiosError<{
-              error: { message: string };
-            }>;
-            console.error("Error updating journey status to live:", error);
-            const errorMessage =
-              error.response?.data?.error?.message ||
-              error.message ||
-              "Failed to set status to live";
-            toast.error(errorMessage);
-            statusUpdateSuccess = false;
-          }
-        } else if (data.schedule?.enableScheduledStart === true) {
-          try {
-            const statusResponse = await updateJourneyStatus(
-              createdOrUpdatedJourneyId,
-              "schedule"
-            );
-
-            toast.success("Journey is now scheduled!");
-            statusUpdateSuccess = true;
-          } catch (statusError) {
-            const error = statusError as AxiosError<{
-              error: { message: string };
-            }>;
-            console.error("Error updating journey status to scheduled:", error);
-            const errorMessage =
-              error.response?.data?.error?.message ||
-              error.message ||
-              "Failed to set status to scheduled";
-            toast.error(errorMessage);
-            statusUpdateSuccess = false;
-          }
-        } else {
-          statusUpdateSuccess = true;
-        }
-      } else {
-        console.error("No journey ID available for status update");
-        statusUpdateSuccess = true;
-      }
-
-      if (statusUpdateSuccess) {
-        router.push("/dashboard");
-      } else {
-      }
-    } catch (error) {
-      const axiosError = error as AxiosError<{ error: { message: string } }>;
-      console.error(
-        `Error ${journeyId && !isCloneMode ? "updating" : "creating"} journey:`,
-        axiosError
-      );
-      const errorMessage =
-        axiosError.response?.data?.error?.message ||
-        axiosError.message ||
-        `Failed to ${
-          journeyId && !isCloneMode ? "update" : "create"
-        } journey. Please try again.`;
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+        const queryString = params.toString();
+        router.push(`/dashboard${queryString ? `?${queryString}` : ""}`);
+      },
+    });
   };
-  const [activeTab, setActiveTab] = useState<"setup" | "ui">("ui");
-  const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
-  // Watch template to check validation
-  const template = useWatch({
-    control,
-    name: "nudgeSelection.actions.0.template",
-  });
-
-  const watchedActions = useWatch({
-    control,
-    name: "nudgeSelection.actions",
-  });
-
-  const hasTemplate = useMemo(() => {
-    return (
-      watchedActions &&
-      watchedActions.length > 0 &&
-      watchedActions.some((action) => action.template)
-    );
+  const template = useMemo(() => {
+    if (!watchedActions || watchedActions.length === 0) return undefined;
+    const actionWithTemplate = watchedActions.find((action) => action.template);
+    return actionWithTemplate?.template;
   }, [watchedActions]);
 
-  // State to force re-validation check when template is saved
-  const [validationKey, setValidationKey] = useState(0);
+  const hasTemplate = useMemo(() => checkHasTemplate(watchedActions), [
+    watchedActions,
+  ]);
 
-  // Helper to check if any errors exist in template path
-  const hasTemplateErrors = useMemo(() => {
-    const templateErrorsPath = errors.nudgeSelection?.actions?.[0]?.template;
-    if (!templateErrorsPath) return false;
+  const hasTemplateErrors = useMemo(
+    () =>
+      checkTemplateErrors({
+        formStateErrors: formState.errors,
+        errors,
+      }),
+    [formState.errors, errors, validationKey]
+  );
 
-    // Recursively check if any error exists
-    const checkForErrors = (obj: unknown): boolean => {
-      if (!obj || typeof obj !== "object") return false;
-      if ("message" in obj) return true;
+  const isTemplateValid = useMemo(() => {
+    const isValid = !!template && !hasTemplateErrors;
+    return isValid;
+  }, [template, hasTemplateErrors]);
 
-      for (const key in obj) {
-        if (checkForErrors((obj as Record<string, unknown>)[key])) return true;
-      }
-      return false;
-    };
-
-    return checkForErrors(templateErrorsPath);
-  }, [errors, template, validationKey]);
-
-  // Template is valid if it exists and has no errors
-  const isTemplateValid = !!template && !hasTemplateErrors;
-
-  // Ref to store the sync function from JourneyFlowBuilderIntegrated
   const syncTemplateRef = useRef<(() => void) | null>(null);
-  // Ref to check if all engagements have templates
   const checkAllEngagementsHaveTemplatesRef = useRef<(() => boolean) | null>(
     null
   );
 
-  // Callback to trigger re-validation when template is saved
-  const handleTemplateSaved = () => {
-    // Sync template back to engagement config first
+  const handleTemplateSaved = async () => {
     if (syncTemplateRef.current) {
       syncTemplateRef.current();
     }
 
-    // Force re-check by updating validation key
-    setValidationKey((prev) => prev + 1);
-    // Also trigger form validation to ensure errors object is updated
-    setTimeout(() => {
-      trigger(
-        "nudgeSelection.actions.0.template" as Path<CreateJourneyFormData>
+    const currentActions = getValues("nudgeSelection.actions") || [];
+    currentActions.forEach((_, index) => {
+      clearErrors(
+        `nudgeSelection.actions.${index}.template` as Path<
+          CreateJourneyFormData
+        >
       );
-    }, 0);
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const actions = getValues("nudgeSelection.actions") || [];
+    const validationPromises = actions.map((_, index) =>
+      trigger(
+        `nudgeSelection.actions.${index}.template` as Path<
+          CreateJourneyFormData
+        >
+      )
+    );
+    await Promise.all(validationPromises);
+
+    setValidationKey((prev) => prev + 1);
   };
 
+  const checkUnconnectedNodesRef = useRef<(() => boolean) | null>(null);
+
   const handleTabChange = async (newTab: "setup" | "ui") => {
-    // If moving to setup tab, check if all engagement nodes have templates
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    if (checkUnconnectedNodesRef.current) {
+      const hasUnconnected = checkUnconnectedNodesRef.current();
+      if (hasUnconnected) {
+        return;
+      }
+    }
+
     if (newTab === "setup") {
-      // Check if there are any engagement nodes in the flow
       if (checkAllEngagementsHaveTemplatesRef.current) {
         const allHaveTemplates = checkAllEngagementsHaveTemplatesRef.current();
         if (!allHaveTemplates) {
@@ -603,28 +296,12 @@ export default function CreateJourneyPage({
           return;
         }
       } else {
-        // Fallback: check actions in form data if ref is not available
         const currentData = getValues();
         const actions = currentData.nudgeSelection?.actions || [];
 
-        // Check if there are engagements without templates
-        const engagementsWithoutTemplates = actions.filter((action) => {
-          if (!action.template) return true;
-
-          const template = action.template;
-          // Check if template has meaningful content
-          const hasContent =
-            (template.children && template.children.length > 0) ||
-            (template.props && Object.keys(template.props).length > 1) || // More than just testID
-            (template.styles && Object.keys(template.styles).length > 0);
-
-          return !hasContent;
-        });
-
-        if (engagementsWithoutTemplates.length > 0) {
-          toast.error(
-            "Please add template details for all engagements before proceeding to Journey Setup."
-          );
+        const validation = validateEngagementsBeforeTabChange(actions);
+        if (!validation.isValid) {
+          toast.error(validation.message || "");
           return;
         }
       }
@@ -632,13 +309,10 @@ export default function CreateJourneyPage({
 
     setActiveTab(newTab);
   };
+
   const handleNext = () => {
-    // Check if a template is selected
     const currentData = getValues();
-    const hasTemplate =
-      currentData.nudgeSelection?.actions &&
-      currentData.nudgeSelection.actions.length > 0 &&
-      currentData.nudgeSelection.actions.some((action) => action.template);
+    const hasTemplate = checkHasTemplate(currentData.nudgeSelection?.actions);
 
     if (!hasTemplate) {
       toast.error(
@@ -649,9 +323,6 @@ export default function CreateJourneyPage({
 
     setActiveTab("setup");
   };
-  const isLoading =
-    (!eventsData && isFetchingEvents) ||
-    (!systemPropertiesData && isFetchingSystemProperties);
 
   if (journeyId && isLoadingJourney) {
     return (
@@ -697,14 +368,14 @@ export default function CreateJourneyPage({
                   systemPropertyNames={systemPropertyNames}
                   systemPropertyTypes={systemPropertyTypes}
                   onEngagementSelect={(nodeId, engagementId, stateNumber) => {
-                    // The integrated component handles the mapping to form actions
-                    // Just open the side panel for template selection
+                    setCurrentEngagementId(engagementId);
                     setSidePanelOpen(true);
                   }}
                   syncTemplateRef={syncTemplateRef}
                   checkAllEngagementsHaveTemplatesRef={
                     checkAllEngagementsHaveTemplatesRef
                   }
+                  checkUnconnectedNodesRef={checkUnconnectedNodesRef}
                 />
               </Box>
               {activeTab === "setup" && (
@@ -717,10 +388,14 @@ export default function CreateJourneyPage({
 
               <EngagementSidePanel
                 open={sidePanelOpen}
-                onClose={() => setSidePanelOpen(false)}
+                onClose={() => {
+                  setSidePanelOpen(false);
+                  setCurrentEngagementId(null);
+                }}
                 control={control}
                 errors={errors}
                 onTemplateSaved={handleTemplateSaved}
+                engagementId={currentEngagementId}
               />
               <JourneyActions
                 activeTab={activeTab}

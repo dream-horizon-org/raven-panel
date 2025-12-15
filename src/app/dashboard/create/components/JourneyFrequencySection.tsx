@@ -17,21 +17,14 @@ import { useTheme } from "@mui/material/styles";
 import { Controller, FieldValues } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 
-import { CreateJourneyFormData } from "../types/journeyTypes";
-import { JOURNEY_TEXT } from "../constants/journeyConstants";
-import { journeyFrequencySectionStyles } from "../styles/journeyFrequencySectionStyles";
+import { CreateJourneyFormData } from "../types/journey.interface";
+import { JOURNEY_TEXT, PERIOD_UNITS } from "../constants/journeyConstants";
+import { journeyFrequencySectionStyles } from "./content/styles/journeyFrequencySectionStyles";
 
 interface JourneyFrequencySectionProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
 }
-
-const PERIOD_UNITS = [
-  { value: "days", label: "days" },
-  { value: "hours", label: "hours" },
-  { value: "weeks", label: "weeks" },
-  { value: "months", label: "months" },
-] as const;
 
 export default function JourneyFrequencySection({
   control,
@@ -52,6 +45,7 @@ export default function JourneyFrequencySection({
             <Tooltip
               title={JOURNEY_TEXT.SECTIONS.JOURNEY_FREQUENCY.TOOLTIP}
               placement="top"
+              arrow
             >
               <HelpOutlineIcon
                 sx={journeyFrequencySectionStyles.fieldInfoIcon}
@@ -68,12 +62,11 @@ export default function JourneyFrequencySection({
               }}
             >
               {(errors.journeyFrequency?.message as string) ||
-                "At least one journey frequency option must be selected"}
+                JOURNEY_TEXT.ERRORS.AT_LEAST_ONE_FREQUENCY_OPTION}
             </Typography>
           )}
         </Box>
 
-        {/* Max times in lifetime */}
         <Box sx={journeyFrequencySectionStyles.frequencyRow}>
           <Controller
             name="journeyFrequency.enableMaxTimesInLifetime"
