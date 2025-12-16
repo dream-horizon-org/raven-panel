@@ -8,7 +8,6 @@ import {
   searchInputStyles,
 } from "./styles/searchAndFiltersStyles";
 import { useState, useEffect } from "react";
-import { useFiltersList } from "@/hooks/useFiltersList";
 import { LABELS } from "@/config/constants";
 
 interface SearchAndFiltersProps {

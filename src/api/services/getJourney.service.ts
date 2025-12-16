@@ -6,7 +6,7 @@ export const getJourneyById = async (
   journeyId: number
 ): Promise<GetJourneyResponse> => {
   const response = await axiosInstance.get<GetJourneyResponse>(
-    `${API_BASE_URLS.THUNDER}/ctas/${journeyId}`
+    `${API_BASE_URLS.THUNDER}/thunder/ctas/${journeyId}`
   );
 
   return response.data;

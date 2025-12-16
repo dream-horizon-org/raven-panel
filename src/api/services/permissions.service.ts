@@ -6,19 +6,18 @@ import {
 
 export const getPermissions = async (): Promise<UserPermission[]> => {
   try {
-    const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-    const isProduction = env === "production";
-    const isUAT = env === "uat";
+    const enablePermission = process.env.NEXT_PUBLIC_ENABLE_PERMISSION;
+    if (enablePermission !== "true") {
+      return [];
+    }
 
-    let PERMISSIONS_URL = "/raven-permissions.json";
+    const PERMISSIONS_URL = process.env.NEXT_PUBLIC_PERMISSION_S3_URL;
 
-    if (isProduction || isUAT) {
-      if (typeof window !== "undefined") {
-        const hostname = window.location.hostname;
-        PERMISSIONS_URL = `https://${hostname}/raven-permissions.json`;
-      } else {
-        PERMISSIONS_URL = "https://raven.horizonos.in/raven-permissions.json";
-      }
+    if (!PERMISSIONS_URL) {
+      console.warn(
+        "NEXT_PUBLIC_PERMISSION_S3_URL is not configured. Please set it in your environment variables."
+      );
+      return [];
     }
 
     const response = await axiosInstance.get<

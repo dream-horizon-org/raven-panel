@@ -8,6 +8,7 @@ import { landingPageStyles } from "./styles/landingPageStyles";
 import { useAuth } from "@/app/Auth/hooks/useAuth";
 import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
 import { buildPathWithTenant } from "@/app/utils/tenant.utils";
+import { isTenantEnabled } from "./constants";
 import LoginForm from "./landing/LoginForm";
 import FeaturesSection from "./landing/FeaturesSection";
 import Footer from "./landing/Footer";
@@ -19,19 +20,27 @@ export default function LandingPage() {
   const { setTenantData } = useMultiTenant();
   const [organization, setOrganization] = useState("");
   const [touched, setTouched] = useState(false);
+  const tenantEnabled = isTenantEnabled();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      const tenant =
-        organization.trim() || localStorage.getItem("organization");
-      if (tenant) {
-        const { pathname, search } = buildPathWithTenant("/dashboard", tenant);
-        router.push(`${pathname}${search}`);
+      if (tenantEnabled) {
+        const tenant =
+          organization.trim() || localStorage.getItem("organization");
+        if (tenant) {
+          const { pathname, search } = buildPathWithTenant(
+            "/dashboard",
+            tenant
+          );
+          router.push(`${pathname}${search}`);
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         router.push("/dashboard");
       }
     }
-  }, [isAuthenticated, isLoading, router, organization]);
+  }, [isAuthenticated, isLoading, router, organization, tenantEnabled]);
 
   if (isLoading || isAuthenticated) {
     return null;
@@ -39,7 +48,6 @@ export default function LandingPage() {
 
   const handleOrganizationChange = (value: string) => {
     setOrganization(value);
-    // Store organization in localStorage and set tenant
     if (value.trim()) {
       localStorage.setItem("organization", value.trim());
       setTenantData({ name: value.trim() });

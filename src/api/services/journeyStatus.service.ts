@@ -7,7 +7,7 @@ export const updateJourneyStatus = async (
   status: JourneyStatus
 ): Promise<any> => {
   const response = await axiosInstance.put(
-    `${API_BASE_URLS.THUNDER}/ctas/${journeyId}/${status}`
+    `${API_BASE_URLS.THUNDER}/thunder/ctas/${journeyId}/${status}`
   );
 
   return response.data;

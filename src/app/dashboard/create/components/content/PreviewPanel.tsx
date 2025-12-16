@@ -85,7 +85,7 @@ export default function PreviewPanel({
 
   const template = useWatch({
     control,
-    name: `nudgeSelection.actions.${actionIndex}.template` as any,
+    name: `nudgeSelection.actions.${actionIndex}.template` ,
   }) as ReactNativeJson | undefined;
 
   const actions = useWatch({
