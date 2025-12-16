@@ -25,8 +25,6 @@ export const getSystemProperties = async ({
   const res = await axiosInstance.get<SystemPropertiesResponse>(
     API_ENDPOINTS.SYSTEM_PROPERTIES,
     {
-      params: { limit: 10000, companyName: "dream11", branchId: 0 },
-      headers: { "x-tenant-id": "dream11", "x-skip-validation": "false" },
       signal,
     }
   );
