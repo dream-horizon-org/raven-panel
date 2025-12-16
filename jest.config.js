@@ -37,4 +37,6 @@ module.exports = {
     resetMocks: true,
   
     clearMocks: true,
+  
+    passWithNoTests: true,
   };
