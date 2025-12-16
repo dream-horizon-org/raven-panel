@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { landingPageStyles } from "./styles/landingPageStyles";
 import { useAuth } from "@/app/Auth/hooks/useAuth";
 import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
-import { buildPathWithTenant } from "@/app/utils/tenant.utils";
+import { buildPathWithTenant } from "@/app/components/utils/tenanat.utils";
 import { isTenantEnabled } from "./constants";
 import LoginForm from "./landing/LoginForm";
 import FeaturesSection from "./landing/FeaturesSection";

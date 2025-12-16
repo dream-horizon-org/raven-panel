@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 
 import { styles } from "./styles/Auth.style";
-import { handleGoogleSignInSuccess } from "../Auth.utils";
+import { handleGoogleSignInSuccess } from "../utils/Auth.utils";
 import { usePermissions } from "@/app/providers/PermissionProvider";
-import { buildPathWithTenant } from "@/app/utils/tenant.utils";
+import { buildPathWithTenant } from "@/app/components/utils/tenanat.utils";
 
 export const handleGoogleSuccess = async (
   credentialResponse: CredentialResponse,
