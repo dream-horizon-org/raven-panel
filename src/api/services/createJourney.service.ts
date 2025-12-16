@@ -12,7 +12,7 @@ export const createJourney = async (
   const apiPayload = transformFormDataToApiFormat(formData);
 
   const response = await axiosInstance.post(
-    `${API_BASE_URLS.THUNDER}/ctas/`,
+    `${API_BASE_URLS.THUNDER}/thunder/ctas/`,
     apiPayload
   );
 

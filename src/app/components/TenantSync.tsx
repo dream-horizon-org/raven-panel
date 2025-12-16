@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
 import { getTenantFromUrl } from "@/app/utils/tenant.utils";
-
-const TENANTS = [{ name: "dream11" }, { name: "criq" }];
+import { TENANTS } from "./constants";
 
 export const AppTenantSync = () => {
   const { tenantData, setTenantData } = useMultiTenant();

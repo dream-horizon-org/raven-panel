@@ -39,7 +39,7 @@ export const updateJourney = async (
   };
 
   const response = await axiosInstance.put(
-    `${API_BASE_URLS.THUNDER}/ctas/${journeyId}`,
+    `${API_BASE_URLS.THUNDER}/thunder/ctas/${journeyId}`,
     updatePayload
   );
 

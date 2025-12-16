@@ -37,11 +37,17 @@ interface PermissionProviderProps {
   children: React.ReactNode;
 }
 
+const isPermissionEnabled = () => {
+  const enablePermission = process.env.NEXT_PUBLIC_ENABLE_PERMISSION;
+  return enablePermission === "true";
+};
+
 export const PermissionProvider: React.FC<PermissionProviderProps> = ({
   children,
 }) => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isEmailResolved, setIsEmailResolved] = useState(false);
+  const permissionEnabled = isPermissionEnabled();
 
   useEffect(() => {
     try {
@@ -65,14 +71,21 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
   >({
     queryKey: ["permissions", userEmail],
     queryFn: getPermissions,
-    enabled: !!userEmail,
+    enabled: permissionEnabled && !!userEmail,
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
   });
 
-  // 3) Compute effective access
   const { hasViewAccess, hasEditAccess, hasPublishAccess } = useMemo(() => {
+    if (!permissionEnabled) {
+      return {
+        hasViewAccess: true,
+        hasEditAccess: true,
+        hasPublishAccess: true,
+      };
+    }
+
     if (!isEmailResolved || isPermissionsLoading || !userEmail) {
       return {
         hasViewAccess: false,
@@ -85,9 +98,8 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     const isFancodeEmail = userEmail.endsWith("@fancode.com");
 
     let hasViewAccess = isDream11Email || isFancodeEmail;
-    // TEMPORARY: Hardcoded to true for testing
-    const hasEditAccess = true;
-    const hasPublishAccess = true;
+    let hasEditAccess = false;
+    let hasPublishAccess = false;
 
     const userPermission = permissions.find(
       (p) => p.user.toLowerCase() === userEmail.toLowerCase()
@@ -95,13 +107,18 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
 
     if (userPermission) {
       hasViewAccess = userPermission.view;
-      // TEMPORARY: Override with true for testing
-      // hasEditAccess = userPermission.edit;
-      // hasPublishAccess = userPermission.publish;
+      hasEditAccess = userPermission.edit;
+      hasPublishAccess = userPermission.publish;
     }
 
     return { hasViewAccess, hasEditAccess, hasPublishAccess };
-  }, [permissions, userEmail, isEmailResolved, isPermissionsLoading]);
+  }, [
+    permissions,
+    userEmail,
+    isEmailResolved,
+    isPermissionsLoading,
+    permissionEnabled,
+  ]);
 
   const value: PermissionContextType = {
     permissions,
@@ -109,7 +126,9 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     hasViewAccess,
     hasEditAccess,
     hasPublishAccess,
-    isLoading: !isEmailResolved || isPermissionsLoading,
+    isLoading: !permissionEnabled
+      ? false
+      : !isEmailResolved || isPermissionsLoading,
     setUserEmailFromOutside: setUserEmail,
   };
   return (

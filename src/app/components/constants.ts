@@ -2,6 +2,7 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import RouteIcon from "@mui/icons-material/Route";
+import { getOrganizations } from "./utils/tenanat.utils";
 
 export const FEATURES = [
   {
@@ -30,13 +31,18 @@ export const FEATURES = [
     description:
       "Present contextual experiences tailored to specific user journeys.",
     icon: RouteIcon,
-    color: "#3b82f6", // Blue
+    color: "#3b82f6",
   },
 ];
 
-// Organization options
-export const ORGANIZATIONS = ["dream11"] as const;
-// Uncomment when needed: export const ORGANIZATIONS = ["dream11", "criq"] as const;
+export const ORGANIZATIONS = getOrganizations();
+
+export const TENANTS = ORGANIZATIONS.map((name) => ({ name }));
+
+export const isTenantEnabled = () => {
+  const enableTenant = process.env.NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT;
+  return enableTenant === "true";
+};
 
 // Landing page text constants
 export const LANDING_PAGE_TEXT = {

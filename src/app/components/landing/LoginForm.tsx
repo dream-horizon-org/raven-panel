@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { landingPageStyles } from "../styles/landingPageStyles";
 import { handleGoogleSuccess } from "@/app/Auth/components/GoogleSignIn";
 import { usePermissions } from "@/app/providers/PermissionProvider";
-import { LANDING_PAGE_TEXT } from "../constants";
+import { LANDING_PAGE_TEXT, isTenantEnabled } from "../constants";
 import Logo from "./Logo";
 import OrganizationField from "./OrganizationField";
 
@@ -29,9 +29,10 @@ export default function LoginForm({
   const router = useRouter();
   const { setUserEmailFromOutside } = usePermissions();
   const googleLoginRef = useRef<HTMLDivElement>(null);
+  const tenantEnabled = isTenantEnabled();
 
   const handleSignIn = () => {
-    if (!organization.trim()) {
+    if (tenantEnabled && !organization.trim()) {
       onTouchedChange(true);
       return;
     }
@@ -54,15 +55,17 @@ export default function LoginForm({
         </Typography>
 
         <Typography variant="body1" sx={landingPageStyles.subtitle(theme)}>
-          {LANDING_PAGE_TEXT.subtitle}
+          {tenantEnabled ? LANDING_PAGE_TEXT.subtitle : ""}
         </Typography>
 
-        <OrganizationField
-          organization={organization}
-          touched={touched}
-          onOrganizationChange={onOrganizationChange}
-          onBlur={() => onTouchedChange(true)}
-        />
+        {tenantEnabled && (
+          <OrganizationField
+            organization={organization}
+            touched={touched}
+            onOrganizationChange={onOrganizationChange}
+            onBlur={() => onTouchedChange(true)}
+          />
+        )}
 
         <Box ref={googleLoginRef} sx={{ display: "none" }}>
           <GoogleLogin
@@ -85,7 +88,7 @@ export default function LoginForm({
           variant="contained"
           size="large"
           onClick={handleSignIn}
-          disabled={!organization.trim()}
+          disabled={tenantEnabled && !organization.trim()}
           sx={landingPageStyles.signInButton(theme)}
         >
           {LANDING_PAGE_TEXT.signInButton}
