@@ -278,14 +278,14 @@ export default function EngagementSidePanel({
           </Box>
 
           <EngagementLocators
-            control={control}
-            engagementId={engagementId}
+                      control={control}
+                      engagementId={engagementId}
             activeSubTab={activeSubTab}
             setActiveSubTab={setActiveSubTab}
             hasContentErrors={hasContentErrors}
             hasLocationErrors={hasLocationErrors}
             isTooltip={isTooltip}
-            errors={errors}
+                      errors={errors}
             handleCloseRequest={handleCloseRequest}
             handleSave={handleSave}
             onClose={onClose}
