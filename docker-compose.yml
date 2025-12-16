@@ -8,7 +8,7 @@ services:
         - NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=${NEXT_PUBLIC_GOOGLE_CLIENT_SECRET}
         - NEXT_PUBLIC_BASE_URL_PROD=${NEXT_PUBLIC_BASE_URL_PROD}
         - NEXT_PUBLIC_BASE_URL_UAT=${NEXT_PUBLIC_BASE_URL_UAT}
-        - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
+        - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
         - NEXT_PUBLIC_ENABLE_COHORT=${NEXT_PUBLIC_ENABLE_COHORT}
         - NEXT_PUBLIC_COHORT_URL_PROD=${NEXT_PUBLIC_COHORT_URL_PROD}
         - NEXT_PUBLIC_COHORT_URL_UAT=${NEXT_PUBLIC_COHORT_URL_UAT}
@@ -22,7 +22,6 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
     env_file:
       - .env
     restart: unless-stopped
