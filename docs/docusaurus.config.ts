@@ -73,7 +73,7 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started',
+              to: '/docs/development/getting-started',
             },
             {
               label: 'Journeys',

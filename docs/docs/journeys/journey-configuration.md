@@ -13,16 +13,9 @@ Target specific user groups or all users.
 ### Options
 
 - **All Users** - Journey applies to everyone
-- **Specific Segment** - Choose a cohort from the dropdown
+- **Specific Cohort** - Choose a cohort from the dropdown
 
-**Note:** Segments are created in your analytics platform and synced to Raven Panel.
-
-### Cohort Types
-
-| Type | Description | Example |
-|------|-------------|---------|
-| **Static** | Fixed user list | "Users who signed up in January 2024" |
-| **Dynamic** | Auto-updates based on criteria | "Active users in last 7 days" |
+**Note:** Cohorts are fetched from your cohort service API. Select from available cohorts in the dropdown menu.
 
 ---
 
@@ -80,14 +73,4 @@ Set when your journey is active.
 - Start: Nov 29, 2024 12:00 AM
 - End: Dec 2, 2024 11:59 PM
 
----
 
-## Pre-Publish Checklist
-
-Before publishing your journey, ensure:
-
-- ✅ Cohort selected
-- ✅ Frequency rules configured
-- ✅ Schedule set
-- ✅ All nodes saved
-- ✅ At least one engagement configured (recommended)

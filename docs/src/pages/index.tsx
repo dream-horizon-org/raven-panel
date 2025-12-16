@@ -169,7 +169,7 @@ function HomepageCTA() {
         <div className={styles.ctaButtons}>
           <Link
             className="button button--primary button--lg"
-            to="/docs/getting-started">
+            to="/docs/development/getting-started">
             Quick Start Guide
           </Link>
           <Link

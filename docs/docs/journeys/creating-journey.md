@@ -34,6 +34,8 @@ Give your journey a clear, descriptive name that helps you identify it later.
 
 You'll land on the **"UI & Content"** tab with a canvas showing a green **Entry Node**. Click on it to open the configuration panel.
 
+![Entry Node Configuration](/img/entry-node-configuration.png)
+
 **Select an Event:**
 1. Find the "Event" dropdown in the configuration panel
 2. Choose the event that triggers your journey (e.g., "User opens app", "User signs up", "User logs in")

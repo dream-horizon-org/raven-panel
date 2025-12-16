@@ -3,7 +3,6 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'intro',
-    'getting-started',
     {
       type: 'category',
       label: 'Journeys',
@@ -19,9 +18,11 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Development',
       items: [
+        'development/getting-started',
         'development/contributing',
         'development/testing',
         'development/deployment',
+        'development/permissions',
       ],
     },
   ],

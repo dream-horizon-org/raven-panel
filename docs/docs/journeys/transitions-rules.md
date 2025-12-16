@@ -10,26 +10,44 @@ Transitions connect nodes in your journey, defining how users move from one step
 
 **Critical Concept:** A transition from Node A (with event "ABC") to Node B happens when event "ABC" is triggered in your app, **NOT** when Node B's event is triggered.
 
-**Once users reach Node B, the next transition will occur when Node B's event happens.**
+Once users reach Node B, the next transition will occur when Node B's event happens.
 
-**Example:**
+<div style={{ textAlign: 'center', margin: '2rem 0' }}>
+
+```mermaid
+flowchart TD
+    A[🚀 User Opens App] -->|① User is logged in| B[🛍️ User Clicks Product]
+    B -->|② Product price > $50| C[🛒 User Adds to Cart]
+    C -->|③ Cart value > $100| D[🏠 User Returns to Home]
+    D -->|④| E[📱 Bottom Sheet<br/>Checkout Suggestion]
+    
+    style A fill:#4ade80,stroke:#22c55e,stroke-width:3px,color:#000
+    style B fill:#60a5fa,stroke:#3b82f6,stroke-width:2px,color:#000
+    style C fill:#60a5fa,stroke:#3b82f6,stroke-width:2px,color:#000
+    style D fill:#60a5fa,stroke:#3b82f6,stroke-width:2px,color:#000
+    style E fill:#fbbf24,stroke:#f59e0b,stroke-width:3px,color:#000
 ```
-Entry Node: "User Opens App"
-    │
-    │ Transition happens when "User Opens App" event occurs
-    ▼
-Node: "User Clicks Product"
-    │
-    │ Transition happens when "User Clicks Product" event occurs
-    ▼
-Node: "User Adds to Cart"
-```
+
+</div>
+
+**How Each Transition Works:**
+
+1. **Transition ①:** When the **"User Opens App"** event occurs (and the rule "User is logged in" passes), users move to the "User Clicks Product" node.
+
+2. **Transition ②:** When the **"User Clicks Product"** event occurs (and the rule "Product price > $50" passes), users move to the "User Adds to Cart" node.
+
+3. **Transition ③:** When the **"User Adds to Cart"** event occurs (and the rule "Cart value > $100" passes), users move to the "User Returns to Home" node.
+
+4. **Engagement ④:** When the **"User Returns to Home"** event occurs, the "Bottom Sheet" engagement is shown to users.
 
 ### Rules
 
-**All Rules Must Pass:** If you add multiple rules to a transition, **ALL of them must be true** for the transition to happen.
+**All Rules Must Pass**
+
+If you add multiple rules to a transition, **ALL of them must be true** for the transition to happen.
 
 **Example:**
+
 ```
 Transition: Node A → Node B
 Rules:
@@ -66,21 +84,17 @@ See **[Creating a Journey](./creating-journey)** for detailed step-by-step instr
 
 ## Rule Operators
 
-Common operators you can use in rules:
+Operators available in the panel:
 
 | Operator | Description | Example |
-|----------|-------------|---------|
-| **equals** | Exact match | `user.status` equals "premium" |
-| **not_equals** | Not equal to | `user.status` not_equals "free" |
-| **greater_than** | Greater than | `product.price` greater_than 50 |
-| **less_than** | Less than | `cart.value` less_than 100 |
-| **greater_than_or_equal** | `>=` | `user.age` greater_than_or_equal 18 |
-| **less_than_or_equal** | `<=` | `item.count` less_than_or_equal 5 |
-| **contains** | String contains | `page.path` contains "/checkout" |
-| **not_contains** | String doesn't contain | `page.path` not_contains "/admin" |
-| **in** | Value in list | `user.country` in `["US", "CA", "UK"]` |
-| **not_in** | Value not in list | `user.plan` not_in `["free", "trial"]` |
-| **exists** | Property exists | `user.email` exists |
-| **not_exists** | Property doesn't exist | `user.phone` not_exists |
+|:---------|:------------|:--------|
+| `=` | Equals | `user.status` equals "premium" |
+| `≠` | Not equal to | `user.status` not equal to "free" |
+| `>` | Greater than | `product.price` greater than 50 |
+| `<` | Less than | `cart.value` less than 100 |
+| `≥` | Greater than or equal | `user.age` greater than or equal 18 |
+| `≤` | Less than or equal | `item.count` less than or equal 5 |
+| `In` | Value in list | `user.country` in ["US", "CA", "UK"] |
+| `Not In` | Value not in list | `user.plan` not in ["free", "trial"] |
 
 

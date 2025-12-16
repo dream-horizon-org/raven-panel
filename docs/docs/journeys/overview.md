@@ -13,6 +13,8 @@ A **journey** is a visual flow that maps user behavior through a series of steps
 
 Here's an example of an E-Commerce Shopping Journey:
 
+<div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+
 ```mermaid
 flowchart TD
     A[🚀 User Opens App] -->|User is logged in| B[🛍️ User Clicks Product]
@@ -26,6 +28,8 @@ flowchart TD
     style D fill:#60a5fa,stroke:#3b82f6,stroke-width:2px,color:#000
     style E fill:#fbbf24,stroke:#f59e0b,stroke-width:3px,color:#000
 ```
+
+</div>
 
 **Let's follow a user through this journey:**
 
@@ -46,31 +50,64 @@ Imagine Sarah is shopping on your app:
 
 Think of it like a path: Sarah walks along it, and at each step, the journey checks if she meets the conditions before letting her continue.
 
+:::note Important
+All user actions in this example (opening the app, clicking a product, adding to cart, returning home) must have corresponding events associated with them in your application.
+:::
+
 
 
 ## Journey Lifecycle
 
-Journeys have different statuses that change as you manage them:
+Journeys have different statuses that change as you manage them.
 
-```
-┌──────────┐   Publish   ┌──────────┐
-│  DRAFT   │────────────▶│   LIVE   │
-└──────────┘             └──────────┘
-     │                        │
-     │                        ├───▶ PAUSED ───▶ (can resume to LIVE)
-     │                        │
-     │                        ├───▶ CONCLUDED (journey completed)
-     │                        │
-     └────────────────────────┴───▶ TERMINATED (permanently stopped)
+### Standard Flow
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '3rem 0', width: '100%', overflow: 'visible' }}>
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryColor': '#8b5cf6', 'primaryTextColor': '#000', 'primaryBorderColor': '#7c3aed', 'lineColor': '#8b5cf6', 'secondaryColor': '#a78bfa', 'tertiaryColor': '#c4b5fd', 'nodeBkgColor': '#fff', 'nodeBorder': '2px', 'clusterBkg': '#fff', 'clusterBorder': '2px', 'defaultLinkColor': '#8b5cf6', 'titleColor': '#000', 'edgeLabelBackground': '#fff', 'mainBkgColor': '#fff', 'secondBkgColor': '#fff', 'tertiaryBkgColor': '#fff', 'edgeLabelBackgroundSize': 'auto', 'edgeLabelFontSize': '12px'}, 'flowchart': { 'nodeSpacing': 80, 'rankSpacing': 100, 'curve': 'basis', 'padding': 20, 'useMaxWidth': false, 'htmlLabels': true, 'defaultRenderer': 'dagre-wrapper'}}}%%
+flowchart LR
+    A["📝<br/>DRAFT"] -->|Publish| B["🟢<br/>LIVE"]
+    B -->|Pause| C["⏸️<br/>PAUSED"]
+    C -->|Resume| B
+    B -->|Conclude| D["✅<br/>CONCLUDED"]
+    B -->|Terminate| E["🛑<br/>TERMINATED"]
+    A -->|Terminate| E
+    
+    style A fill:#94a3b8,stroke:#64748b,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style B fill:#4ade80,stroke:#22c55e,stroke-width:5px,color:#000,min-width:120px,min-height:80px
+    style C fill:#fbbf24,stroke:#f59e0b,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style D fill:#34d399,stroke:#10b981,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style E fill:#f87171,stroke:#ef4444,stroke-width:4px,color:#000,min-width:120px,min-height:80px
 ```
 
-**Or with scheduling:**
+</div>
 
+### Scheduled Flow
+
+<div style={{ display: 'flex', justifyContent: 'center', margin: '3rem 0', width: '100%', overflow: 'visible' }}>
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryColor': '#8b5cf6', 'primaryTextColor': '#000', 'primaryBorderColor': '#7c3aed', 'lineColor': '#8b5cf6', 'secondaryColor': '#a78bfa', 'tertiaryColor': '#c4b5fd', 'nodeBkgColor': '#fff', 'nodeBorder': '2px', 'clusterBkg': '#fff', 'clusterBorder': '2px', 'defaultLinkColor': '#8b5cf6', 'titleColor': '#000', 'edgeLabelBackground': '#fff', 'mainBkgColor': '#fff', 'secondBkgColor': '#fff', 'tertiaryBkgColor': '#fff'}, 'flowchart': { 'nodeSpacing': 100, 'rankSpacing': 120, 'curve': 'basis', 'padding': 20, 'useMaxWidth': false, 'htmlLabels': true, 'defaultRenderer': 'dagre-wrapper'}}}%%
+flowchart LR
+    A["📝<br/>DRAFT"] -->|Schedule| B["📅<br/>SCHEDULED"]
+    B -->|Auto Start| C["🟢<br/>LIVE"]
+    C -->|Pause| D["⏸️<br/>PAUSED"]
+    D -->|Resume| C
+    C -->|Conclude| E["✅<br/>CONCLUDED"]
+    C -->|Terminate| F["🛑<br/>TERMINATED"]
+    A -->|Terminate| F
+    B -->|Terminate| F
+    
+    style A fill:#94a3b8,stroke:#64748b,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style B fill:#60a5fa,stroke:#3b82f6,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style C fill:#4ade80,stroke:#22c55e,stroke-width:5px,color:#000,min-width:120px,min-height:80px
+    style D fill:#fbbf24,stroke:#f59e0b,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style E fill:#34d399,stroke:#10b981,stroke-width:4px,color:#000,min-width:120px,min-height:80px
+    style F fill:#f87171,stroke:#ef4444,stroke-width:4px,color:#000,min-width:120px,min-height:80px
 ```
-┌──────────┐   Schedule  ┌───────────┐   Auto    ┌──────────┐
-│  DRAFT   │────────────▶│ SCHEDULED │──────────▶│   LIVE   │
-└──────────┘             └───────────┘           └──────────┘
-```
+
+</div>
 
 ### Status Definitions
 
@@ -82,18 +119,6 @@ Journeys have different statuses that change as you manage them:
 | **Paused** | Journey is temporarily stopped, can be resumed | Edit, Make Live, Terminate |
 | **Concluded** | Journey has completed its run as intended | Clone |
 | **Terminated** | Journey is permanently stopped | Clone |
-
-## Permissions (Can be moved or removed)
-
-Raven implements role-based access control:
-
-| Permission Level | Capabilities |
-|------------------|--------------|
-| **View Access** | View journeys list, view journey details, copy journey ID |
-| **Edit Access** | Create journeys, edit journeys, clone journeys, pause/terminate journeys |
-| **Publish Access** | Make journeys live, schedule journeys |
-
-When a user lacks the required permission, the corresponding action buttons are disabled.
 
 ## Next Steps
 

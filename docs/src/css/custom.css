@@ -315,3 +315,87 @@ blockquote {
   animation: float 3s ease-in-out infinite;
 }
 
+
+/* Transition example box */
+.transition-example {
+  position: relative;
+  overflow: hidden;
+}
+
+.transition-example::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.transition-example:hover {
+  background: rgba(139, 92, 246, 0.08) !important;
+  transform: translateX(4px);
+  transition: all 0.3s ease;
+}
+
+/* Responsive: hide explanation boxes on smaller screens */
+@media (max-width: 1400px) {
+  div[style*="right: '-300px'"] {
+    display: none;
+  }
+}
+
+/* Mermaid diagrams */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 3rem 0;
+  width: 100%;
+  overflow: visible;
+}
+
+.mermaid svg {
+  max-width: none !important;
+  width: 200% !important;
+  height: auto !important;
+  transform: scale(1.8);
+  transform-origin: center;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  min-width: 150px !important;
+  min-height: 100px !important;
+  padding: 15px !important;
+}
+
+.mermaid .nodeLabel {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+.mermaid .edgeLabel {
+  font-size: 12px !important;
+  padding: 2px 6px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.mermaid .edgeLabel text {
+  font-size: 12px !important;
+}
+
+/* Container for centered mermaid diagrams */
+.markdown > div:has(.mermaid) {
+  width: 100%;
+  overflow: visible;
+  margin: 3rem 0;
+}
+
