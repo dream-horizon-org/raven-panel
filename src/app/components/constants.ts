@@ -44,6 +44,11 @@ export const isTenantEnabled = () => {
   return enableTenant === "true";
 };
 
+export const isLoginEnabled = () => {
+  const enableLogin = process.env.NEXT_PUBLIC_IS_LOGIN_ENABLED;
+  return enableLogin === "true";
+};
+
 // Landing page text constants
 export const LANDING_PAGE_TEXT = {
   greeting: "Hi, Welcome Back!",
@@ -51,6 +56,7 @@ export const LANDING_PAGE_TEXT = {
   signInButton: "Sign In",
   organizationRequired: "Organization name is required",
   featuresTitle: "Build better products with our best-in-class tool",
+  goToDashboard: "Go to Dashboard",
 } as const;
 
 // Feature card grid area mappings

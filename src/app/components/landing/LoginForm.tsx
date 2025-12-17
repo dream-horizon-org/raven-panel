@@ -8,7 +8,12 @@ import { useRouter } from "next/navigation";
 import { landingPageStyles } from "../styles/landingPageStyles";
 import { handleGoogleSuccess } from "@/app/Auth/components/GoogleSignIn";
 import { usePermissions } from "@/app/providers/PermissionProvider";
-import { LANDING_PAGE_TEXT, isTenantEnabled } from "../constants";
+import {
+  LANDING_PAGE_TEXT,
+  isTenantEnabled,
+  isLoginEnabled,
+} from "../constants";
+import { buildPathWithTenant } from "../utils/tenanat.utils";
 import Logo from "./Logo";
 import OrganizationField from "./OrganizationField";
 
@@ -30,6 +35,7 @@ export default function LoginForm({
   const { setUserEmailFromOutside } = usePermissions();
   const googleLoginRef = useRef<HTMLDivElement>(null);
   const tenantEnabled = isTenantEnabled();
+  const loginEnabled = isLoginEnabled();
 
   const handleSignIn = () => {
     if (tenantEnabled && !organization.trim()) {
@@ -37,11 +43,23 @@ export default function LoginForm({
       return;
     }
 
-    const googleButton = googleLoginRef.current?.querySelector(
-      'div[role="button"]'
-    ) as HTMLElement;
-    if (googleButton) {
-      googleButton.click();
+    if (loginEnabled) {
+      const googleButton = googleLoginRef.current?.querySelector(
+        'div[role="button"]'
+      ) as HTMLElement;
+      if (googleButton) {
+        googleButton.click();
+      }
+    } else {
+      if (tenantEnabled && organization.trim()) {
+        const { pathname, search } = buildPathWithTenant(
+          "/dashboard",
+          organization.trim()
+        );
+        router.push(`${pathname}${search}`);
+      } else {
+        router.push("/dashboard");
+      }
     }
   };
 
@@ -67,21 +85,23 @@ export default function LoginForm({
           />
         )}
 
-        <Box ref={googleLoginRef} sx={{ display: "none" }}>
-          <GoogleLogin
-            onSuccess={(credentialResponse) =>
-              handleGoogleSuccess(
-                credentialResponse,
-                router,
-                setUserEmailFromOutside
-              )
-            }
-            onError={() => {
-              console.error("Google sign-in error occurred");
-            }}
-            width="0"
-          />
-        </Box>
+        {loginEnabled && (
+          <Box ref={googleLoginRef} sx={{ display: "none" }}>
+            <GoogleLogin
+              onSuccess={(credentialResponse) =>
+                handleGoogleSuccess(
+                  credentialResponse,
+                  router,
+                  setUserEmailFromOutside
+                )
+              }
+              onError={() => {
+                console.error("Google sign-in error occurred");
+              }}
+              width="0"
+            />
+          </Box>
+        )}
 
         <Button
           fullWidth
@@ -91,7 +111,9 @@ export default function LoginForm({
           disabled={tenantEnabled && !organization.trim()}
           sx={landingPageStyles.signInButton(theme)}
         >
-          {LANDING_PAGE_TEXT.signInButton}
+          {loginEnabled
+            ? LANDING_PAGE_TEXT.signInButton
+            : LANDING_PAGE_TEXT.goToDashboard}
         </Button>
       </Box>
     </Box>
