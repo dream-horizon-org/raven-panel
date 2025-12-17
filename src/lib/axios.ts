@@ -17,9 +17,7 @@ axiosInstance.interceptors.request.use(
       if (typeof window !== "undefined") {
         const storedTenant = localStorage.getItem("tenantData");
         const tenantData = storedTenant ? JSON.parse(storedTenant) : {};
-        const tenantId = (tenantData?.name ||
-          tenantData?.id ||
-          "dream11") as string;
+        const tenantId = (tenantData?.name || tenantData?.id) as string;
 
         const tenantConfig = TENANT_CONFIG[tenantId] || TENANT_CONFIG.dream11;
 

@@ -18,7 +18,7 @@ import {
 import { BUTTON_TEXT, PAGE_TITLES } from "@/config/constants";
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useJourneysList } from "@/hooks/useJourneysList";
+import { useJourneysList } from "@/app/dashboard/hooks/useJourneysList";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
 export default function JourneyListingPage() {

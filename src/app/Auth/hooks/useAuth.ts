@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { isLoginEnabled } from "@/app/components/constants";
 
 const checkAuthStatus = (): boolean => {
+  if (!isLoginEnabled()) {
+    return true;
+  }
+
   try {
     const token = localStorage.getItem("google_jwt");
     const userData = localStorage.getItem("google_user");
@@ -25,6 +30,10 @@ export const useAuth = () => {
 
     // Listen for storage changes (when cookies/localStorage are cleared)
     const handleStorageChange = (e: StorageEvent) => {
+      if (!isLoginEnabled()) {
+        return;
+      }
+
       if (e.key === "google_jwt" || e.key === "google_user" || e.key === null) {
         const authenticated = checkAuthStatus();
         setIsAuthenticated(authenticated);
@@ -37,6 +46,10 @@ export const useAuth = () => {
 
     // Periodic check for localStorage changes (handles cases where storage events don't fire)
     const intervalId = setInterval(() => {
+      if (!isLoginEnabled()) {
+        return;
+      }
+
       const authenticated = checkAuthStatus();
       setIsAuthenticated((prev) => {
         if (prev !== authenticated && !authenticated) {

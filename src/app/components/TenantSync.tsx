@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
-import { getTenantFromUrl } from "@/app/utils/tenant.utils";
+import { getTenantFromUrl } from "@/app/components/utils/tenanat.utils";
 import { TENANTS } from "./constants";
 
 export const AppTenantSync = () => {
