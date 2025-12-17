@@ -37,6 +37,11 @@
   
   /* Code blocks */
   --docusaurus-highlighted-code-line-bg: rgba(75, 85, 99, 0.1);
+  
+  /* Link colors - More visible */
+  --ifm-link-color: #2563eb;
+  --ifm-link-hover-color: #1d4ed8;
+  --ifm-link-decoration: none;
 }
 
 [data-theme='dark'] {
@@ -54,6 +59,11 @@
   --ifm-footer-background-color: #0f172a;
   
   --docusaurus-highlighted-code-line-bg: rgba(156, 163, 175, 0.15);
+  
+  /* Link colors - More visible in dark mode */
+  --ifm-link-color: #60a5fa;
+  --ifm-link-hover-color: #93c5fd;
+  --ifm-link-decoration: none;
 }
 
 /* Hero section styling */
@@ -479,4 +489,57 @@ blockquote {
 
 .markdown li {
   margin-bottom: 0.5rem;
+}
+
+/* Link styling - Make hyperlinks more visible */
+a {
+  color: var(--ifm-link-color);
+  text-decoration: var(--ifm-link-decoration);
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration: underline;
+}
+
+/* Markdown links */
+.markdown a {
+  color: var(--ifm-link-color);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.3);
+  text-underline-offset: 2px;
+}
+
+.markdown a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration-color: var(--ifm-link-hover-color);
+}
+
+[data-theme='dark'] .markdown a {
+  color: var(--ifm-link-color);
+  text-decoration-color: rgba(96, 165, 250, 0.4);
+}
+
+[data-theme='dark'] .markdown a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration-color: var(--ifm-link-hover-color);
+}
+
+/* Links in tables */
+table a {
+  color: var(--ifm-link-color);
+  font-weight: 500;
+}
+
+table a:hover {
+  color: var(--ifm-link-hover-color);
+}
+
+/* Links in code blocks should remain as-is */
+code a,
+pre a {
+  color: inherit;
+  text-decoration: none;
 }

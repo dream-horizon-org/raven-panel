@@ -94,7 +94,5 @@ Operators available in the panel:
 | `<` | Less than | `cart.value` less than 100 |
 | `≥` | Greater than or equal | `user.age` greater than or equal 18 |
 | `≤` | Less than or equal | `item.count` less than or equal 5 |
-| `In` | Value in list | `user.country` in ["US", "CA", "UK"] |
-| `Not In` | Value not in list | `user.plan` not in ["free", "trial"] |
 
 

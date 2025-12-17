@@ -57,7 +57,4 @@ An Engagement Node (orange) appears connected to your node in the canvas.
 
 ## Multiple Engagements
 
-You can add multiple engagements to the same node. Users will see them in the order you add them, one at a time.
-
-**Best Practice:** Limit to 2-3 engagements per node and start with less intrusive types (Tooltip) before more intrusive ones (Popup).
-
+You can add multiple engagements to the same journey, but not multiple engagements to the same node. Each node can have only one engagement attached to it.

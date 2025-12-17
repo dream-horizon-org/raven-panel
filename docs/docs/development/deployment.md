@@ -384,7 +384,7 @@ The tenant configuration in the application expects:
 |:--------|:------------|
 | `NEXT_PUBLIC_SYSTEM_PROPERTIES_URL` | System properties service URL |
 
-**Note:** System properties define global attributes that are included with every event. If not configured, the application will fall back to using `NEXT_PUBLIC_EVENT_URL` (both typically use the Concord service base URL).
+**Note:** System properties define global attributes that are included with every event. If not configured, the application will use only the properties specific to that event.
 
 **Expected API Response Format:**
 
@@ -433,7 +433,6 @@ export interface SystemPropertiesResponse {
   - `x-tenant-id: string`
   - `x-skip-validation: false`
 - **Environment Variable**: `NEXT_PUBLIC_SYSTEM_PROPERTIES_URL` (base URL for system properties API)
-  - If not set, falls back to `NEXT_PUBLIC_EVENT_URL` (both typically use the Concord service base URL)
 
 **Note:** The application extracts property names and types from any of the supported formats. If objects are provided, it uses the `propertyName` and `type` properties. If strings are provided, it uses them directly as property names. If the API response does not match these structures, system properties may not be available for journey configuration.
 

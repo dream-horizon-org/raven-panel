@@ -49,7 +49,7 @@ const config: Config = {
       title: 'Raven',
       logo: {
         alt: 'Raven Logo',
-        src: 'img/logo.svg',
+        src: 'img/icon.svg',
       },
       items: [
         {
@@ -108,7 +108,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Raven. Built with Docusaurus.`,
+      copyright: `Copyright © 2025 Dream Horizon.`,
     },
     prism: {
       theme: prismThemes.github,
