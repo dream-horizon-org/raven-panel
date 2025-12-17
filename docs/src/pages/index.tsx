@@ -160,28 +160,6 @@ function HomepageTechStack() {
   );
 }
 
-function HomepageCTA() {
-  return (
-    <section className={styles.cta}>
-      <div className="container">
-        <Heading as="h2">Ready to Get Started?</Heading>
-        <p>Set up Raven Panel in minutes and start creating customer journeys</p>
-        <div className={styles.ctaButtons}>
-          <Link
-            className="button button--primary button--lg"
-            to="/docs/development/getting-started">
-            Quick Start Guide
-          </Link>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/journeys/overview">
-            Explore Journeys
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
@@ -193,7 +171,6 @@ export default function Home(): JSX.Element {
       <main>
         <HomepageFeatures />
         <HomepageTechStack />
-        <HomepageCTA />
       </main>
     </Layout>
   );

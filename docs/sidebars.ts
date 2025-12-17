@@ -19,10 +19,9 @@ const sidebars: SidebarsConfig = {
       label: 'Development',
       items: [
         'development/getting-started',
-        'development/contributing',
-        'development/testing',
         'development/deployment',
-        'development/permissions',
+        'development/testing',
+        'development/contributing',
       ],
     },
   ],

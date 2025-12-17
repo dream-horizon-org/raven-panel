@@ -8,7 +8,7 @@ Set up your local development environment for Raven Panel.
 
 ## Prerequisites
 
-- **Node.js** 18.0 or higher
+- **Node.js** 20.0 or higher
 - **Yarn** 1.22+ (recommended) or npm
 - **Git**
 - **Docker** (optional, for containerized setup)
@@ -41,9 +41,11 @@ cd raven-panel
 
 **2. Create `.env` file:**
 ```bash
-cp .env.example .env
-# Edit .env with your environment variables
+cp .env.template .env
+# Edit .env and replace {VARIABLE_NAME} placeholders with your actual values
 ```
+
+The `.env.template` file contains all required and optional variables with `{VARIABLE_NAME}` placeholders. Replace each placeholder with your actual configuration values. See the [Deployment](/docs/development/deployment#environment-configuration) page for detailed variable descriptions.
 
 **3. Build and run with Docker Compose:**
 ```bash
@@ -52,7 +54,7 @@ docker-compose up --build
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
 
-**Note:** Ensure you're on the `feat/docker-integration` branch or have the Docker files in your repository.
+**Note:** The Docker setup uses a multi-stage build with Node.js 20, includes health checks, and runs as a non-root user for security. All `NEXT_PUBLIC_*` variables must be set in your `.env` file as they are passed as build arguments.
 
 ## Available Scripts
 

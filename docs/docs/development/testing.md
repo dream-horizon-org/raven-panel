@@ -37,13 +37,13 @@ Test pure functions in isolation:
 import { formatJourneyStatus, isJourneyEditable } from '../utils/journeyUtils';
 
 describe('journeyUtils', () => {
-  it('should capitalize status', () => {
-    expect(formatJourneyStatus('draft')).toBe('Draft');
-    expect(formatJourneyStatus('active')).toBe('Active');
-  });
+    it('should capitalize status', () => {
+      expect(formatJourneyStatus('draft')).toBe('Draft');
+      expect(formatJourneyStatus('active')).toBe('Active');
+    });
 
-  it('should return true for draft journeys', () => {
-    expect(isJourneyEditable({ status: 'draft' })).toBe(true);
+    it('should return true for draft journeys', () => {
+      expect(isJourneyEditable({ status: 'draft' })).toBe(true);
   });
 });
 ```
