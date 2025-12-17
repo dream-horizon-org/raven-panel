@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Testing
 
-Raven Panel uses Jest and React Testing Library for testing.
+Raven uses Jest and React Testing Library for testing.
 
 ## Running Tests
 

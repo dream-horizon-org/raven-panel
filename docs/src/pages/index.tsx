@@ -15,17 +15,14 @@ function HomepageHeader() {
           <Heading as="h1" className="hero__title">
             {siteConfig.title}
           </Heading>
-          <p className="hero__subtitle">{siteConfig.tagline}</p>
+          <p className="hero__subtitle">
+            Powerful platform for managing customer journeys, in-app messaging, and user engagement
+          </p>
           <div className={styles.buttons}>
             <Link
-              className="button button--secondary button--lg"
-              to="/docs">
-              Get Started →
-            </Link>
-            <Link
-              className="button button--outline button--lg"
-              to="https://github.com/dream-horizon-org/raven-panel">
-              View on GitHub
+              className={clsx('button button--lg', styles.getStartedButton)}
+              to="/docs/development/getting-started">
+              Get Started
             </Link>
           </div>
         </div>
@@ -116,10 +113,6 @@ function HomepageFeatures() {
   return (
     <section className={styles.features}>
       <div className="container">
-        <div className={styles.sectionHeader}>
-          <Heading as="h2">Features</Heading>
-          <p>Everything you need to manage customer journeys</p>
-        </div>
         <div className="row">
           {FeatureList.map((props, idx) => (
             <Feature key={idx} {...props} />
@@ -170,7 +163,6 @@ export default function Home(): JSX.Element {
       <HomepageHeader />
       <main>
         <HomepageFeatures />
-        <HomepageTechStack />
       </main>
     </Layout>
   );

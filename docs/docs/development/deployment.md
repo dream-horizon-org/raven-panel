@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Deployment
 
-Deploy Raven Panel to production environments.
+Deploy Raven to production environments.
 
 ## Environment Configuration
 
@@ -130,7 +130,7 @@ export interface CohortsResponse {
 | `NEXT_PUBLIC_EVENT_URL_PROD` | Production event service URL |
 | `NEXT_PUBLIC_EVENT_URL_UAT` | UAT event service URL |
 
-**Note:** Without these event service URLs, the event selection feature will be unavailable when creating new journeys or modifying event triggers in existing journeys. While you can still edit existing journeys that don't require event changes, creating new journeys—which is the core functionality of Raven Panel—requires event triggers and will not be possible without these variables configured.
+**Note:** Without these event service URLs, the event selection feature will be unavailable when creating new journeys or modifying event triggers in existing journeys. While you can still edit existing journeys that don't require event changes, creating new journeys—which is the core functionality of Raven—requires event triggers and will not be possible without these variables configured.
 
 **Expected API Response Format:**
 
@@ -441,7 +441,7 @@ export interface SystemPropertiesResponse {
 
 ### Container Deployment (Recommended)
 
-Raven Panel includes a production-ready Dockerfile with multi-stage builds.
+Raven includes a production-ready Dockerfile with multi-stage builds.
 
 #### Using Docker Compose
 

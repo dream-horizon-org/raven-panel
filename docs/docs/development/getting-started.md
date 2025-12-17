@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Getting Started
 
-Set up your local development environment for Raven Panel.
+Set up your local development environment for Raven.
 
 ## Prerequisites
 

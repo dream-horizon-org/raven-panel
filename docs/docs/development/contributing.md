@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Contributing
 
-Guidelines for contributing to Raven Panel.
+Guidelines for contributing to Raven.
 
 ## Getting Started
 

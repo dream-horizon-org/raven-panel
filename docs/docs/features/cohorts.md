@@ -8,7 +8,7 @@ Cohorts allow you to define specific groups of users to target with your journey
 
 ## What is a Cohort?
 
-A cohort is a defined group of users who share specific characteristics or behaviors. Cohorts are typically created in your analytics platform and synced to Raven Panel.
+A cohort is a defined group of users who share specific characteristics or behaviors. Cohorts are typically created in your analytics platform and synced to Raven.
 
 ## Cohort Structure
 
@@ -135,7 +135,7 @@ Cohorts are synced from external analytics platforms:
 
 ```
 ┌─────────────────┐      Sync       ┌─────────────────┐
-│   Analytics     │────────────────▶│  Raven Panel    │
+│   Analytics     │────────────────▶│  Raven          │
 │   Platform      │                 │    Cohorts      │
 └─────────────────┘                 └─────────────────┘
 ```

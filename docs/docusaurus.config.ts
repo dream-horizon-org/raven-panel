@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Raven',
-  tagline: '*Tagline to be added',
+  tagline: 'Powerful platform for managing customer journeys, in-app messaging, and user engagement',
   favicon: 'img/favicon.ico',
 
   url: 'https://dream-horizon-org.github.io',
@@ -108,7 +108,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Raven Panel. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Raven. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
