@@ -7,8 +7,8 @@ import { useState, useEffect } from "react";
 import { landingPageStyles } from "./styles/landingPageStyles";
 import { useAuth } from "@/app/Auth/hooks/useAuth";
 import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
-import { buildPathWithTenant } from "@/app/utils/tenant.utils";
-import { isTenantEnabled } from "./constants";
+import { buildPathWithTenant } from "@/app/components/utils/tenanat.utils";
+import { isTenantEnabled, isLoginEnabled } from "./constants";
 import LoginForm from "./landing/LoginForm";
 import FeaturesSection from "./landing/FeaturesSection";
 import Footer from "./landing/Footer";
@@ -21,9 +21,10 @@ export default function LandingPage() {
   const [organization, setOrganization] = useState("");
   const [touched, setTouched] = useState(false);
   const tenantEnabled = isTenantEnabled();
+  const loginEnabled = isLoginEnabled();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (loginEnabled && !isLoading && isAuthenticated) {
       if (tenantEnabled) {
         const tenant =
           organization.trim() || localStorage.getItem("organization");
@@ -40,9 +41,16 @@ export default function LandingPage() {
         router.push("/dashboard");
       }
     }
-  }, [isAuthenticated, isLoading, router, organization, tenantEnabled]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    router,
+    organization,
+    tenantEnabled,
+    loginEnabled,
+  ]);
 
-  if (isLoading || isAuthenticated) {
+  if (loginEnabled && (isLoading || isAuthenticated)) {
     return null;
   }
 

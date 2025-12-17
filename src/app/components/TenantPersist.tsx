@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useMultiTenant } from "@/app/providers/MultiTenantProvider";
-import { buildPathWithTenant } from "@/app/utils/tenant.utils";
+import { buildPathWithTenant } from "@/app/components/utils/tenanat.utils";
 
 /**
  * Persists tenant in URL

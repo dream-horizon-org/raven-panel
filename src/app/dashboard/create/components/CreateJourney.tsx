@@ -2,8 +2,8 @@
 
 import { Box, CircularProgress } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
-import { useEventsList } from "@/hooks/useEventsList";
-import { useSystemProperties } from "@/hooks/useSystemProperties";
+import { useEventsList } from "@/app/dashboard/create/hooks/useEventsList";
+import { useSystemProperties } from "@/app/dashboard/create/hooks/useSystemProperties";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "./content/styles/createJourneyPageStyles";

@@ -16,7 +16,7 @@ import { useState, useMemo, useEffect } from "react";
 import { cohortSectionStyles } from "./content/styles/cohortSectionStyles";
 import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
-import { useCohortsList } from "@/hooks/useCohortsList";
+import { useCohortsList } from "@/app/dashboard/create/hooks/useCohortsList";
 
 interface CohortRecord {
   id: number;
