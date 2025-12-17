@@ -85,17 +85,6 @@ export const fetchJourney = async (id: string): Promise<Journey> => {
 - Keep components focused and small
 - Co-locate styles with components
 
-### File Organization
-
-```
-ComponentName/
-├── ComponentName.tsx      # Main component
-├── ComponentName.test.tsx # Tests
-├── componentNameStyles.ts # Styles
-├── types.ts               # Component-specific types
-└── index.ts               # Exports
-```
-
 ## Pull Request Process
 
 1. **Update your branch:**
@@ -115,14 +104,12 @@ ComponentName/
    - Link related issues
    - Request reviews from maintainers
 
-### PR Checklist
-
-- [ ] Code follows the style guide
-- [ ] Tests pass locally
-- [ ] New functionality has tests
-- [ ] Documentation updated (if needed)
-- [ ] No linting errors
-- [ ] TypeScript compiles without errors
+   **PR Checklist:**
+   - [ ] Code follows the style guide
+   - [ ] Tests pass locally
+   - [ ] New functionality has tests
+   - [ ] No linting errors
+   - [ ] TypeScript compiles without errors
 
 4. **Address review feedback** - Respond to comments and push updates
 

@@ -50,14 +50,16 @@ If `NEXT_PUBLIC_ENV` is not set, it falls back to `NODE_ENV`, which defaults to 
 | `NEXT_PUBLIC_COHORT_URL_PROD` | Production cohort service URL |
 | `NEXT_PUBLIC_COHORT_URL_UAT` | UAT cohort service URL |
 
-### Events
+**Note:** When `NEXT_PUBLIC_ENABLE_COHORT` is set to `false` or not configured, the cohort selection feature will default to including all users, effectively applying journey configurations to the entire user base.
 
-**Optional:**
+### Events
 
 | Variable | Description |
 |:--------|:------------|
 | `NEXT_PUBLIC_EVENT_URL_PROD` | Production event service URL |
 | `NEXT_PUBLIC_EVENT_URL_UAT` | UAT event service URL |
+
+**Note:** Without these event service URLs, the event selection feature will be unavailable when creating new journeys or modifying event triggers in existing journeys. While you can still edit existing journeys that don't require event changes, creating new journeys—which is the core functionality of Raven Panel—requires event triggers and will not be possible without these variables configured.
 
 ### Permissions
 
@@ -65,7 +67,7 @@ If `NEXT_PUBLIC_ENV` is not set, it falls back to `NODE_ENV`, which defaults to 
 
 | Variable | Description |
 |:--------|:------------|
-| `NEXT_PUBLIC_ENABLE_PERMISSION` | Enable permission system (`true`/`false`) |
+| `NEXT_PUBLIC_ENABLE_PERMISSION` | Enable permission system (`true`/`false`, defaults to `false` if not set) |
 | `NEXT_PUBLIC_PERMISSION_S3_URL` | Permission S3 URL (JSON file with roles/permissions) |
 
 **Note:** If `NEXT_PUBLIC_ENABLE_PERMISSION` is set to `true`, then `NEXT_PUBLIC_PERMISSION_S3_URL` is required.
