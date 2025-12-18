@@ -42,6 +42,10 @@
   --ifm-link-color: #2563eb;
   --ifm-link-hover-color: #1d4ed8;
   --ifm-link-decoration: none;
+  
+  /* Homepage Feature Colors */
+  --feature-card-title: #1f2937;
+  --feature-card-text: #4b5563;
 }
 
 [data-theme='dark'] {
@@ -64,6 +68,10 @@
   --ifm-link-color: #60a5fa;
   --ifm-link-hover-color: #93c5fd;
   --ifm-link-decoration: none;
+  
+  /* Homepage Feature Colors */
+  --feature-card-title: #ffffff;
+  --feature-card-text: #d1d5db;
 }
 
 /* Hero section styling */

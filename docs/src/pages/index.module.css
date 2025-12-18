@@ -22,6 +22,10 @@
   letter-spacing: -0.02em;
 }
 
+[data-theme='dark'] .heroBanner .hero__title {
+  color: #ffffff;
+}
+
 .heroBanner .hero__subtitle {
   color: rgba(255, 255, 255, 0.9);
   font-size: 1.25rem;
@@ -105,25 +109,17 @@
 }
 
 .featureCard h3 {
-  color: #1f2937;
+  color: var(--feature-card-title);
   font-weight: 600;
   margin-bottom: 0.75rem;
   font-size: 1.25rem;
 }
 
-[data-theme='dark'] .featureCard h3 {
-  color: var(--ifm-color-emphasis-100);
-}
-
 .featureCard p {
-  color: #4b5563;
+  color: var(--feature-card-text);
   line-height: 1.6;
   margin: 0;
   font-size: 0.95rem;
-}
-
-[data-theme='dark'] .featureCard p {
-  color: var(--ifm-color-emphasis-600);
 }
 
 
