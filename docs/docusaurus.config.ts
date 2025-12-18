@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Raven',
+  title: 'Raven Panel',
   tagline: 'The control panel for orchestrating Raven\'s customer engagement platform',
   favicon: 'img/favicon.ico',
 

@@ -8,7 +8,7 @@ Comprehensive documentation is available on our [Documentation Site](https://dre
 
 ## 🔍 Core Concepts
 
-### [Nudges](https://dream-horizon-org.github.io/raven-panel/docs/#what-is-a-nudge)
+### [Nudges](https://dream-horizon-org.github.io/raven-panel/docs/)
 A nudge is a subtle, non-intrusive prompt designed to guide users toward specific actions. These contextual in-app prompts are triggered by user actions, page views or custom events, appearing at optimal moments for maximum effectiveness.
 
 ### [Journeys](https://dream-horizon-org.github.io/raven-panel/docs/journeys/overview)
