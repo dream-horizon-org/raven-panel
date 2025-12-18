@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // Enable standalone output for Docker
   async rewrites() {
     // Only use rewrites for local development
     // In production, use direct API URLs via NEXT_PUBLIC_PRODUCTION_URL
