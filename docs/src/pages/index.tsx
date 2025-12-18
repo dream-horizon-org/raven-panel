@@ -16,7 +16,7 @@ function HomepageHeader() {
             {siteConfig.title}
           </Heading>
           <p className="hero__subtitle">
-            {siteConfig.tagline}
+            The control panel for orchestrating <Link to="/raven" style={{ fontWeight: 'bold', color: 'inherit', textDecoration: 'underline' }}>Raven</Link>'s customer engagement platform
           </p>
           <div className={styles.buttons}>
             <Link
