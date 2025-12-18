@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Raven Panel
 
-## Getting Started
+Raven is an innovative tool designed to significantly enhance user experience by providing timely and relevant guidance to end-users through in-app nudges such as bottomsheet, popup and tooltip.
 
-First, run the development server:
+## 📚 Documentation
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Comprehensive documentation is available on our [Documentation Site](https://dream-horizon-org.github.io/raven-panel/).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔍 Core Concepts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### [Nudges](https://dream-horizon-org.github.io/raven-panel/docs/intro#what-is-a-nudge)
+A nudge is a subtle, non-intrusive prompt designed to guide users toward specific actions. These contextual in-app prompts are triggered by user actions, page views or custom events, appearing at optimal moments for maximum effectiveness.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### [Journeys](https://dream-horizon-org.github.io/raven-panel/docs/journeys/overview)
+A journey is a visual flow that maps user behavior through a series of steps (nodes) connected by transitions. Each journey represents a user's path through your application, from entry points to specific events, with optional rules and conditions that determine progression.
 
-## Learn More
+## 🚀 Getting Started
 
-To learn more about Next.js, take a look at the following resources:
+Follow the [Getting Started Guide](https://dream-horizon-org.github.io/raven-panel/docs/development/getting-started) to set up your development environment.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Quick Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Install dependencies:**
+   yarn install
+   2. **Configure environment:**
+   Refer to the [Configuration Guide](https://dream-horizon-org.github.io/raven-panel/docs/development/deployment#environment-configuration) to set up your `.env` file.
 
-## Deploy on Vercel
+3. **Run the development server:**
+   yarn dev
+   ## 🛠 Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Raven includes a production-ready Dockerfile. For detailed deployment instructions, including Docker and environment variable configuration, see the [Deployment Guide](https://dream-horizon-org.github.io/raven-panel/docs/development/deployment).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🤝 Contributing
+
+We welcome contributions! Please read our [Contributing Guide](https://dream-horizon-org.github.io/raven-panel/docs/development/contributing) for details on our development process.
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+Copyright © 2025 Dream Horizon.

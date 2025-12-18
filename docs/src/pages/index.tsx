@@ -16,7 +16,7 @@ function HomepageHeader() {
             {siteConfig.title}
           </Heading>
           <p className="hero__subtitle">
-            Powerful platform for managing customer journeys, in-app messaging, and user engagement
+            {siteConfig.tagline}
           </p>
           <div className={styles.buttons}>
             <Link

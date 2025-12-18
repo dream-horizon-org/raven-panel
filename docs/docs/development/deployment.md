@@ -54,6 +54,7 @@ All URL environment variables must be valid HTTP/HTTPS URLs:
 
 | Variable | Description |
 |:--------|:------------|
+| `NEXT_PUBLIC_IS_LOGIN_ENABLED` | Enable Google login (`true`/`false`). If `false`, Google login is not required. |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_SECRET` | Google OAuth client secret (not used in client-side OAuth flow) |
 
 ### Cohorts
@@ -474,6 +475,7 @@ export $(grep -v '^#' .env | grep '^NEXT_PUBLIC_' | xargs)
 docker build \
   --build-arg NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV} \
   --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID} \
+  --build-arg NEXT_PUBLIC_IS_LOGIN_ENABLED=${NEXT_PUBLIC_IS_LOGIN_ENABLED} \
   --build-arg NEXT_PUBLIC_BASE_URL_PROD=${NEXT_PUBLIC_BASE_URL_PROD} \
   --build-arg NEXT_PUBLIC_BASE_URL_UAT=${NEXT_PUBLIC_BASE_URL_UAT} \
   --build-arg NEXT_PUBLIC_ENABLE_COHORT=${NEXT_PUBLIC_ENABLE_COHORT} \

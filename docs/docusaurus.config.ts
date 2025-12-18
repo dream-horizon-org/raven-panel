@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Raven',
-  tagline: 'Powerful platform for managing customer journeys, in-app messaging, and user engagement',
+  tagline: 'The control panel for orchestrating Raven\'s customer engagement platform',
   favicon: 'img/favicon.ico',
 
   url: 'https://dream-horizon-org.github.io',
