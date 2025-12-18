@@ -21,7 +21,7 @@ function HomepageHeader() {
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--lg', styles.getStartedButton)}
-              to="/docs/development/getting-started">
+              to="/docs">
               Get Started
             </Link>
           </div>
@@ -154,6 +154,46 @@ function HomepageTechStack() {
 }
 
 
+function HomepagePlatformComponents() {
+  const components = [
+    {
+      title: 'Raven Client',
+      icon: '📱',
+      description: 'React Native SDK for in-app messaging, nudges, tooltips, and engagement. Built with a sophisticated state machine system.',
+      link: 'https://dream-horizon-org.github.io/raven-client/',
+    },
+    {
+      title: 'Raven Thunder',
+      icon: '⚡',
+      description: 'High-performance backend service built with Java 17 + Vert.x for managing user journeys and engagement logic.',
+      link: 'https://dream-horizon-org.github.io/raven-thunder/',
+    }
+  ];
+
+  return (
+    <section className={styles.features} style={{ paddingBottom: '2rem', background: 'var(--ifm-background-surface-color)' }}>
+      <div className="container">
+        <div className="text--center margin-bottom--lg">
+          <Heading as="h2">Platform Components</Heading>
+        </div>
+        <div className="row" style={{ justifyContent: 'center' }}>
+          {components.map((item, idx) => (
+            <div key={idx} className={clsx('col col--5')}>
+              <Link to={item.link} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
+                <div className={styles.featureCard} style={{ textAlign: 'center', height: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div className={styles.featureIcon} style={{ fontSize: '3rem', marginBottom: '1rem' }}>{item.icon}</div>
+                  <Heading as="h3">{item.title}</Heading>
+                  <p style={{ flexGrow: 1, marginBottom: 0 }}>{item.description}</p>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
   return (
@@ -162,6 +202,7 @@ export default function Home(): JSX.Element {
       description="Customer Journey Management Platform - Documentation and guides">
       <HomepageHeader />
       <main>
+        <HomepagePlatformComponents />
         <HomepageFeatures />
       </main>
     </Layout>

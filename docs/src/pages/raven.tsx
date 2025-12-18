@@ -1,6 +1,7 @@
 import React from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
+import Head from '@docusaurus/Head';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './raven.module.css';
 import clsx from 'clsx';
@@ -50,6 +51,10 @@ export default function RavenPromo() {
     <Layout
       title="Raven Platform"
       description="The Complete Platform for Customer Engagement">
+      <Head>
+        {/* Hide Navbar specifically for this promo page */}
+        <style>{`.navbar { display: none !important; }`}</style>
+      </Head>
       <HomepageHeader />
       <main>
         {/* Platform Components Section */}
@@ -148,7 +153,7 @@ export default function RavenPromo() {
             <div className={styles.buttons}>
               <Link
                 className={styles.primaryButton}
-                to="/docs/development/getting-started">
+                to="/docs/">
                 Get Started with Raven Panel
               </Link>
               <Link
