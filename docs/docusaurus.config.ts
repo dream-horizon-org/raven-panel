@@ -46,7 +46,7 @@ const config: Config = {
   themeConfig: {
     image: 'img/raven-social-card.png',
     navbar: {
-      title: 'Raven',
+      title: 'Raven Panel',
       logo: {
         alt: 'Raven Logo',
         src: 'img/icon.svg',
