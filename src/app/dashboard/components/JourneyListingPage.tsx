@@ -22,14 +22,237 @@ import { useJourneysList } from "@/app/dashboard/hooks/useJourneysList";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
 export default function JourneyListingPage() {
+  // ============================================
+  // Environment Variables Console Logs
+  // ============================================
+  console.log("=== Environment Variables ===");
+  console.log("NEXT_PUBLIC_ENV:", process.env.NEXT_PUBLIC_ENV);
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+
+  // ============================================
+  // Google OAuth Configuration
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID:",
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  );
+  console.log(
+    "NEXT_PUBLIC_GOOGLE_CLIENT_SECRET:",
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET
+  );
+
+  // ============================================
+  // Base URL Configuration
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_PRODUCTION_URL:",
+    process.env.NEXT_PUBLIC_PRODUCTION_URL
+  );
+  console.log("NEXT_PUBLIC_UAT_URL:", process.env.NEXT_PUBLIC_UAT_URL);
+  console.log(
+    "NEXT_PUBLIC_BASE_URL_PROD:",
+    process.env.NEXT_PUBLIC_BASE_URL_PROD
+  );
+  console.log(
+    "NEXT_PUBLIC_BASE_URL_UAT:",
+    process.env.NEXT_PUBLIC_BASE_URL_UAT
+  );
+
+  // ============================================
+  // Login Configuration
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_IS_LOGIN_ENABLED:",
+    process.env.NEXT_PUBLIC_IS_LOGIN_ENABLED
+  );
+
+  // ============================================
+  // Cohort Configuration (API)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_ENABLE_COHORT:",
+    process.env.NEXT_PUBLIC_ENABLE_COHORT
+  );
+  console.log(
+    "NEXT_PUBLIC_COHORT_URL_PROD:",
+    process.env.NEXT_PUBLIC_COHORT_URL_PROD
+  );
+  console.log(
+    "NEXT_PUBLIC_COHORT_URL_UAT:",
+    process.env.NEXT_PUBLIC_COHORT_URL_UAT
+  );
+
+  // ============================================
+  // Event Configuration (API)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_EVENT_URL_PROD:",
+    process.env.NEXT_PUBLIC_EVENT_URL_PROD
+  );
+  console.log(
+    "NEXT_PUBLIC_EVENT_URL_UAT:",
+    process.env.NEXT_PUBLIC_EVENT_URL_UAT
+  );
+
+  // ============================================
+  // System Properties Configuration (API)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_SYSTEM_PROPERTIES_URL:",
+    process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL
+  );
+
+  // ============================================
+  // Permission Configuration (JSON File)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_ENABLE_PERMISSION:",
+    process.env.NEXT_PUBLIC_ENABLE_PERMISSION
+  );
+  console.log(
+    "NEXT_PUBLIC_PERMISSION_S3_URL:",
+    process.env.NEXT_PUBLIC_PERMISSION_S3_URL
+  );
+
+  // ============================================
+  // Tenant Configuration (Dropdown Options)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT:",
+    process.env.NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT
+  );
+  console.log(
+    "NEXT_PUBLIC_ORGANIZATIONS:",
+    process.env.NEXT_PUBLIC_ORGANIZATIONS
+  );
+
+  console.log("=== End Environment Variables ===\n");
+  // ============================================
+  // Environment Variables Console Logs
+  // ============================================
+  console.log("=== Environment Variables ===");
+  console.log("NEXT_PUBLIC_ENV:", process.env.NEXT_PUBLIC_ENV);
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+
+  // ============================================
+  // Google OAuth Configuration
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID:",
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  );
+  console.log(
+    "NEXT_PUBLIC_GOOGLE_CLIENT_SECRET:",
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET
+  );
+
+  // ============================================
+  // Base URL Configuration
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_PRODUCTION_URL:",
+    process.env.NEXT_PUBLIC_PRODUCTION_URL
+  );
+  console.log("NEXT_PUBLIC_UAT_URL:", process.env.NEXT_PUBLIC_UAT_URL);
+  console.log(
+    "NEXT_PUBLIC_BASE_URL_PROD:",
+    process.env.NEXT_PUBLIC_BASE_URL_PROD
+  );
+  console.log(
+    "NEXT_PUBLIC_BASE_URL_UAT:",
+    process.env.NEXT_PUBLIC_BASE_URL_UAT
+  );
+
+  // ============================================
+  // Login Configuration
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_IS_LOGIN_ENABLED:",
+    process.env.NEXT_PUBLIC_IS_LOGIN_ENABLED
+  );
+
+  // ============================================
+  // Cohort Configuration (API)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_ENABLE_COHORT:",
+    process.env.NEXT_PUBLIC_ENABLE_COHORT
+  );
+  console.log(
+    "NEXT_PUBLIC_COHORT_URL_PROD:",
+    process.env.NEXT_PUBLIC_COHORT_URL_PROD
+  );
+  console.log(
+    "NEXT_PUBLIC_COHORT_URL_UAT:",
+    process.env.NEXT_PUBLIC_COHORT_URL_UAT
+  );
+
+  // ============================================
+  // Event Configuration (API)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_EVENT_URL_PROD:",
+    process.env.NEXT_PUBLIC_EVENT_URL_PROD
+  );
+  console.log(
+    "NEXT_PUBLIC_EVENT_URL_UAT:",
+    process.env.NEXT_PUBLIC_EVENT_URL_UAT
+  );
+
+  // ============================================
+  // System Properties Configuration (API)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_SYSTEM_PROPERTIES_URL:",
+    process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL
+  );
+
+  // ============================================
+  // Permission Configuration (JSON File)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_ENABLE_PERMISSION:",
+    process.env.NEXT_PUBLIC_ENABLE_PERMISSION
+  );
+  console.log(
+    "NEXT_PUBLIC_PERMISSION_S3_URL:",
+    process.env.NEXT_PUBLIC_PERMISSION_S3_URL
+  );
+
+  // ============================================
+  // Tenant Configuration (Dropdown Options)
+  // ============================================
+  console.log(
+    "NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT:",
+    process.env.NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT
+  );
+  console.log(
+    "NEXT_PUBLIC_ORGANIZATIONS:",
+    process.env.NEXT_PUBLIC_ORGANIZATIONS
+  );
+
+  console.log("=== End Environment Variables ===\n");
   const { hasEditAccess, isLoading: isPermissionsLoading } = usePermissions();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  const statusFromUrl = searchParams.get("status")?.toUpperCase() as Status | null;
-  const validStatuses: Status[] = ["ALL", "DRAFT", "LIVE", "SCHEDULED", "PAUSED", "CONCLUDED", "TERMINATED"];
-  const initialStatus = statusFromUrl && validStatuses.includes(statusFromUrl) ? statusFromUrl : "ALL";
-  
+
+  const statusFromUrl = searchParams
+    .get("status")
+    ?.toUpperCase() as Status | null;
+  const validStatuses: Status[] = [
+    "ALL",
+    "DRAFT",
+    "LIVE",
+    "SCHEDULED",
+    "PAUSED",
+    "CONCLUDED",
+    "TERMINATED",
+  ];
+  const initialStatus =
+    statusFromUrl && validStatuses.includes(statusFromUrl)
+      ? statusFromUrl
+      : "ALL";
+
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState<Status>(initialStatus);
 
@@ -38,21 +261,22 @@ export default function JourneyListingPage() {
 
   useEffect(() => setPageNumber(0), [searchTerm, status]);
 
-
   useEffect(() => {
-    const urlStatus = searchParams.get("status")?.toUpperCase() as Status | null;
-    const expectedStatus = urlStatus && validStatuses.includes(urlStatus) ? urlStatus : "ALL";
+    const urlStatus = searchParams
+      .get("status")
+      ?.toUpperCase() as Status | null;
+    const expectedStatus =
+      urlStatus && validStatuses.includes(urlStatus) ? urlStatus : "ALL";
     if (expectedStatus !== status) {
       setStatus(expectedStatus);
     }
   }, [searchParams]);
 
-
   useEffect(() => {
     const urlStatus = searchParams.get("status")?.toUpperCase();
     const expectedUrlStatus = status === "ALL" ? null : status.toLowerCase();
     const currentUrlStatus = urlStatus?.toLowerCase() || null;
-    
+
     if (currentUrlStatus !== expectedUrlStatus) {
       const params = new URLSearchParams(searchParams.toString());
       if (status === "ALL") {
@@ -60,7 +284,7 @@ export default function JourneyListingPage() {
       } else {
         params.set("status", status.toLowerCase());
       }
-      const newUrl = params.toString() 
+      const newUrl = params.toString()
         ? `/dashboard?${params.toString()}`
         : "/dashboard";
       router.replace(newUrl, { scroll: false });
@@ -147,7 +371,9 @@ export default function JourneyListingPage() {
                     params.set("status", status.toLowerCase());
                   }
                   const queryString = params.toString();
-                  router.push(`/dashboard/create${queryString ? `?${queryString}` : ""}`);
+                  router.push(
+                    `/dashboard/create${queryString ? `?${queryString}` : ""}`
+                  );
                 }}
                 disabled={!hasEditAccess || isPermissionsLoading}
               >
