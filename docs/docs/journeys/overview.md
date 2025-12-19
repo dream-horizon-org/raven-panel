@@ -123,6 +123,6 @@ flowchart LR
 ## Next Steps
 
 - **[Creating a Journey](./creating-journey)** - Step-by-step guide to build your first journey
-- **[Transitions & Rules](./transitions-rules)** - Connect nodes with transitions and rules
+- **[Transitions & Conditions](./transitions-rules)** - Connect nodes with transitions and conditions
 - **[Engagements](./engagements)** - Learn about engagement types and how to add them
 

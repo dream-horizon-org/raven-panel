@@ -26,7 +26,7 @@ A journey is a visual flow that maps user behavior through a series of steps (no
 - **[Journey Overview](/docs/journeys/overview)** - Understand what journeys are and how to navigate the panel
 - **[Creating a Journey](/docs/journeys/creating-journey)** - Build new journeys with an intuitive interface
 - **[Journey Configuration](/docs/journeys/journey-configuration)** - Configure cohorts, frequency, and scheduling
-- **[Transitions & Rules](/docs/journeys/transitions-rules)** - Connect nodes with transitions and rules
+- **[Transitions & Conditions](/docs/journeys/transitions-rules)** - Connect nodes with transitions and conditions
 - **[Engagements](/docs/journeys/engagements)** - Learn about engagement types, design options, and how to add them
 
 ## Next Steps

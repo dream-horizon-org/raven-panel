@@ -67,7 +67,7 @@ Set when your journey is active.
 
 **Ongoing Journey:**
 - Start: As soon as published
-- End: None
+- End: As specified
 
 **Time-Limited Campaign:**
 - Start: Nov 29, 2024 12:00 AM

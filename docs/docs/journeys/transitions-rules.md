@@ -2,9 +2,9 @@
 sidebar_position: 5
 ---
 
-# Transitions & Rules
+# Transitions & Conditions
 
-Transitions connect nodes in your journey, defining how users move from one step to another. Rules (also called conditions) add logic to transitions, controlling which users progress based on specific criteria.
+Transitions connect nodes in your journey, defining how users move from one step to another. Conditions add logic to transitions, controlling which users progress based on specific criteria.
 
 ## How Transitions Work
 
@@ -16,25 +16,25 @@ import JourneyAnimation from '@site/src/components/JourneyAnimation';
 
 <JourneyAnimation />
 
-### Rules
+### Conditions
 
-**All Rules Must Pass**
+**All Conditions Must Pass**
 
-If you add multiple rules to a transition, **ALL of them must be true** for the transition to happen.
+If you add multiple conditions to a transition, **ALL of them must be true** for the transition to happen.
 
 **Example:**
 
 ```
 Transition: Node A → Node B
-Rules:
+Conditions:
   - "User is logged in" = true
   - "Product price" > 50
   - "Cart value" > 100
 ```
 
-**Result:** The transition only occurs if the user is logged in **AND** product price > $50 **AND** cart value > $100. If any rule fails, the user stays at Node A.
+**Result:** The transition only occurs if the user is logged in **AND** product price > $50 **AND** cart value > $100. If any condition fails, the user stays at Node A.
 
-**No Rules:** If you don't add any rules, **everyone moves to the next node** when the current node's event occurs.
+**No Conditions:** If you don't add any conditions, **everyone moves to the next node** when the current node's event occurs.
 
 ---
 
@@ -46,19 +46,19 @@ To add a transition:
 2. Find the **"Transitions"** section in the configuration panel
 3. Click **"Add Transition"**
 4. Select the target node or choose **"Exit"** to end the journey
-5. Optionally click **"Add Rule"** to add conditions:
+5. Optionally click **"Add Condition"** to add conditions:
    - Select the property to check
    - Choose the operator
    - Set the value to compare against
 6. Click **"Save"** on the node
 
-The transition appears as an arrow in the canvas, with rules shown as labels.
+The transition appears as an arrow in the canvas, with conditions shown as labels.
 
 See **[Creating a Journey](./creating-journey)** for detailed step-by-step instructions.
 
 ---
 
-## Rule Operators
+## Condition Operators
 
 Operators available in the panel:
 

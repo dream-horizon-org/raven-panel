@@ -36,7 +36,7 @@ You'll land on the **"UI & Content"** tab with a canvas showing a green **Entry 
 **Select an Event:**
 1. Find the "Event" dropdown in the configuration panel
 2. Choose the event that triggers your journey (e.g., "User opens app", "User signs up", "User logs in")
-3. Optionally add filters to make the trigger more specific
+3. Optionally add conditions to make the trigger more specific
 
 **Example:** Event "User opens app" with filter "User is logged in" = true
 
@@ -68,12 +68,12 @@ Define what happens next in your journey.
 3. Click "Add Transition"
 4. Select the target node or choose "Exit" to end the journey
 
-**Add Rules (Optional):**
-- Click "Add Rule" to add conditions that must pass for the transition to occur
+**Add Conditions (Optional):**
+- Click "Add Condition" to add conditions that must pass for the transition to occur
 - Select the property, operator, and value to check
 - All rules must pass for users to progress
 
-**Example:** Transition from Entry Node to "User Clicks Product" with rule "User is logged in" = true
+**Example:** Transition from Entry Node to "User Clicks Product" with condition "User is logged in" = true
 
 See **[Transitions & Rules](./transitions-rules)** for detailed guidance on rules and operators.
 
@@ -97,6 +97,6 @@ See **[Journey Configuration](./journey-configuration)** for detailed instructio
 
 Once configured, you can:
 - **Save as Draft** - Save without publishing (journey won't be active)
-- **Publish** - Make the journey live immediately (requires Publish Access)
-- **Schedule** - Set a future publish date (requires Publish Access)
+- **Publish** - Make the journey live immediately
+- **Schedule** - Set a future publish date
 

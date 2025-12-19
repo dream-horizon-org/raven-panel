@@ -48,7 +48,7 @@ To add an engagement to a node:
 6. Design your message in the visual editor:
    - Configure text, styling, and behavior
    - Add elements (stacks, images, buttons)
-   - For tooltips: Set target screen and element ID
+   - For tooltips: Set target screen and target ID
 7. Click **"Save"** on the node
 
 An Engagement Node (orange) appears connected to your node in the canvas.

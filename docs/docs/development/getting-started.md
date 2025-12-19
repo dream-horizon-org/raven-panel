@@ -9,6 +9,8 @@ Set up your local development environment for Raven.
 ## Prerequisites
 
 - **Node.js** 20.0 or higher
+- **Next.js** 15.5.7
+- **React** 19.1.0
 - **Yarn** 1.22+ (recommended) or npm
 - **Git**
 - **Docker** (optional, for containerized setup)
