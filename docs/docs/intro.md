@@ -23,15 +23,15 @@ A nudge is a subtle, non-intrusive prompt designed to guide users toward specifi
 A journey is a visual flow that maps user behavior through a series of steps (nodes) connected by transitions.
 
 **Explore:**
-- **[Journey Overview](./journeys/overview)** - Understand what journeys are and how to navigate the panel
-- **[Creating a Journey](./journeys/creating-journey)** - Build new journeys with an intuitive interface
-- **[Journey Configuration](./journeys/journey-configuration)** - Configure cohorts, frequency, and scheduling
-- **[Transitions & Rules](./journeys/transitions-rules)** - Connect nodes with transitions and rules
-- **[Engagements](./journeys/engagements)** - Learn about engagement types, design options, and how to add them
+- **[Journey Overview](/docs/journeys/overview)** - Understand what journeys are and how to navigate the panel
+- **[Creating a Journey](/docs/journeys/creating-journey)** - Build new journeys with an intuitive interface
+- **[Journey Configuration](/docs/journeys/journey-configuration)** - Configure cohorts, frequency, and scheduling
+- **[Transitions & Rules](/docs/journeys/transitions-rules)** - Connect nodes with transitions and rules
+- **[Engagements](/docs/journeys/engagements)** - Learn about engagement types, design options, and how to add them
 
 ## Next Steps
 
-- [Getting Started](./development/getting-started) - Set up your development environment
-- [Journeys Overview](./journeys/overview) - Learn about journeys and the panel interface
-- [Creating a Journey](./journeys/creating-journey) - Build your first journey
-- [Journey Configuration](./journeys/journey-configuration) - Configure cohorts, frequency, and scheduling
+- [Getting Started](/docs/development/getting-started) - Set up your development environment
+- [Journeys Overview](/docs/journeys/overview) - Learn about journeys and the panel interface
+- [Creating a Journey](/docs/journeys/creating-journey) - Build your first journey
+- [Journey Configuration](/docs/journeys/journey-configuration) - Configure cohorts, frequency, and scheduling

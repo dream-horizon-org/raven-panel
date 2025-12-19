@@ -6,9 +6,6 @@ sidebar_position: 2
 
 Build journeys to guide users through your app with timely messages.
 
-:::tip Permission
-You need **Edit Access** to create journeys.
-:::
 
 ## Step-by-Step: Creating Your First Journey
 
@@ -18,10 +15,10 @@ You need **Edit Access** to create journeys.
 Give your journey a clear, descriptive name that helps you identify it later.
 
 **Examples:**
-- "Welcome New Users"
-- "Re-engage Inactive Users"
-- "E-Commerce Checkout Flow"
-- "Feature Discovery Tooltip"
+- Welcome New Users
+- Re-engage Inactive Users
+- E-Commerce Checkout Flow
+- Feature Discovery Tooltip
 
 **Best Practices:**
 - Use descriptive names that indicate the journey's purpose
