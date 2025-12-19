@@ -27,7 +27,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/dream-horizon-org/raven-panel/tree/main/docs/',
         },
         blog: false,
         theme: {
