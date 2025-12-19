@@ -208,7 +208,7 @@ const JourneyAnimation = () => {
 
            <ExplanationBox isVisible={activeStep === 0}>
              <div><strong>Step 1:</strong> Transition to <strong>"User Clicks Product"</strong> happens when <strong>"User Opens App"</strong> event occurs.</div>
-             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Rule "User is logged in" is checked. If true, user proceeds.</div>
+             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "User is logged in" is checked. If true, user proceeds.</div>
            </ExplanationBox>
         </div>
 
@@ -249,7 +249,7 @@ const JourneyAnimation = () => {
 
            <ExplanationBox isVisible={activeStep === 1}>
              <div><strong>Step 2:</strong> Transition to <strong>"User Adds to Cart"</strong> happens when <strong>"User Clicks Product"</strong> event occurs.</div>
-             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Rule "Price > $50" is checked. Only high-value items trigger next step.</div>
+             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "Price > $50" is checked. Only high-value items trigger next step.</div>
            </ExplanationBox>
         </div>
 
@@ -290,7 +290,7 @@ const JourneyAnimation = () => {
 
            <ExplanationBox isVisible={activeStep === 2}>
              <div><strong>Step 3:</strong> Transition to <strong>"User Returns to Home"</strong> happens when <strong>"User Adds to Cart"</strong> event occurs.</div>
-             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Rule "Cart value > $100" checked. User must have enough value in cart.</div>
+             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "Cart value > $100" checked. User must have enough value in cart.</div>
            </ExplanationBox>
         </div>
 

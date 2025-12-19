@@ -38,7 +38,7 @@ You'll land on the **"UI & Content"** tab with a canvas showing a green **Entry 
 2. Choose the event that triggers your journey (e.g., "User opens app", "User signs up", "User logs in")
 3. Optionally add conditions to make the trigger more specific
 
-**Example:** Event "User opens app" with filter "User is logged in" = true
+**Example:** Event "User opens app" with condition "User is logged in" = true
 
 ---
 
@@ -71,11 +71,11 @@ Define what happens next in your journey.
 **Add Conditions (Optional):**
 - Click "Add Condition" to add conditions that must pass for the transition to occur
 - Select the property, operator, and value to check
-- All rules must pass for users to progress
+- All conditions must pass for users to progress
 
 **Example:** Transition from Entry Node to "User Clicks Product" with condition "User is logged in" = true
 
-See **[Transitions & Rules](./transitions-rules)** for detailed guidance on rules and operators.
+See **[Transitions & conditions](./transitions-rules)** for detailed guidance on rules and operators.
 
 ---
 
