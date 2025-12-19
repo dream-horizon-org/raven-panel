@@ -1,0 +1,145 @@
+.heroBanner {
+  padding: 8rem 0 6rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  background: #282c34;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+}
+
+.heroBanner .hero__title {
+  color: #ffffff;
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+[data-theme='dark'] .heroBanner .hero__title {
+  color: #ffffff;
+}
+
+.heroBanner .hero__subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  font-weight: 400;
+  max-width: 700px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.getStartedButton {
+  background: #20c997;
+  color: #ffffff;
+  border: none;
+  padding: 0.875rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.getStartedButton:hover {
+  background: #1aa179;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  color: #ffffff;
+}
+
+.features {
+  padding: 5rem 0;
+  background: #ffffff;
+}
+
+[data-theme='dark'] .features {
+  background: var(--ifm-background-color);
+}
+
+.feature {
+  margin-bottom: 2rem;
+}
+
+.featureCard {
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  height: 100%;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+[data-theme='dark'] .featureCard {
+  background: var(--ifm-background-surface-color);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='dark'] .featureCard:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1.25rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+.featureCard h3 {
+  color: var(--feature-card-title);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.featureCard p {
+  color: var(--feature-card-text);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+
+@media screen and (max-width: 768px) {
+  .heroBanner {
+    padding: 4rem 1rem;
+    min-height: 400px;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .sectionHeader h2 {
+    font-size: 1.75rem;
+  }
+
+  .featureCard {
+    padding: 1.5rem;
+  }
+
+}
+

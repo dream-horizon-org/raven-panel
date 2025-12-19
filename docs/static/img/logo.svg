@@ -1,0 +1,15 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#6d28d9"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="8" fill="url(#logoGradient)"/>
+  <path d="M20 8C16.5 8 13.5 10 12 13L10 18L12 23C13.5 26 16.5 28 20 28C23.5 28 26.5 26 28 23L30 18L28 13C26.5 10 23.5 8 20 8Z" fill="white" opacity="0.9"/>
+  <path d="M15 18L18 15L20 18L22 15L25 18L22 21L20 24L18 21L15 18Z" fill="#8b5cf6"/>
+  <circle cx="16" cy="15" r="2" fill="#1e1b4b"/>
+  <circle cx="24" cy="15" r="2" fill="#1e1b4b"/>
+  <path d="M8 32L12 28M32 32L28 28" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>
+

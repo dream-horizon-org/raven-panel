@@ -1,0 +1,553 @@
+/**
+ * Raven Documentation - Custom Styles
+ * Modern, clean design inspired by professional documentation sites
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Primary palette - Neutral gray */
+  --ifm-color-primary: #4b5563;
+  --ifm-color-primary-dark: #374151;
+  --ifm-color-primary-darker: #1f2937;
+  --ifm-color-primary-darkest: #111827;
+  --ifm-color-primary-light: #6b7280;
+  --ifm-color-primary-lighter: #9ca3af;
+  --ifm-color-primary-lightest: #d1d5db;
+
+  /* Typography - Inter for modern, clean look */
+  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --ifm-heading-font-family: 'Inter', sans-serif;
+  
+  /* Sizing */
+  --ifm-code-font-size: 90%;
+  --ifm-h1-font-size: 2.5rem;
+  --ifm-h2-font-size: 1.75rem;
+  --ifm-h3-font-size: 1.5rem;
+  
+  /* Borders and shadows */
+  --ifm-global-radius: 8px;
+  --ifm-code-border-radius: 6px;
+  
+  /* Backgrounds - Clean whites and light grays */
+  --ifm-background-color: #ffffff;
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.98);
+  --ifm-footer-background-color: #1f2937;
+  
+  /* Code blocks */
+  --docusaurus-highlighted-code-line-bg: rgba(75, 85, 99, 0.1);
+  
+  /* Link colors - More visible */
+  --ifm-link-color: #2563eb;
+  --ifm-link-hover-color: #1d4ed8;
+  --ifm-link-decoration: none;
+  
+  /* Homepage Feature Colors */
+  --feature-card-title: #1f2937;
+  --feature-card-text: #4b5563;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #9ca3af;
+  --ifm-color-primary-dark: #6b7280;
+  --ifm-color-primary-darker: #4b5563;
+  --ifm-color-primary-darkest: #374151;
+  --ifm-color-primary-light: #d1d5db;
+  --ifm-color-primary-lighter: #e5e7eb;
+  --ifm-color-primary-lightest: #f3f4f6;
+  
+  --ifm-background-color: #111827;
+  --ifm-background-surface-color: #1f2937;
+  --ifm-navbar-background-color: rgba(17, 24, 39, 0.98);
+  --ifm-footer-background-color: #0f172a;
+  
+  --docusaurus-highlighted-code-line-bg: rgba(156, 163, 175, 0.15);
+  
+  /* Link colors - More visible in dark mode */
+  --ifm-link-color: #60a5fa;
+  --ifm-link-hover-color: #93c5fd;
+  --ifm-link-decoration: none;
+  
+  /* Homepage Feature Colors */
+  --feature-card-title: #ffffff;
+  --feature-card-text: #d1d5db;
+}
+
+/* Hero section styling */
+.hero {
+  background: #282c34;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(75, 85, 99, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(107, 114, 128, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero__title {
+  font-weight: 700;
+  font-size: 3.5rem;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.hero__subtitle {
+  font-weight: 400;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Navbar */
+.navbar {
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar__title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.navbar__link {
+  font-weight: 500;
+}
+
+/* Sidebar */
+.menu__link {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.menu__link:hover {
+  background: rgba(75, 85, 99, 0.08);
+}
+
+.menu__link--active {
+  background: rgba(75, 85, 99, 0.12);
+  border-left: 3px solid var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+/* Cards and boxes */
+.card {
+  border-radius: var(--ifm-global-radius);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+[data-theme='dark'] .card {
+  background: var(--ifm-background-surface-color);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Code blocks */
+pre {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+}
+
+[data-theme='dark'] pre {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+code {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(75, 85, 99, 0.06);
+  padding: 2px 6px;
+  font-size: 0.9em;
+}
+
+[data-theme='dark'] code {
+  background: rgba(156, 163, 175, 0.15);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tables */
+table {
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  width: 100% !important;
+  max-width: 100% !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  display: table;
+  table-layout: auto;
+}
+
+[data-theme='dark'] table {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+table td,
+table th {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] table td,
+[data-theme='dark'] table th {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ensure table container uses full width */
+.markdown table {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+th {
+  background: rgba(75, 85, 99, 0.08);
+  font-weight: 600;
+  color: var(--ifm-color-primary-darkest);
+}
+
+[data-theme='dark'] th {
+  background: rgba(156, 163, 175, 0.15);
+  color: var(--ifm-color-primary-lightest);
+}
+
+/* Buttons */
+.button--primary {
+  background: var(--ifm-color-primary);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+
+.button--primary:hover {
+  background: var(--ifm-color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(75, 85, 99, 0.3);
+}
+
+.button--secondary {
+  border: 1.5px solid var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+  background: transparent;
+}
+
+.button--secondary:hover {
+  background: rgba(75, 85, 99, 0.08);
+  border-color: var(--ifm-color-primary-dark);
+}
+
+/* Admonitions */
+.admonition {
+  border-radius: var(--ifm-global-radius);
+  border-left-width: 4px;
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 4px solid var(--ifm-color-primary);
+  background: rgba(75, 85, 99, 0.04);
+  border-radius: 0 var(--ifm-global-radius) var(--ifm-global-radius) 0;
+  padding: 1rem 1.5rem;
+}
+
+[data-theme='dark'] blockquote {
+  background: rgba(156, 163, 175, 0.1);
+}
+
+/* Footer */
+.footer {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+}
+
+[data-theme='dark'] .footer {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+}
+
+.footer__title {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.footer__link-item {
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+}
+
+.footer__link-item:hover {
+  color: #9ca3af;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+/* Feature cards on homepage */
+.feature-card {
+  padding: 2rem;
+  border-radius: 12px;
+  background: rgba(75, 85, 99, 0.04);
+  border: 1px solid rgba(75, 85, 99, 0.15);
+  transition: all 0.2s ease;
+}
+
+[data-theme='dark'] .feature-card {
+  background: rgba(156, 163, 175, 0.08);
+  border-color: rgba(156, 163, 175, 0.2);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(75, 85, 99, 0.15);
+  border-color: var(--ifm-color-primary);
+}
+
+.feature-card h3 {
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+/* TOC */
+.table-of-contents__link--active {
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+/* Search */
+.DocSearch-Button {
+  border-radius: 8px !important;
+  background: rgba(75, 85, 99, 0.06) !important;
+  border: 1px solid rgba(75, 85, 99, 0.15) !important;
+}
+
+[data-theme='dark'] .DocSearch-Button {
+  background: rgba(156, 163, 175, 0.1) !important;
+  border-color: rgba(156, 163, 175, 0.2) !important;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Transition example box */
+.transition-example {
+  position: relative;
+  overflow: hidden;
+}
+
+.transition-example::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(75, 85, 99, 0.08), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.transition-example:hover {
+  background: rgba(75, 85, 99, 0.06) !important;
+  transform: translateX(4px);
+  transition: all 0.2s ease;
+}
+
+/* Responsive: hide explanation boxes on smaller screens */
+@media (max-width: 1400px) {
+  div[style*="right: '-300px'"] {
+    display: none;
+  }
+}
+
+/* Mermaid diagrams */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 3rem 0;
+  width: 100%;
+  overflow: visible;
+}
+
+.mermaid svg {
+  max-width: none !important;
+  width: 200% !important;
+  height: auto !important;
+  transform: scale(1.8);
+  transform-origin: center;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  min-width: 150px !important;
+  min-height: 100px !important;
+  padding: 15px !important;
+}
+
+.mermaid .nodeLabel {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+.mermaid .edgeLabel {
+  font-size: 12px !important;
+  padding: 2px 6px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.mermaid .edgeLabel text {
+  font-size: 12px !important;
+}
+
+/* Container for centered mermaid diagrams */
+.markdown > div:has(.mermaid) {
+  width: 100%;
+  overflow: visible;
+  margin: 3rem 0;
+}
+
+/* Improved readability for markdown content */
+.markdown {
+  line-height: 1.7;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.markdown p {
+  margin-bottom: 1.25rem;
+}
+
+.markdown ul,
+.markdown ol {
+  margin-bottom: 1.25rem;
+}
+
+.markdown li {
+  margin-bottom: 0.5rem;
+}
+
+/* Link styling - Make hyperlinks more visible */
+a {
+  color: var(--ifm-link-color);
+  text-decoration: var(--ifm-link-decoration);
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration: underline;
+}
+
+/* Markdown links */
+.markdown a {
+  color: var(--ifm-link-color);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.3);
+  text-underline-offset: 2px;
+}
+
+.markdown a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration-color: var(--ifm-link-hover-color);
+}
+
+[data-theme='dark'] .markdown a {
+  color: var(--ifm-link-color);
+  text-decoration-color: rgba(96, 165, 250, 0.4);
+}
+
+[data-theme='dark'] .markdown a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration-color: var(--ifm-link-hover-color);
+}
+
+/* Links in tables */
+table a {
+  color: var(--ifm-link-color);
+  font-weight: 500;
+}
+
+table a:hover {
+  color: var(--ifm-link-hover-color);
+}
+
+/* Links in code blocks should remain as-is */
+code a,
+pre a {
+  color: inherit;
+  text-decoration: none;
+}
