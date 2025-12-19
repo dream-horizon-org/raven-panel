@@ -1,61 +1,78 @@
-/**
- * Determines the base URL based on the environment.
- */
 const getBaseUrl = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
 
   if (env === "production") {
-    return "https://kong.dream11.com/thunder";
+    return process.env.NEXT_PUBLIC_BASE_URL_PROD;
   }
   if (env === "uat") {
-    return "https://kong-uat.dream11.com/thunder";
+    return process.env.NEXT_PUBLIC_BASE_URL_UAT;
   }
 
-  return "/thunder";
+  return process.env.NEXT_PUBLIC_BASE_URL_PROD;
 };
 
 const getBaseUrlForCohorts = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-  if (process.env.NODE_ENV === "development") {
-    return "https://kong.dream11.com/v1/destinations/UserCohortService/cohorts";
-  }
-  if (env === "uat") {
-    return "https://kong-uat.dream11.com/v1/destinations/UserCohortService/cohorts";
+  const baseUrl = getBaseUrl();
+
+  let cohortPath: string | undefined;
+  if (env === "production") {
+    cohortPath = process.env.NEXT_PUBLIC_COHORT_URL_PROD;
+  } else if (env === "uat") {
+    cohortPath = process.env.NEXT_PUBLIC_COHORT_URL_UAT;
+  } else {
+    cohortPath = process.env.NEXT_PUBLIC_COHORT_URL_PROD;
   }
 
-  return "https://kong.dream11.com/v1/destinations/UserCohortService/cohorts";
+  if (!cohortPath) {
+    return;
+  }
+
+  if (!baseUrl) {
+    return;
+  }
+
+  return `${baseUrl}${cohortPath}`;
 };
 
-/**
-
- * Gets the base URL for Concord service
- */
-const getConcordBaseUrl = () => {
+const getBaseUrlForEvents = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+  const baseUrl = getBaseUrl();
 
+  let eventPath: string | undefined;
   if (env === "production") {
-    return "https://kong.dream11.com";
+    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+  } else if (env === "uat") {
+    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+  } else {
+    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
   }
-  if (env === "uat") {
-    return "https://kong-uat.dream11.com";
+
+  if (!eventPath) {
+    return;
   }
-  // Development: use local kong
-  return "https://kong.dream11.com";
+
+  if (!baseUrl) {
+    return;
+  }
+
+  return `${baseUrl}${eventPath}`;
 };
 
 export const API_BASE_URLS = {
   THUNDER: getBaseUrl(),
   USER_COHORTS: getBaseUrlForCohorts(),
-  CONCORD: getConcordBaseUrl(),
+  EVENTS: getBaseUrlForEvents(),
+  CONCORD: getBaseUrl(),
 };
 
 export const API_ENDPOINTS = {
-  FILTERS_LIST: `${API_BASE_URLS.THUNDER}/filters`,
-  JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/ctas`,
-  EVENTS_SCHEMA: `${API_BASE_URLS.CONCORD}/schema`,
-  SYSTEM_PROPERTIES: `${API_BASE_URLS.CONCORD}/getSystemProperties`,
-  COHORTS_REALTIME: `${API_BASE_URLS.USER_COHORTS}?pageSize=999999`,
+  JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
+  EVENTS_SCHEMA: API_BASE_URLS.EVENTS,
+  SYSTEM_PROPERTIES: `${API_BASE_URLS.THUNDER}/${process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL}`,
+  COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
 };
+
 export const API_AXIOS_CONFIG = {
   timeout: 60000,
   headers: {

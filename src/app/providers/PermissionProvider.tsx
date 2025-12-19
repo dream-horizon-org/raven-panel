@@ -37,11 +37,17 @@ interface PermissionProviderProps {
   children: React.ReactNode;
 }
 
+const isPermissionEnabled = () => {
+  const enablePermission = process.env.NEXT_PUBLIC_ENABLE_PERMISSION;
+  return enablePermission === "true";
+};
+
 export const PermissionProvider: React.FC<PermissionProviderProps> = ({
   children,
 }) => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isEmailResolved, setIsEmailResolved] = useState(false);
+  const permissionEnabled = isPermissionEnabled();
 
   useEffect(() => {
     try {
@@ -65,14 +71,21 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
   >({
     queryKey: ["permissions", userEmail],
     queryFn: getPermissions,
-    enabled: !!userEmail,
+    enabled: permissionEnabled && !!userEmail,
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
   });
 
-  // 3) Compute effective access
   const { hasViewAccess, hasEditAccess, hasPublishAccess } = useMemo(() => {
+    if (!permissionEnabled) {
+      return {
+        hasViewAccess: true,
+        hasEditAccess: true,
+        hasPublishAccess: true,
+      };
+    }
+
     if (!isEmailResolved || isPermissionsLoading || !userEmail) {
       return {
         hasViewAccess: false,
@@ -99,7 +112,13 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     }
 
     return { hasViewAccess, hasEditAccess, hasPublishAccess };
-  }, [permissions, userEmail, isEmailResolved, isPermissionsLoading]);
+  }, [
+    permissions,
+    userEmail,
+    isEmailResolved,
+    isPermissionsLoading,
+    permissionEnabled,
+  ]);
 
   const value: PermissionContextType = {
     permissions,
@@ -107,7 +126,9 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     hasViewAccess,
     hasEditAccess,
     hasPublishAccess,
-    isLoading: !isEmailResolved || isPermissionsLoading,
+    isLoading: !permissionEnabled
+      ? false
+      : !isEmailResolved || isPermissionsLoading,
     setUserEmailFromOutside: setUserEmail,
   };
   return (

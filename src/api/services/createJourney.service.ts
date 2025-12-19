@@ -3,8 +3,8 @@ import { API_BASE_URLS } from "@/config/api";
 import {
   CreateJourneyFormData,
   NudgeType,
-} from "@/app/dashboard/create/types/journeyTypes";
-import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney";
+} from "@/app/dashboard/create/types/journey.interface";
+import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney.utils";
 
 export const createJourney = async (
   formData: CreateJourneyFormData
@@ -12,7 +12,7 @@ export const createJourney = async (
   const apiPayload = transformFormDataToApiFormat(formData);
 
   const response = await axiosInstance.post(
-    `${API_BASE_URLS.THUNDER}/ctas/`,
+    `${API_BASE_URLS.THUNDER}/thunder/ctas/`,
     apiPayload
   );
 

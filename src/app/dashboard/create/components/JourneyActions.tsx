@@ -2,8 +2,8 @@
 
 import { Box, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { useRouter } from "next/navigation";
-import { journeyActionsStyles } from "../styles/journeyActionsStyles";
+import { useRouter, useSearchParams } from "next/navigation";
+import { journeyActionsStyles } from "./content/styles/journeyActionsStyles";
 import { JOURNEY_TEXT } from "../constants/journeyConstants";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
@@ -26,12 +26,22 @@ export default function JourneyActions({
 }: JourneyActionsProps) {
   const theme = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { hasEditAccess } = usePermissions();
+
+  const handleCancel = () => {
+    const statusParam = searchParams?.get("status");
+    if (statusParam) {
+      router.push(`/dashboard?status=${statusParam}`);
+    } else {
+      router.back();
+    }
+  };
 
   return (
     <Box sx={journeyActionsStyles.actions}>
       <Button
-        onClick={() => router.back()}
+        onClick={handleCancel}
         sx={journeyActionsStyles.cancelButton}
         size="large"
       >
@@ -62,10 +72,10 @@ export default function JourneyActions({
         >
           {isSubmitting
             ? isEditMode
-              ? "Updating..."
-              : "Creating..."
+              ? JOURNEY_TEXT.LOADING.UPDATING
+              : JOURNEY_TEXT.LOADING.CREATING
             : isEditMode
-            ? "Update Journey"
+            ? JOURNEY_TEXT.LOADING.UPDATE_JOURNEY
             : JOURNEY_TEXT.ACTIONS.CREATE_JOURNEY}
         </Button>
       )}

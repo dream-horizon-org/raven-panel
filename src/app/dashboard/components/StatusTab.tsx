@@ -5,16 +5,8 @@ import {
   statusTabStyles,
   statusTabLabelContainerStyles,
 } from "./styles/statusTabStyles";
+import { STATUSES } from "./DashboardConstants";
 
-export const STATUSES = [
-  "ALL",
-  "DRAFT",
-  "LIVE",
-  "SCHEDULED",
-  "PAUSED",
-  "CONCLUDED",
-  "TERMINATED",
-] as const;
 export type Status = typeof STATUSES[number];
 export type StatusCounts = Partial<Record<Status, number>>;
 

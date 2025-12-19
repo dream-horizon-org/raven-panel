@@ -16,18 +16,21 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { ReactNativeJson, NudgeType } from "../../types/journeyTypes";
 import {
-  getAvailableActions,
-  getAllClickActions,
-  getClickActionDefinition,
+  ReactNativeJson,
+  NudgeType,
   ClickActionDefinition,
-} from "../../utils/componentDefinitions";
-import { contentElementEditorStyles } from "../../styles/contentElementEditorStyles";
-import { useState } from "react";
-import { useFormContext, Path } from "react-hook-form";
-import { CreateJourneyFormData } from "../../types/journeyTypes";
+} from "../../types/journey.interface";
+
+import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
+import { useFormContext } from "react-hook-form";
+import { CreateJourneyFormData } from "../../types/journey.interface";
 import FormHelperText from "@mui/material/FormHelperText";
+import {
+  getAllClickActions,
+  getAvailableActions,
+  getClickActionDefinition,
+} from "../../utils/componentDefinitions.utils";
 
 interface ElementActionsEditorProps {
   element: ReactNativeJson;
@@ -59,6 +62,7 @@ export default function ElementActionsEditor({
     const fieldPath = `${basePath}.actions.${actionIndex}.params.${paramName}`;
 
     const pathParts = fieldPath.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = errors;
 
     for (let i = 0; i < pathParts.length; i++) {
@@ -288,6 +292,7 @@ export default function ElementActionsEditor({
     const params = getActionParams(actionDef.name);
 
     const actionIndex = elementActions.findIndex(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (action: any) =>
         typeof action === "object" &&
         "name" in action &&

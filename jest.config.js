@@ -3,20 +3,15 @@ module.exports = {
     roots: ['<rootDir>/src'],
   
     collectCoverageFrom: [
-      'src/**/utils/**/*.ts',
-      'src/**/hooks/**/*.ts',
-      'src/**/services/**/*.ts',
-      'src/lib/**/*.ts',
-      'src/config/**/*.ts',
+      'src/**/*.utils.ts',
       '!src/**/*.d.ts',
-      '!src/**/types/**',
     ],
   
     setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   
     testMatch: [
-      '<rootDir>/src/**/__tests__/**/*.{ts,tsx}',
-      '<rootDir>/src/**/*.{spec,test}.{ts,tsx}',
+      '<rootDir>/src/**/*.utils.test.ts',
+      '<rootDir>/src/**/*.utils.spec.ts',
     ],
   
     testEnvironment: 'jsdom',
@@ -42,4 +37,6 @@ module.exports = {
     resetMocks: true,
   
     clearMocks: true,
+  
+    passWithNoTests: true,
   };

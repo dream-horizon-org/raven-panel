@@ -1,4 +1,4 @@
-import { OperatorType, PropertyType } from "../types/journeyTypes";
+import { OperatorType, PropertyType } from "../types/journey.interface";
 
 export type FilterOperator = "=" | ">" | "<" | ">=" | "<=";
 
@@ -32,13 +32,23 @@ export const EVENT_OPTIONS = [
 export const COHORT_OPTIONS = [{ value: "all", label: "All" }] as const;
 
 export const JOURNEY_TEXT = {
+  ERRORS: {
+    AT_LEAST_ONE_FREQUENCY_OPTION:
+      "At least one journey frequency option must be selected",
+  },
+  LOADING: {
+    UPDATING: "Updating...",
+    CREATING: "Creating...",
+    UPDATE_JOURNEY: "Update Journey",
+    CREATE_JOURNEY: "Create Journey",
+  },
   HEADER: {
     PLACEHOLDER: "Journey Setup",
     TOOLTIP: "Journey info",
   },
   TABS: {
     SETUP: "Journey Setup",
-    UI_CONTENT: "Content",
+    UI_CONTENT: "UI & Content",
   },
   SECTIONS: {
     COHORT: {
@@ -105,6 +115,20 @@ export const JOURNEY_TEXT = {
     NEXT: "Next",
     CREATE_JOURNEY: "Create Journey",
   },
+  ENGAGEMENT: {
+    BOTTOMSHEET: "Configure Engagement: Bottomsheet",
+    CONFIGURE_ENGAGEMENT: "Configure Engagement: ",
+  },
+  UNSAVED_CHANGES:
+    "You have unsaved changes to the engagement template. If you close without saving, all your changes will be lost and the template will be reset.",
+  UNSAVED_CHANGES_CONFIRMATION:
+    "Would you like to save your changes before closing?",
+  UNSAVED_CHANGES_TITLE: "Unsaved Changes",
+  DISCARD: "Discard",
+  CONTINUE_EDITING: "Continue Editing",
+  SAVE: "Save",
+  LOCATION: "Location",
+  CONTENT: "Content",
 } as const;
 
 export const getJourneyFormDefaults = () => ({
@@ -172,3 +196,9 @@ export const NUMERIC_TYPES: PropertyType[] = [
   "decimal",
   "float",
 ];
+export const PERIOD_UNITS = [
+  { value: "days", label: "days" },
+  { value: "hours", label: "hours" },
+  { value: "weeks", label: "weeks" },
+  { value: "months", label: "months" },
+] as const;

@@ -3,8 +3,8 @@ import { API_BASE_URLS } from "@/config/api";
 import {
   CreateJourneyFormData,
   ReactNativeJson,
-} from "@/app/dashboard/create/types/journeyTypes";
-import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney";
+} from "@/app/dashboard/create/types/journey.interface";
+import { transformFormDataToApiFormat } from "@/app/dashboard/create/utils/createJourney.utils";
 import { UpdateCtaInput } from "./types/updateJourney.interface";
 
 export const updateJourney = async (
@@ -39,7 +39,7 @@ export const updateJourney = async (
   };
 
   const response = await axiosInstance.put(
-    `${API_BASE_URLS.THUNDER}/ctas/${journeyId}`,
+    `${API_BASE_URLS.THUNDER}/thunder/ctas/${journeyId}`,
     updatePayload
   );
 

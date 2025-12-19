@@ -1,0 +1,71 @@
+import GridViewIcon from "@mui/icons-material/GridView";
+import SettingsIcon from "@mui/icons-material/Settings";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import RouteIcon from "@mui/icons-material/Route";
+import { getOrganizations } from "./utils/tenanat.utils";
+
+export const FEATURES = [
+  {
+    title: "Rich Component Library",
+    description:
+      "Explore UI components like bottomsheets, popups, tooltips, and more.",
+    icon: GridViewIcon,
+    color: "#6366f1", // Indigo
+  },
+  {
+    title: "Customizable Design System",
+    description:
+      "Easily adapt interface elements to match your brand guidelines.",
+    icon: SettingsIcon,
+    color: "#ef4444", // Red
+  },
+  {
+    title: "Dynamic User Targeting",
+    description:
+      "Leverage behavioral insights to deliver personalized experiences.",
+    icon: TrendingDownIcon,
+    color: "#eab308", // Yellow
+  },
+  {
+    title: "Journey-Based Engagement",
+    description:
+      "Present contextual experiences tailored to specific user journeys.",
+    icon: RouteIcon,
+    color: "#3b82f6",
+  },
+];
+
+export const ORGANIZATIONS = getOrganizations();
+
+export const TENANTS = ORGANIZATIONS.map((name) => ({ name }));
+
+export const isTenantEnabled = () => {
+  const enableTenant = process.env.NEXT_PUBLIC_ORGANIZATIONS_ENABLE_TENANT;
+  return enableTenant === "true";
+};
+
+export const isLoginEnabled = () => {
+  const enableLogin = process.env.NEXT_PUBLIC_IS_LOGIN_ENABLED;
+  return enableLogin === "true";
+};
+
+// Landing page text constants
+export const LANDING_PAGE_TEXT = {
+  greeting: "Hi, Welcome Back!",
+  subtitle: "Enter your organization to continue",
+  signInButton: "Sign In",
+  organizationRequired: "Organization name is required",
+  featuresTitle: "Build better products with our best-in-class tool",
+  goToDashboard: "Go to Dashboard",
+} as const;
+
+// Feature card grid area mappings
+export const GRID_AREAS = [
+  "left",
+  "center-top",
+  "center-bottom",
+  "right",
+] as const;
+
+// Animation delay multiplier for staggered animations
+export const ANIMATION_DELAY_MULTIPLIER = 0.5;
