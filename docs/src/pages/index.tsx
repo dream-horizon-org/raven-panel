@@ -519,13 +519,13 @@ function HomepageCTA() {
     <section className={styles.cta}>
       <div className="container">
         <div className={styles.ctaContent}>
-          <Heading as="h2">Ready to Build Better User Experiences?</Heading>
-          <p>Join product teams worldwide who use Raven to drive engagement, increase adoption, and boost conversions. Get started in minutes—no credit card required.</p>
+          <Heading as="h2">Ready to Start Building with Raven?</Heading>
+          <p>Everything you need to get started is in our documentation. Set up your first engagement campaign, integrate the SDK, and start guiding users—all in one open source platform.</p>
           <div className={styles.ctaButtons}>
             <Link
               className={clsx('button button--lg button--primary', styles.ctaButton)}
               to={`${docsUrl}/getting-started`}>
-              Start Building Free
+              Start Building
             </Link>
             <Link
               className={clsx('button button--lg', styles.ctaButtonSecondary)}

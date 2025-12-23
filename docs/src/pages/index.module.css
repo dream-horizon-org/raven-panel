@@ -707,13 +707,14 @@
   flex: 1;
 }
 
-/* CTA Section - Colorful Gradient */
+/* CTA Section - Enhanced Dark Gradient */
 .cta {
   padding: 8rem 0;
   background: 
-    linear-gradient(135deg, #1e293b 0%, #334155 30%, #475569 100%),
-    radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 70% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+    linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%),
+    radial-gradient(ellipse at 20% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 60%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
   color: #ffffff;
   position: relative;
   overflow: hidden;
@@ -721,9 +722,10 @@
 
 [data-theme='dark'] .cta {
   background: 
-    linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #334155 100%),
-    radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 70% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+    linear-gradient(135deg, #0a0e1a 0%, #0f172a 25%, #1e293b 50%, #334155 75%, #475569 100%),
+    radial-gradient(ellipse at 20% 40%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 60%, rgba(16, 185, 129, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
 }
 
 .cta::before {
@@ -733,7 +735,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
 }
 
 .cta::after {
@@ -744,9 +746,11 @@
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 30% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+    radial-gradient(circle at 30% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
   pointer-events: none;
+  opacity: 0.8;
 }
 
 .ctaContent {
@@ -765,6 +769,7 @@
   color: #ffffff;
   letter-spacing: -0.03em;
   line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .ctaContent p {
@@ -793,7 +798,7 @@
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
-    0 4px 16px rgba(16, 185, 129, 0.3),
+    0 4px 20px rgba(16, 185, 129, 0.35),
     0 0 0 0 rgba(16, 185, 129, 0);
   letter-spacing: 0.01em;
 }
@@ -802,15 +807,15 @@
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 28px rgba(16, 185, 129, 0.4),
-    0 0 0 4px rgba(16, 185, 129, 0.15);
+    0 8px 32px rgba(16, 185, 129, 0.45),
+    0 0 0 4px rgba(16, 185, 129, 0.2);
   color: #ffffff;
 }
 
 .ctaButtonSecondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   padding: 1.125rem 2.75rem;
   font-size: 1.0625rem;
   font-weight: 600;
@@ -820,11 +825,11 @@
 }
 
 .ctaButtonSecondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
   transform: translateY(-2px);
   color: #ffffff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
 }
 
 /* Responsive Design */
