@@ -237,31 +237,31 @@ type ComponentItem = {
 
 const Components: ComponentItem[] = [
   {
-    title: 'Raven Panel',
+    title: 'Web Panel',
     icon: <DashboardIcon color="#6366f1" />,
-    description: 'A powerful Next.js web dashboard that empowers product teams to create, manage, and optimize customer engagement journeys through an intuitive visual interface. No coding required.',
+    description: 'A web-based dashboard where product managers and marketers create, manage, and optimize customer engagement campaigns. Build journeys visually with drag-and-drop—no coding skills needed.',
     link: 'raven-panel/intro',
     color: '#6366f1',
-    useCase: 'For Product Managers & Marketers: Build journeys visually',
-    features: ['Visual Journey Builder', 'Cohort Targeting', 'Content Editor', 'Analytics Dashboard'],
+    useCase: 'For Product Teams: Create campaigns without code',
+    features: ['Visual Journey Builder', 'User Targeting', 'Content Editor', 'Performance Tracking'],
   },
   {
-    title: 'Raven Client',
+    title: 'Mobile SDK',
     icon: <MobileIcon color="#10b981" />,
-    description: 'A React Native SDK that seamlessly integrates into mobile apps to deliver contextual nudges, tooltips, and event-driven engagements. Built with a powerful state machine system for complex flows.',
+    description: 'A mobile app integration that displays your engagements to users. Works on both iOS and Android, showing nudges, tooltips, and messages exactly when you configure them in the dashboard.',
     link: 'raven-client/introduction',
     color: '#10b981',
-    useCase: 'For Developers: Integrate in minutes, customize everything',
-    features: ['State Machine DSL', 'Event-Driven', 'Cross-Platform', 'Fully Customizable'],
+    useCase: 'For Your Mobile App: Show engagements to users',
+    features: ['Works on iOS & Android', 'Real-Time Updates', 'Fully Customizable', 'Easy Integration'],
   },
   {
-    title: 'Raven Thunder',
+    title: 'Backend',
     icon: <BackendIcon color="#f59e0b" />,
-    description: 'Enterprise-grade backend service built for scale. Manages CTAs, nudges, behavior tags, and user segments with high-performance APIs and real-time event processing.',
+    description: 'The backend service that powers everything. Handles all the technical work—managing user data, processing events, and delivering engagements at scale. Your engineering team can deploy it easily.',
     link: 'raven-thunder/getting-started/overview',
     color: '#f59e0b',
-    useCase: 'For Engineering Teams: Production-ready infrastructure',
-    features: ['REST APIs', 'Aerospike Integration', 'Multi-Tenant', 'Docker Ready'],
+    useCase: 'For Your Infrastructure: Powers the entire platform',
+    features: ['High Performance', 'Easy Deployment', 'Scalable', 'Production Ready'],
   },
 ];
 
@@ -276,7 +276,10 @@ function ComponentCard({title, icon, description, link, color, features, useCase
         <div className={styles.componentIcon} style={{ backgroundColor: `${color}10`, color: color }}>
           {icon}
         </div>
-        <Heading as="h3" className={styles.componentTitle}>{title}</Heading>
+        <div className={styles.componentTitleWrapper}>
+          <Heading as="h3" className={styles.componentTitle}>{title}</Heading>
+          <span className={styles.openSourceBadge}>Open Source</span>
+        </div>
         <p className={styles.componentUseCase}>{useCase}</p>
       </div>
       <p className={styles.componentDescription}>{description}</p>
@@ -302,9 +305,9 @@ function HomepageComponents() {
     <section className={styles.components}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionLabel}>Platform Architecture</div>
-          <Heading as="h2">Three Components, One Powerful Platform</Heading>
-          <p>Raven&apos;s modular architecture gives you complete control. Use all three components together or integrate them individually into your existing stack</p>
+          <div className={styles.sectionLabel}>Raven Components</div>
+          <Heading as="h2">Three Open Source Components, One Complete Platform</Heading>
+          <p>Raven consists of three fully open source components that work together seamlessly. Use them all for a complete solution, or integrate individual components into your existing tools.</p>
         </div>
         <div className={styles.componentsGrid}>
           {Components.map((component, idx) => (
