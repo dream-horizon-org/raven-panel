@@ -15,26 +15,40 @@ function HomepageHeader() {
       <div className="container">
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            <span>✨ Complete Customer Engagement Platform</span>
+            <span>🚀 Complete Customer Engagement Platform</span>
           </div>
           <Heading as="h1" className="hero__title">
-            Raven
+            Guide Users. Drive Conversions.
           </Heading>
           <p className="hero__subtitle">
             Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. 
-            Everything you need to guide users and drive conversions.
+            Everything you need to guide users and drive conversions—all in one platform.
           </p>
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--lg button--primary', styles.getStartedButton)}
               to={`${docsUrl}/getting-started`}>
-              Get Started
+              Get Started Free
             </Link>
             <Link
               className={clsx('button button--lg button--outline', styles.docsButton)}
               to={`${docsUrl}/getting-started`}>
               View Documentation
             </Link>
+          </div>
+          <div className={styles.heroStats}>
+            <div className={styles.statItem}>
+              <div className={styles.statNumber}>3</div>
+              <div className={styles.statLabel}>Integrated Components</div>
+            </div>
+            <div className={styles.statItem}>
+              <div className={styles.statNumber}>100%</div>
+              <div className={styles.statLabel}>Open Source</div>
+            </div>
+            <div className={styles.statItem}>
+              <div className={styles.statNumber}>∞</div>
+              <div className={styles.statLabel}>Customizable</div>
+            </div>
           </div>
         </div>
       </div>
@@ -50,6 +64,7 @@ type ComponentItem = {
   link: string;
   color: string;
   features: string[];
+  useCase: string;
 };
 
 const Components: ComponentItem[] = [
@@ -59,6 +74,7 @@ const Components: ComponentItem[] = [
     description: 'Visual journey builder and web dashboard for orchestrating customer engagement flows',
     link: 'raven-panel/intro',
     color: '#6366f1',
+    useCase: 'Create and manage customer journeys without code',
     features: ['Visual Journey Builder', 'Cohort Targeting', 'Content Editor', 'Smart Scheduling'],
   },
   {
@@ -67,19 +83,21 @@ const Components: ComponentItem[] = [
     description: 'React Native SDK for in-app messaging, nudges, tooltips, and event-driven engagements',
     link: 'raven-client/introduction',
     color: '#10b981',
+    useCase: 'Deliver contextual experiences in your mobile app',
     features: ['State Machine DSL', 'Event-Driven', 'Cross-Platform', 'Customizable UI'],
   },
   {
     title: 'Raven Thunder',
     icon: '⚡',
     description: 'High-performance backend service for managing CTAs, nudges, and behavior tags at scale',
-    link: 'raven-thunder',
+    link: 'raven-thunder/getting-started/overview',
     color: '#f59e0b',
+    useCase: 'Power your engagement platform with enterprise-grade APIs',
     features: ['REST APIs', 'Aerospike Integration', 'Multi-Module Architecture', 'Docker Ready'],
   },
 ];
 
-function ComponentCard({title, icon, description, link, color, features}: ComponentItem) {
+function ComponentCard({title, icon, description, link, color, features, useCase}: ComponentItem) {
   const docsUrl = useBaseUrl('/docs');
   return (
     <Link to={`${docsUrl}/${link}`} className={styles.componentCard}>
@@ -88,6 +106,7 @@ function ComponentCard({title, icon, description, link, color, features}: Compon
           {icon}
         </div>
         <Heading as="h3" className={styles.componentTitle}>{title}</Heading>
+        <p className={styles.componentUseCase}>{useCase}</p>
       </div>
       <p className={styles.componentDescription}>{description}</p>
       <div className={styles.componentFeatures}>
@@ -109,12 +128,69 @@ function HomepageComponents() {
     <section className={styles.components}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <Heading as="h2">Three Powerful Components, One Platform</Heading>
-          <p>Raven consists of three integrated components that work together to deliver seamless customer engagement</p>
+          <Heading as="h2">One Platform, Three Powerful Components</Heading>
+          <p>Raven consists of three integrated components that work seamlessly together to deliver exceptional customer engagement</p>
         </div>
         <div className={styles.componentsGrid}>
           {Components.map((component, idx) => (
             <ComponentCard key={idx} {...component} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type UseCaseItem = {
+  title: string;
+  description: string;
+  icon: string;
+};
+
+const UseCases: UseCaseItem[] = [
+  {
+    title: 'Onboarding New Users',
+    description: 'Guide new users through your app with contextual tooltips and step-by-step nudges',
+    icon: '👋',
+  },
+  {
+    title: 'Feature Discovery',
+    description: 'Highlight new features and capabilities at the right moment to increase adoption',
+    icon: '✨',
+  },
+  {
+    title: 'Conversion Optimization',
+    description: 'Reduce cart abandonment and drive conversions with timely prompts and offers',
+    icon: '📈',
+  },
+  {
+    title: 'User Re-engagement',
+    description: 'Re-engage inactive users with personalized messages and relevant content',
+    icon: '🔄',
+  },
+];
+
+function UseCaseCard({title, description, icon}: UseCaseItem) {
+  return (
+    <div className={styles.useCaseCard}>
+      <div className={styles.useCaseIcon}>{icon}</div>
+      <Heading as="h3" className={styles.useCaseTitle}>{title}</Heading>
+      <p className={styles.useCaseDescription}>{description}</p>
+    </div>
+  );
+}
+
+function HomepageUseCases() {
+  return (
+    <section className={styles.useCases}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <Heading as="h2">Perfect For</Heading>
+          <p>Common use cases where Raven helps you create better user experiences</p>
+        </div>
+        <div className={styles.useCasesGrid}>
+          {UseCases.map((useCase, idx) => (
+            <UseCaseCard key={idx} {...useCase} />
           ))}
         </div>
       </div>
@@ -207,13 +283,13 @@ function HomepageCTA() {
     <section className={styles.cta}>
       <div className="container">
         <div className={styles.ctaContent}>
-          <Heading as="h2">Ready to Get Started?</Heading>
-          <p>Start building intelligent customer journeys today</p>
+          <Heading as="h2">Ready to Transform Your User Experience?</Heading>
+          <p>Start building intelligent customer journeys today. Get up and running in minutes.</p>
           <div className={styles.ctaButtons}>
             <Link
               className={clsx('button button--lg button--primary', styles.ctaButton)}
               to={`${docsUrl}/getting-started`}>
-              Start Building
+              Get Started Now
             </Link>
             <Link
               className={clsx('button button--lg button--outline', styles.ctaButtonSecondary)}
@@ -236,6 +312,7 @@ export default function Home(): JSX.Element {
       <HomepageHeader />
       <main>
         <HomepageComponents />
+        <HomepageUseCases />
         <HomepageFeatures />
         <HomepageCTA />
       </main>

@@ -45,7 +45,7 @@
 }
 
 .heroBanner .hero__title {
-  font-size: 4rem;
+  font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
   letter-spacing: -0.03em;
@@ -53,10 +53,11 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.1;
 }
 
 .heroBanner .hero__subtitle {
-  font-size: 1.375rem;
+  font-size: 1.25rem;
   font-weight: 400;
   max-width: 800px;
   margin: 0 auto 2.5rem;
@@ -71,6 +72,7 @@
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 3rem;
 }
 
 .getStartedButton {
@@ -111,6 +113,34 @@
   color: #ffffff;
 }
 
+.heroStats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #10b981;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
 /* Components Section */
 .components {
   padding: 6rem 0;
@@ -130,10 +160,11 @@
 }
 
 .sectionHeader p {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   color: var(--ifm-color-content-secondary);
   max-width: 700px;
   margin: 0 auto;
+  line-height: 1.6;
 }
 
 .componentsGrid {
@@ -194,6 +225,14 @@
   color: var(--ifm-heading-color);
 }
 
+.componentUseCase {
+  font-size: 0.875rem;
+  color: var(--ifm-color-content-secondary);
+  font-weight: 500;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
 .componentDescription {
   font-size: 1rem;
   line-height: 1.6;
@@ -223,17 +262,72 @@
   font-weight: 600;
   font-size: 0.95rem;
   margin-top: auto;
+  transition: transform 0.2s ease;
+  display: inline-block;
 }
 
 .componentCard:hover .componentLink {
   transform: translateX(4px);
+}
+
+/* Use Cases Section */
+.useCases {
+  padding: 6rem 0;
+  background: var(--ifm-background-surface-color);
+}
+
+.useCasesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.useCaseCard {
+  padding: 2rem;
+  border-radius: 12px;
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.useCaseCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+[data-theme='dark'] .useCaseCard:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.useCaseIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
   display: inline-block;
+  line-height: 1;
+}
+
+.useCaseTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-heading-color);
+}
+
+.useCaseDescription {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ifm-color-content-secondary);
+  margin: 0;
 }
 
 /* Features Section */
 .features {
   padding: 6rem 0;
-  background: var(--ifm-background-surface-color);
+  background: var(--ifm-background-color);
 }
 
 .feature {
@@ -243,7 +337,7 @@
 .featureCard {
   padding: 2rem;
   border-radius: 12px;
-  background: var(--ifm-background-color);
+  background: var(--ifm-background-surface-color);
   border: 1px solid var(--ifm-color-emphasis-200);
   height: 100%;
   transition: all 0.3s ease;
@@ -323,9 +417,10 @@
 }
 
 .ctaContent p {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   margin-bottom: 2.5rem;
   color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
 }
 
 .ctaButtons {
@@ -388,15 +483,25 @@
     font-size: 1.125rem;
   }
 
+  .heroStats {
+    gap: 2rem;
+  }
+
+  .statNumber {
+    font-size: 2rem;
+  }
+
   .sectionHeader h2 {
     font-size: 2rem;
   }
 
-  .componentsGrid {
+  .componentsGrid,
+  .useCasesGrid {
     grid-template-columns: 1fr;
   }
 
   .components,
+  .useCases,
   .features,
   .cta {
     padding: 4rem 0;
@@ -425,7 +530,13 @@
     width: 100%;
   }
 
-  .featureCard {
+  .heroStats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .featureCard,
+  .useCaseCard {
     padding: 1.5rem;
   }
 }
