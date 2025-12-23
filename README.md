@@ -77,24 +77,7 @@ A high-performance Java 17 + Vert.x backend service that manages all engagement 
 
 For a complete setup guide covering all three components, see the [Getting Started Guide](https://dream-horizon-org.github.io/raven-panel/docs/getting-started).
 
-#### Step 1: Set Up Raven Thunder (Backend)
-
-```bash
-# Clone the repository
-git clone https://github.com/dream-horizon-org/raven-thunder.git
-cd raven-thunder
-
-# Start with Docker (Recommended)
-docker-compose up -d --build
-
-# Verify services
-curl http://localhost:8081/healthcheck  # Admin API
-curl http://localhost:8080/healthcheck  # SDK API
-```
-
-**📖 [Thunder Quick Start →](https://dream-horizon-org.github.io/raven-panel/docs/raven-thunder/getting-started/quickstart)**
-
-#### Step 2: Set Up Raven Panel (Web Dashboard)
+#### Step 1: Set Up Raven Panel (Web Dashboard)
 
 ```bash
 # Navigate to panel directory
@@ -114,6 +97,23 @@ yarn dev
 Access the panel at: **http://localhost:3000**
 
 **📖 [Panel Getting Started →](https://dream-horizon-org.github.io/raven-panel/docs/raven-panel/development/getting-started)**
+
+#### Step 2: Set Up Raven Thunder (Backend)
+
+```bash
+# Clone the repository
+git clone https://github.com/dream-horizon-org/raven-thunder.git
+cd raven-thunder
+
+# Start with Docker (Recommended)
+docker-compose up -d --build
+
+# Verify services
+curl http://localhost:8081/healthcheck  # Admin API
+curl http://localhost:8080/healthcheck  # SDK API
+```
+
+**📖 [Thunder Quick Start →](https://dream-horizon-org.github.io/raven-panel/docs/raven-thunder/getting-started/quickstart)**
 
 #### Step 3: Set Up Raven Client (Mobile SDK)
 
