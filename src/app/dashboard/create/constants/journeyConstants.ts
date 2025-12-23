@@ -184,6 +184,12 @@ export const getJourneyFormDefaults = () => ({
     actions: [],
     resetStates: [],
   },
+  testFeature: {
+    isTestFeatureEnabled: false,
+    prevCtaId: "",
+    expireInMins: 30,
+    userIds: "",
+  },
 });
 
 /**

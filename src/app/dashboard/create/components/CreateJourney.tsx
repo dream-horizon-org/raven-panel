@@ -346,6 +346,7 @@ export default function CreateJourneyPage({
           control={control}
           errors={errors}
           isEditMode={!!journeyId && !isCloneMode}
+          hasTemplate={hasTemplate}
         />
 
         <Box sx={createJourneyPageStyles.mainLayout}>
