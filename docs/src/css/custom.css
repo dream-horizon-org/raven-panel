@@ -3,47 +3,57 @@
  * Modern, clean design inspired by professional documentation sites
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Primary palette - Professional slate gray (similar to raven-client) */
-  --ifm-color-primary: #1E293B;
-  --ifm-color-primary-dark: #334155;
-  --ifm-color-primary-darker: #0f172a;
-  --ifm-color-primary-darkest: #020617;
-  --ifm-color-primary-light: #334155;
-  --ifm-color-primary-lighter: #475569;
-  --ifm-color-primary-lightest: #64748B;
-  --ifm-color-secondary: #10b981;
-  --ifm-color-secondary-dark: #16a34a;
-  --ifm-color-secondary-darker: #15803d;
-  --ifm-color-secondary-darkest: #166534;
-  --ifm-color-secondary-light: #4ade80;
-  --ifm-color-secondary-lighter: #86efac;
-  --ifm-color-secondary-lightest: #bbf7d0;
+  /* Primary palette - Professional B2B SaaS colors (Indigo/Slate) */
+  --ifm-color-primary: #4F46E5; /* Indigo-600 - Professional, trustworthy */
+  --ifm-color-primary-dark: #4338CA;
+  --ifm-color-primary-darker: #3730A3;
+  --ifm-color-primary-darkest: #312E81;
+  --ifm-color-primary-light: #6366F1;
+  --ifm-color-primary-lighter: #818CF8;
+  --ifm-color-primary-lightest: #A5B4FC;
+  
+  /* Secondary palette - Emerald/Green for success/engagement */
+  --ifm-color-secondary: #10B981; /* Emerald-500 */
+  --ifm-color-secondary-dark: #059669;
+  --ifm-color-secondary-darker: #047857;
+  --ifm-color-secondary-darkest: #065F46;
+  --ifm-color-secondary-light: #34D399;
+  --ifm-color-secondary-lighter: #6EE7B7;
+  --ifm-color-secondary-lightest: #A7F3D0;
+
+  /* Accent colors for features */
+  --accent-blue: #3B82F6;
+  --accent-purple: #8B5CF6;
+  --accent-orange: #F59E0B;
+  --accent-pink: #EC4899;
+  --accent-cyan: #06B6D4;
+  --accent-amber: #F59E0B;
 
   /* Typography - Inter for modern, clean look */
   --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   --ifm-heading-font-family: 'Inter', sans-serif;
   
-  /* Base font size - consistent across all docs */
+  /* Base font size - optimized for readability */
   --ifm-font-size-base: 16px;
   
-  /* Heading sizes - consistent typography scale */
-  --ifm-h1-font-size: 2.5rem;      /* 40px */
-  --ifm-h2-font-size: 1.75rem;    /* 28px */
-  --ifm-h3-font-size: 1.5rem;     /* 24px */
-  --ifm-h4-font-size: 1.25rem;    /* 20px */
+  /* Heading sizes - improved typography scale for better hierarchy */
+  --ifm-h1-font-size: 3rem;        /* 48px - Hero titles */
+  --ifm-h2-font-size: 2rem;        /* 32px - Section headers */
+  --ifm-h3-font-size: 1.5rem;      /* 24px - Subsection headers */
+  --ifm-h4-font-size: 1.25rem;     /* 20px */
   --ifm-h5-font-size: 1.125rem;    /* 18px */
-  --ifm-h6-font-size: 1rem;       /* 16px */
+  --ifm-h6-font-size: 1rem;        /* 16px */
   
   /* Code font size */
   --ifm-code-font-size: 0.875rem; /* 14px */
   
-  /* Line heights */
-  --ifm-line-height-base: 1.6;
-  --ifm-heading-line-height: 1.3;
+  /* Line heights - optimized for readability */
+  --ifm-line-height-base: 1.7;
+  --ifm-heading-line-height: 1.25;
   
   /* Borders and shadows */
   --ifm-global-radius: 8px;
