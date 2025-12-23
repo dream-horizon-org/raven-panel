@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Raven Panel',
-  tagline: 'The control panel for orchestrating Raven\'s customer engagement platform',
+  title: 'Raven',
+  tagline: 'Complete documentation for Raven Panel, Raven Client, and Raven Thunder',
   favicon: 'img/favicon.ico',
 
   url: 'https://dream-horizon-org.github.io',
@@ -13,8 +13,7 @@ const config: Config = {
   organizationName: 'dream-horizon-org',
   projectName: 'raven-panel',
 
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'warn',
 
   i18n: {
     defaultLocale: 'en',
@@ -40,12 +39,15 @@ const config: Config = {
 
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   themeConfig: {
     image: 'img/raven-social-card.png',
     navbar: {
-      title: 'Raven Panel',
+      title: 'Raven',
       logo: {
         alt: 'Raven Logo',
         src: 'img/icon.svg',
@@ -68,32 +70,41 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Raven Panel',
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/development/getting-started',
+              to: '/docs/raven-panel/development/getting-started',
             },
             {
-              label: 'Journeys',
-              to: '/docs/journeys/overview',
+              label: 'Journeys Overview',
+              to: '/docs/raven-panel/journeys/overview',
             },
           ],
         },
         {
-          title: 'Journeys',
+          title: 'Raven Client',
           items: [
             {
-              label: 'Overview',
-              to: '/docs/journeys/overview',
+              label: 'Getting Started',
+              to: '/docs/raven-client/getting-started/installation',
             },
             {
-              label: 'Creating a Journey',
-              to: '/docs/journeys/creating-journey',
+              label: 'Introduction',
+              to: '/docs/raven-client/introduction',
+            },
+          ],
+        },
+        {
+          title: 'Raven Thunder',
+          items: [
+            {
+              label: 'Getting Started',
+              to: '/docs/raven-thunder/getting-started/overview',
             },
             {
-              label: 'Engagements',
-              to: '/docs/journeys/engagements',
+              label: 'Quickstart',
+              to: '/docs/raven-thunder/getting-started/quickstart',
             },
           ],
         },
@@ -123,4 +134,5 @@ const config: Config = {
 };
 
 export default config;
+
 

@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 
@@ -8,102 +9,175 @@ import styles from './index.module.css';
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
+  const docsUrl = useBaseUrl('/docs');
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+    <header className={clsx('hero', styles.heroBanner)}>
       <div className="container">
         <div className={styles.heroContent}>
+          <div className={styles.heroBadge}>
+            <span>✨ Complete Customer Engagement Platform</span>
+          </div>
           <Heading as="h1" className="hero__title">
-            {siteConfig.title}
+            Raven
           </Heading>
           <p className="hero__subtitle">
-            The control panel for orchestrating <Link to="/raven" style={{ fontWeight: 'bold', color: 'inherit', textDecoration: 'underline' }}>Raven</Link>'s customer engagement platform
+            Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. 
+            Everything you need to guide users and drive conversions.
           </p>
           <div className={styles.buttons}>
             <Link
-              className={clsx('button button--lg', styles.getStartedButton)}
-              to="/docs">
+              className={clsx('button button--lg button--primary', styles.getStartedButton)}
+              to={`${docsUrl}/raven-panel/intro`}>
               Get Started
+            </Link>
+            <Link
+              className={clsx('button button--lg button--outline', styles.docsButton)}
+              to={`${docsUrl}/raven-panel/intro`}>
+              View Documentation
             </Link>
           </div>
         </div>
       </div>
+      <div className={styles.heroGradient}></div>
     </header>
+  );
+}
+
+type ComponentItem = {
+  title: string;
+  icon: string;
+  description: string;
+  link: string;
+  color: string;
+  features: string[];
+};
+
+const Components: ComponentItem[] = [
+  {
+    title: 'Raven Panel',
+    icon: '🎛️',
+    description: 'Visual journey builder and control center for orchestrating customer engagement flows',
+    link: 'raven-panel/intro',
+    color: '#6366f1',
+    features: ['Visual Journey Builder', 'Cohort Targeting', 'Content Editor', 'Smart Scheduling'],
+  },
+  {
+    title: 'Raven Client',
+    icon: '📱',
+    description: 'React Native SDK for in-app messaging, nudges, tooltips, and event-driven engagements',
+    link: 'raven-client/introduction',
+    color: '#10b981',
+    features: ['State Machine DSL', 'Event-Driven', 'Cross-Platform', 'Customizable UI'],
+  },
+  {
+    title: 'Raven Thunder',
+    icon: '⚡',
+    description: 'High-performance backend service for managing CTAs, nudges, and behavior tags at scale',
+    link: 'raven-thunder',
+    color: '#f59e0b',
+    features: ['REST APIs', 'Aerospike Integration', 'Multi-Module Architecture', 'Docker Ready'],
+  },
+];
+
+function ComponentCard({title, icon, description, link, color, features}: ComponentItem) {
+  const docsUrl = useBaseUrl('/docs');
+  return (
+    <Link to={`${docsUrl}/${link}`} className={styles.componentCard}>
+      <div className={styles.componentHeader} style={{ borderTopColor: color }}>
+        <div className={styles.componentIcon} style={{ backgroundColor: `${color}15` }}>
+          {icon}
+        </div>
+        <Heading as="h3" className={styles.componentTitle}>{title}</Heading>
+      </div>
+      <p className={styles.componentDescription}>{description}</p>
+      <div className={styles.componentFeatures}>
+        {features.map((feature, idx) => (
+          <span key={idx} className={styles.featureTag} style={{ borderColor: `${color}40`, color: color }}>
+            {feature}
+          </span>
+        ))}
+      </div>
+      <div className={styles.componentLink}>
+        Learn more →
+      </div>
+    </Link>
+  );
+}
+
+function HomepageComponents() {
+  return (
+    <section className={styles.components}>
+      <div className="container">
+        <div className={styles.sectionHeader}>
+          <Heading as="h2">Three Powerful Components, One Platform</Heading>
+          <p>Raven consists of three integrated components that work together to deliver seamless customer engagement</p>
+        </div>
+        <div className={styles.componentsGrid}>
+          {Components.map((component, idx) => (
+            <ComponentCard key={idx} {...component} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
 type FeatureItem = {
   title: string;
   icon: string;
-  description: JSX.Element;
+  description: string;
 };
 
-const FeatureList: FeatureItem[] = [
+const Features: FeatureItem[] = [
   {
-    title: 'Journey Builder',
-    icon: '🚀',
-    description: (
-      <>
-        Create user journeys with an intuitive visual editor.
-        Define triggers, set schedules, and design engaging content.
-      </>
-    ),
-  },
-  {
-    title: 'Cohort Targeting',
-    icon: '👥',
-    description: (
-      <>
-        Target specific user segments with precision.
-      </>
-    ),
-  },
-  {
-    title: 'Event-Driven',
+    title: 'Event-Driven Architecture',
     icon: '⚡',
-    description: (
-      <>
-        Trigger journeys based on user actions, page views, or custom events.
-      </>
-    ),
+    description: 'Trigger engagements based on user actions, page views, or custom events in real-time',
   },
   {
-    title: 'Content Editor',
-    icon: '📝',
-    description: (
-      <>
-        Design beautiful in-app content with live preview. Choose from 
-        templates or build custom layouts by adding and configuring elements.
-      </>
-    ),
+    title: 'Visual Journey Builder',
+    icon: '🎨',
+    description: 'Create complex user journeys with an intuitive drag-and-drop interface. No code required.',
   },
   {
-    title: 'Smart Scheduling',
-    icon: '📅',
-    description: (
-      <>
-        Schedule journeys with flexible timing options. Set recurring schedules and
-        active hours.
-      </>
-    ),
+    title: 'Smart Targeting',
+    icon: '🎯',
+    description: 'Target specific user segments with precision using cohorts, behavior tags, and filters',
   },
   {
-    title: 'Multi-Tenant',
-    icon: '🏢',
-    description: (
-      <>
-        Manage multiple organizations from a single platform.
-      </>
-    ),
+    title: 'State Machine DSL',
+    icon: '🔄',
+    description: 'Define sophisticated engagement flows with a powerful state machine system',
+  },
+  {
+    title: 'Cross-Platform SDK',
+    icon: '📱',
+    description: 'Works seamlessly on iOS and Android with a single React Native codebase',
+  },
+  {
+    title: 'Real-Time Analytics',
+    icon: '📊',
+    description: 'Track engagement performance, user interactions, and conversion metrics',
+  },
+  {
+    title: 'Frequency Control',
+    icon: '⏱️',
+    description: 'Control how often engagements are shown with session, window, or lifespan-based rules',
+  },
+  {
+    title: 'Customizable UI',
+    icon: '🎨',
+    description: 'Fully customizable nudges, tooltips, and bottom sheets to match your brand',
   },
 ];
 
 function Feature({title, icon, description}: FeatureItem) {
   return (
-    <div className={clsx('col col--4', styles.feature)}>
+    <div className={clsx('col col--3', styles.feature)}>
       <div className={styles.featureCard}>
         <div className={styles.featureIcon}>{icon}</div>
-        <Heading as="h3">{title}</Heading>
-        <p>{description}</p>
+        <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
+        <p className={styles.featureDescription}>{description}</p>
       </div>
     </div>
   );
@@ -113,8 +187,12 @@ function HomepageFeatures() {
   return (
     <section className={styles.features}>
       <div className="container">
+        <div className={styles.sectionHeader}>
+          <Heading as="h2">Powerful Features</Heading>
+          <p>Everything you need to create engaging customer experiences</p>
+        </div>
         <div className="row">
-          {FeatureList.map((props, idx) => (
+          {Features.map((props, idx) => (
             <Feature key={idx} {...props} />
           ))}
         </div>
@@ -123,71 +201,26 @@ function HomepageFeatures() {
   );
 }
 
-function HomepageTechStack() {
-  const technologies = [
-    { name: 'Next.js 15', icon: '▲' },
-    { name: 'React 19', icon: '⚛️' },
-    { name: 'TypeScript', icon: '📘' },
-    { name: 'Material UI', icon: '🎨' },
-    { name: 'TanStack Query', icon: '🔄' },
-    { name: 'Tailwind CSS', icon: '💨' },
-  ];
-
+function HomepageCTA() {
+  const docsUrl = useBaseUrl('/docs');
   return (
-    <section className={styles.techStack}>
+    <section className={styles.cta}>
       <div className="container">
-        <div className={styles.sectionHeader}>
-          <Heading as="h2">Built with Modern Tech</Heading>
-          <p>Powered by the latest technologies for optimal performance</p>
-        </div>
-        <div className={styles.techGrid}>
-          {technologies.map((tech, idx) => (
-            <div key={idx} className={styles.techItem}>
-              <span className={styles.techIcon}>{tech.icon}</span>
-              <span className={styles.techName}>{tech.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
-function HomepagePlatformComponents() {
-  const components = [
-    {
-      title: 'Raven Client',
-      icon: '📱',
-      description: 'React Native SDK for in-app messaging, nudges, tooltips, and engagement. Built with a sophisticated state machine system.',
-      link: 'https://dream-horizon-org.github.io/raven-client/',
-    },
-    {
-      title: 'Raven Thunder',
-      icon: '⚡',
-      description: 'High-performance backend service built with Java 17 + Vert.x for managing user journeys and engagement logic.',
-      link: 'https://dream-horizon-org.github.io/raven-thunder/',
-    }
-  ];
-
-  return (
-    <section className={styles.features} style={{ paddingBottom: '2rem', background: 'var(--ifm-background-surface-color)' }}>
-      <div className="container">
-        <div className="text--center margin-bottom--lg">
-          <Heading as="h2">Platform Components</Heading>
-        </div>
-        <div className="row" style={{ justifyContent: 'center' }}>
-          {components.map((item, idx) => (
-            <div key={idx} className={clsx('col col--5')}>
-              <Link to={item.link} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
-                <div className={styles.featureCard} style={{ textAlign: 'center', height: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div className={styles.featureIcon} style={{ fontSize: '3rem', marginBottom: '1rem' }}>{item.icon}</div>
-                  <Heading as="h3">{item.title}</Heading>
-                  <p style={{ flexGrow: 1, marginBottom: 0 }}>{item.description}</p>
-                </div>
-              </Link>
-            </div>
-          ))}
+        <div className={styles.ctaContent}>
+          <Heading as="h2">Ready to Get Started?</Heading>
+          <p>Start building intelligent customer journeys today</p>
+          <div className={styles.ctaButtons}>
+            <Link
+              className={clsx('button button--lg button--primary', styles.ctaButton)}
+              to={`${docsUrl}/raven-panel/intro`}>
+              Start Building
+            </Link>
+            <Link
+              className={clsx('button button--lg button--outline', styles.ctaButtonSecondary)}
+              to={`${docsUrl}/raven-panel/intro`}>
+              Browse Documentation
+            </Link>
+          </div>
         </div>
       </div>
     </section>
@@ -198,14 +231,14 @@ export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title} Documentation`}
-      description="Customer Journey Management Platform - Documentation and guides">
+      title="Raven - Customer Engagement Platform"
+      description="Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. Complete platform with Panel, Client SDK, and Thunder backend.">
       <HomepageHeader />
       <main>
-        <HomepagePlatformComponents />
+        <HomepageComponents />
         <HomepageFeatures />
+        <HomepageCTA />
       </main>
     </Layout>
   );
 }
-
