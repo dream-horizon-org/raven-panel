@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Raven',
-  tagline: 'Complete documentation for Raven Panel, Raven Client, and Raven Thunder',
+  tagline: 'Complete documentation for Raven Dashboard, Raven Client, and Raven Thunder',
   favicon: 'img/favicon.ico',
 
   url: 'https://dream-horizon-org.github.io',
@@ -70,7 +70,7 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Raven Panel',
+          title: 'Raven Dashboard',
           items: [
             {
               label: 'Getting Started',

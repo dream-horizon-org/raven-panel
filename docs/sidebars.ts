@@ -7,9 +7,10 @@ const sidebars: SidebarsConfig = {
       label: 'Raven',
       collapsed: true,
       items: [
+        'getting-started',
         {
           type: 'category',
-          label: 'Raven Panel',
+          label: 'Web Dashboard',
           collapsed: true,
           items: [
             'raven-panel/intro',
@@ -40,7 +41,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Raven Client',
+          label: 'Mobile SDK',
           collapsed: true,
           items: [
             'raven-client/introduction',
@@ -125,7 +126,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Raven Thunder',
+          label: 'Backend',
           collapsed: true,
           items: [
             'raven-thunder/index',

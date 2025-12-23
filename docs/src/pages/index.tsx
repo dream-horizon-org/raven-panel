@@ -27,12 +27,12 @@ function HomepageHeader() {
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--lg button--primary', styles.getStartedButton)}
-              to={`${docsUrl}/raven-panel/intro`}>
+              to={`${docsUrl}/getting-started`}>
               Get Started
             </Link>
             <Link
               className={clsx('button button--lg button--outline', styles.docsButton)}
-              to={`${docsUrl}/raven-panel/intro`}>
+              to={`${docsUrl}/getting-started`}>
               View Documentation
             </Link>
           </div>
@@ -54,9 +54,9 @@ type ComponentItem = {
 
 const Components: ComponentItem[] = [
   {
-    title: 'Raven Panel',
+    title: 'Raven Dashboard',
     icon: '🎛️',
-    description: 'Visual journey builder and control center for orchestrating customer engagement flows',
+    description: 'Visual journey builder and web dashboard for orchestrating customer engagement flows',
     link: 'raven-panel/intro',
     color: '#6366f1',
     features: ['Visual Journey Builder', 'Cohort Targeting', 'Content Editor', 'Smart Scheduling'],
@@ -212,12 +212,12 @@ function HomepageCTA() {
           <div className={styles.ctaButtons}>
             <Link
               className={clsx('button button--lg button--primary', styles.ctaButton)}
-              to={`${docsUrl}/raven-panel/intro`}>
+              to={`${docsUrl}/getting-started`}>
               Start Building
             </Link>
             <Link
               className={clsx('button button--lg button--outline', styles.ctaButtonSecondary)}
-              to={`${docsUrl}/raven-panel/intro`}>
+              to={`${docsUrl}/getting-started`}>
               Browse Documentation
             </Link>
           </div>
