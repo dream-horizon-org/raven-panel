@@ -22,25 +22,16 @@ function HomepageHeader() {
           </Heading>
           <p className="hero__subtitle">
             Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. 
-            Everything you need to guide users and drive conversions—all in one platform.
+            Everything you need to guide users and drive conversions all in one platform.
           </p>
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--lg button--primary', styles.getStartedButton)}
               to={`${docsUrl}/getting-started`}>
-              Get Started Free
-            </Link>
-            <Link
-              className={clsx('button button--lg button--outline', styles.docsButton)}
-              to={`${docsUrl}/getting-started`}>
-              View Documentation
+              Get Started
             </Link>
           </div>
           <div className={styles.heroStats}>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>3</div>
-              <div className={styles.statLabel}>Integrated Components</div>
-            </div>
             <div className={styles.statItem}>
               <div className={styles.statNumber}>100%</div>
               <div className={styles.statLabel}>Open Source</div>
@@ -69,7 +60,7 @@ type ComponentItem = {
 
 const Components: ComponentItem[] = [
   {
-    title: 'Raven Dashboard',
+    title: 'Web Dashboard',
     icon: '🎛️',
     description: 'Visual journey builder and web dashboard for orchestrating customer engagement flows',
     link: 'raven-panel/intro',
@@ -78,7 +69,7 @@ const Components: ComponentItem[] = [
     features: ['Visual Journey Builder', 'Cohort Targeting', 'Content Editor', 'Smart Scheduling'],
   },
   {
-    title: 'Raven Client',
+    title: 'Mobile SDK',
     icon: '📱',
     description: 'React Native SDK for in-app messaging, nudges, tooltips, and event-driven engagements',
     link: 'raven-client/introduction',
@@ -87,7 +78,7 @@ const Components: ComponentItem[] = [
     features: ['State Machine DSL', 'Event-Driven', 'Cross-Platform', 'Customizable UI'],
   },
   {
-    title: 'Raven Thunder',
+    title: 'Backend',
     icon: '⚡',
     description: 'High-performance backend service for managing CTAs, nudges, and behavior tags at scale',
     link: 'raven-thunder/getting-started/overview',
@@ -291,11 +282,6 @@ function HomepageCTA() {
               to={`${docsUrl}/getting-started`}>
               Get Started Now
             </Link>
-            <Link
-              className={clsx('button button--lg button--outline', styles.ctaButtonSecondary)}
-              to={`${docsUrl}/getting-started`}>
-              Browse Documentation
-            </Link>
           </div>
         </div>
       </div>
@@ -311,9 +297,9 @@ export default function Home(): JSX.Element {
       description="Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. Complete platform with Panel, Client SDK, and Thunder backend.">
       <HomepageHeader />
       <main>
-        <HomepageComponents />
         <HomepageUseCases />
         <HomepageFeatures />
+        <HomepageComponents />
         <HomepageCTA />
       </main>
     </Layout>
