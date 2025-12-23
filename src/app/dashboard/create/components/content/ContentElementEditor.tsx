@@ -618,8 +618,8 @@ export default function ContentElementEditor({
               engagementType={engagementType}
               basePath={
                 elementPath.length === 0
-                  ? "nudgeSelection.actions.0.template"
-                  : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                  ? `nudgeSelection.actions.${actionIndex}.template`
+                  : `nudgeSelection.actions.${actionIndex}.template.children.${elementPath.join(
                       ".children."
                     )}`
               }

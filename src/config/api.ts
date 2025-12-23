@@ -77,6 +77,5 @@ export const API_AXIOS_CONFIG = {
   timeout: 60000,
   headers: {
     "Content-Type": "application/json",
-    user: "admin@example.com",
   },
 };

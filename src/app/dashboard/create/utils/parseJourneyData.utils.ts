@@ -125,6 +125,7 @@ export const parseJourneyDataToFormData = (
 
       if (Array.isArray(node.actions)) {
         node.actions = node.actions.map((action: ReactNativeAction) => {
+          // Handle deeplink params
           if (
             action.type === "deeplink" &&
             action.params &&
@@ -166,6 +167,52 @@ export const parseJourneyDataToFormData = (
               params: params as ElementDataTypeValues,
             };
           }
+
+          // Handle analyticsEvent and emitNativeEvent params - transform value from array format to display format
+          if (
+            (action.type === "analyticsEvent" &&
+              action.name === "analyticsEvent") ||
+            (action.type === "emitNativeEvent" &&
+              action.name === "emitNativeEvent")
+          ) {
+            if (
+              action.params &&
+              typeof action.params === "object" &&
+              "eventParams" in action.params
+            ) {
+              const eventParams = action.params as NudgeEvent;
+              const transformedEventParams = eventParams.eventParams.map(
+                (param) => {
+                  // If value is an array (API format), extract the actual value
+                  if (Array.isArray(param.value) && param.value.length > 0) {
+                    const firstItem = param.value[0];
+                    if (
+                      typeof firstItem === "object" &&
+                      firstItem !== null &&
+                      "value" in firstItem &&
+                      !firstItem.isTemplateString
+                    ) {
+                      return {
+                        ...param,
+                        value: firstItem.value as string | number | boolean,
+                      };
+                    }
+                  }
+                  // If value is already a primitive, keep it
+                  return param;
+                }
+              );
+
+              return {
+                ...action,
+                params: {
+                  ...eventParams,
+                  eventParams: transformedEventParams,
+                } as NudgeEvent,
+              };
+            }
+          }
+
           return action;
         });
       }

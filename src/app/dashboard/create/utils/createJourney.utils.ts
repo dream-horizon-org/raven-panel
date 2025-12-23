@@ -173,6 +173,7 @@ export const transformFormDataToApiFormat = (
 
     if (Array.isArray(node.actions)) {
       node.actions = node.actions.map((action) => {
+        // Handle deeplink params
         if (
           action.type === "deeplink" &&
           action.params &&
@@ -203,6 +204,112 @@ export const transformFormDataToApiFormat = (
             params,
           };
         }
+
+        // Handle analyticsEvent and emitNativeEvent params - ensure value is in array format
+        if (
+          (action.type === "analyticsEvent" &&
+            action.name === "analyticsEvent") ||
+          (action.type === "emitNativeEvent" &&
+            action.name === "emitNativeEvent")
+        ) {
+          if (
+            action.params &&
+            typeof action.params === "object" &&
+            "eventParams" in action.params
+          ) {
+            const eventParams = action.params as {
+              eventName?: string;
+              eventParams?: Array<{
+                name: string;
+                type: string;
+                value?:
+                  | string
+                  | number
+                  | boolean
+                  | Array<{
+                      value: string | number | boolean;
+                      isTemplateString: boolean;
+                    }>;
+              }>;
+            };
+
+            const transformedEventParams =
+              eventParams.eventParams?.map((param) => {
+                // If value is already an array, convert boolean strings to actual booleans if needed
+                if (Array.isArray(param.value)) {
+                  // For emitNativeEvent, ensure boolean strings are converted to actual booleans
+                  if (
+                    action.type === "emitNativeEvent" &&
+                    param.type === "boolean"
+                  ) {
+                    const firstItem = param.value[0];
+                    if (
+                      typeof firstItem === "object" &&
+                      firstItem !== null &&
+                      "value" in firstItem
+                    ) {
+                      let convertedValue = firstItem.value;
+                      if (typeof firstItem.value === "string") {
+                        const lowerValue = firstItem.value.toLowerCase().trim();
+                        convertedValue = lowerValue === "true";
+                      }
+                      return {
+                        ...param,
+                        value: [
+                          {
+                            value: convertedValue,
+                            isTemplateString: false,
+                          },
+                        ],
+                      };
+                    }
+                  }
+                  return param;
+                }
+
+                // If value is a primitive, convert to array format
+                if (
+                  param.value !== undefined &&
+                  param.value !== null &&
+                  (typeof param.value === "string" ||
+                    typeof param.value === "number" ||
+                    typeof param.value === "boolean")
+                ) {
+                  // For emitNativeEvent, convert boolean strings to actual booleans
+                  let finalValue = param.value;
+                  if (
+                    action.type === "emitNativeEvent" &&
+                    param.type === "boolean" &&
+                    typeof param.value === "string"
+                  ) {
+                    const lowerValue = param.value.toLowerCase().trim();
+                    finalValue = lowerValue === "true";
+                  }
+
+                  return {
+                    ...param,
+                    value: [
+                      {
+                        value: finalValue,
+                        isTemplateString: false,
+                      },
+                    ],
+                  };
+                }
+
+                return param;
+              }) || [];
+
+            return {
+              ...action,
+              params: {
+                eventName: eventParams.eventName || "",
+                eventParams: transformedEventParams,
+              },
+            };
+          }
+        }
+
         return action;
       });
     }
