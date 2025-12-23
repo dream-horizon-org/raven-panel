@@ -352,6 +352,21 @@
   transform: rotate(90deg);
 }
 
+/* Hide caret arrow for the top-level "Raven" category */
+.menu__list > .menu__list-item-collapsible:first-child .menu__caret {
+  display: none;
+}
+
+/* Prevent collapsing for the top-level "Raven" category */
+.menu__list > .menu__list-item-collapsible:first-child > .menu__link {
+  cursor: default;
+  pointer-events: none;
+}
+
+.menu__list > .menu__list-item-collapsible:first-child > .menu__link:hover {
+  cursor: default;
+}
+
 /* Nested menu items - proper indentation */
 .menu__list-item-collapsible .menu__list {
   margin: 0;
