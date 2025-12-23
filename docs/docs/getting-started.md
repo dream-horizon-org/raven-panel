@@ -147,22 +147,6 @@ Raven Client is the React Native SDK that integrates into your mobile app.
 
 For detailed setup instructions, see the [Raven Client Installation Guide](/docs/raven-client/getting-started/installation).
 
-## Complete Setup Flow
-
-Here's the recommended order for setting up the complete platform:
-
-```mermaid
-graph TD
-    A[Start] --> B[1. Set Up Raven Thunder Backend]
-    B --> C[2. Configure Environment Variables]
-    C --> D[3. Start Raven Dashboard]
-    D --> E[4. Create Journeys in Panel]
-    E --> F[5. Install Raven Client SDK]
-    F --> G[6. Initialize SDK in Mobile App]
-    G --> H[7. Test End-to-End Flow]
-    H --> I[Complete!]
-```
-
 ## Configuration
 
 ### Environment Variables
