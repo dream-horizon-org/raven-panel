@@ -140,7 +140,7 @@ import TabItem from '@theme/TabItem';
 - **[Getting Started](/docs/raven-thunder/getting-started/overview)** - Setup and quickstart guides
 - **[Core Entities](/docs/raven-thunder/getting-started/core-entities)** - Understanding CTAs, Behaviour Tags, and Nudges
 - **[Architecture](/docs/raven-thunder/architecture/modules)** - System architecture and design
-- **[API Documentation](/docs/raven-thunder/api/overview)** - SDK API endpoints and contracts
+- **[API Documentation](/docs/raven-thunder/api/scalar)** - Interactive API documentation with Scalar
 - **[Admin Documentation](/docs/raven-thunder/admin/overview)** - Admin API endpoints and contracts
 - **[Operations](/docs/raven-thunder/operations/docker)** - Docker, testing, CI/CD, and releases
 

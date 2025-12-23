@@ -1,8 +1,8 @@
 ---
-title: Thunder API Contracts (SDK Endpoints)
+title: Client API Contracts
 ---
 
-## Thunder API Contracts (SDK Endpoints)
+## Client API Contracts
 
 ### Fetch CTAs (and update delta) - App Launch
 - **Path**: `/cta/active/state-machines/`

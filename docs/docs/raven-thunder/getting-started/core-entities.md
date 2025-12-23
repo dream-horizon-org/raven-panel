@@ -3,20 +3,20 @@ title: Core Entities
 sidebar_position: 2
 ---
 
-Understanding Thunder's core entities is essential for effectively using the platform. This guide explains CTAs, Behaviour Tags, and Nudges in detail.
+Understanding Thunder's core entities is essential for effectively using the platform. This guide explains CTA Journeys, Behaviour, and Nudges in detail.
 
-## CTAs (Call-to-Actions)
+## CTA Journeys (Call-to-Actions)
 
-A **CTA (Call-to-Action)** is a user journey or campaign that guides users through a specific flow or action. CTAs are the primary entities in Thunder that define what actions users should take.
+A **CTA Journey (Call-to-Action)** is a user journey or campaign that guides users through a specific flow or action. CTA Journeys are the primary entities in Thunder that define what actions users should take.
 
 ### Key Features
 
-- **State Machine**: Each CTA uses a state machine to track user progress through different states
-- **Rules & Eligibility**: CTAs define who can see them (cohort eligibility) and when they should be shown
-- **Frequency Control**: Limits how often a CTA can be shown to users (per session, time window, or lifetime)
-- **Status Management**: CTAs have lifecycle statuses: `DRAFT`, `SCHEDULED`, `LIVE`, `PAUSED`, `CONCLUDED`, `TERMINATED`
+- **State Machine**: Each CTA Journey uses a state machine to track user progress through different states
+- **Rules & Eligibility**: CTA Journeys define who can see them (cohort eligibility) and when they should be shown
+- **Frequency Control**: Limits how often a CTA Journey can be shown to users (per session, time window, or lifetime)
+- **Status Management**: CTA Journeys have lifecycle statuses: `DRAFT`, `SCHEDULED`, `LIVE`, `PAUSED`, `CONCLUDED`, `TERMINATED`
 
-### CTA Components
+### CTA Journey Components
 
 1. **Basic Information**
    - Name (unique identifier)
@@ -29,18 +29,18 @@ A **CTA (Call-to-Action)** is a user journey or campaign that guides users throu
    - End time (optional)
 
 3. **Rules**
-   - **Cohort Eligibility**: Define which user cohorts should see this CTA
+   - **Cohort Eligibility**: Define which user cohorts should see this CTA Journey
    - **State Transitions**: Define how users move between states based on events
    - **Actions**: Define what happens at each state
    - **Frequency**: Control exposure limits (session, window, lifetime)
-   - **Priority**: Higher priority CTAs take precedence
+   - **Priority**: Higher priority CTA Journeys take precedence
 
 4. **State Machine**
-   - Tracks user's current state in the CTA journey
+   - Tracks user's current state in the CTA Journey
    - Supports multiple active state machines per user (grouped by context)
    - Can be reset based on configured conditions
 
-### CTA Lifecycle
+### CTA Journey Lifecycle
 
 ```
 DRAFT → SCHEDULED → LIVE → PAUSED/CONCLUDED/TERMINATED
@@ -55,76 +55,76 @@ DRAFT → SCHEDULED → LIVE → PAUSED/CONCLUDED/TERMINATED
 
 ---
 
-## Behaviour Tags
+## Behaviour
 
-**Behaviour Tags** enable you to establish relationships between user journeys (CTAs). They allow you to group one or more CTAs under the same behavior tag and control their overall frequency and visibility.
+**Behaviour** enables you to establish relationships between user journeys (CTA Journeys). They allow you to group one or more CTA Journeys under the same behavior and control their overall frequency and visibility.
 
 ### Purpose
 
-Behaviour Tags help you:
-- **Group Related CTAs**: Link multiple CTAs that are part of the same user journey or campaign
-- **Control Overall Frequency**: Set frequency limits across all linked CTAs
-- **Manage CTA Relationships**: Define rules for when certain CTAs should be shown or hidden based on other CTAs
+Behaviour helps you:
+- **Group Related CTA Journeys**: Link multiple CTA Journeys that are part of the same user journey or campaign
+- **Control Overall Frequency**: Set frequency limits across all linked CTA Journeys
+- **Manage CTA Journey Relationships**: Define rules for when certain CTA Journeys should be shown or hidden based on other CTA Journeys
 
-### Creating a Behaviour Tag
+### Creating a Behaviour
 
-When creating a Behaviour Tag, you need to configure three main sections:
+When creating a Behaviour, you need to configure three main sections:
 
 #### 1. Behaviour Details
 
 **Name** (Mandatory)
-- Add a unique name for your behavior tag
-- This name will be used to identify and reference the tag
+- Add a unique name for your behavior
+- This name will be used to identify and reference the behaviour
 
 **Description** (Optional)
-- Add a description to explain the purpose of this behaviour tag
-- Helps team members understand the tag's intent
+- Add a description to explain the purpose of this behaviour
+- Helps team members understand the behaviour's intent
 
-**Select Journeys (CTAs)**
-- All active CTAs will be visible in the dropdown
-- CTAs that are already selected by another behaviour tag will be marked as **disabled**
-- You can select one or more CTAs to link to this behaviour tag
+**Select Journeys (CTA Journeys)**
+- All active CTA Journeys will be visible in the dropdown
+- CTA Journeys that are already selected by another behaviour will be marked as **disabled**
+- You can select one or more CTA Journeys to link to this behaviour
 
 #### 2. Behavior Frequency
 
-The frequency settings for Behaviour Tags work similarly to CTA frequency settings. You can control:
+The frequency settings for Behaviour work similarly to CTA Journey frequency settings. You can control:
 
-- **Session Frequency**: Maximum number of times the behaviour tag (across all linked CTAs) can be shown per user session
+- **Session Frequency**: Maximum number of times the behaviour (across all linked CTA Journeys) can be shown per user session
 - **Window Frequency**: Maximum number of times within a specific time window (e.g., per day, per week)
 - **Lifespan Frequency**: Maximum number of times in the user's lifetime
 
-This ensures that even if multiple CTAs are linked to a behaviour tag, the overall exposure is controlled.
+This ensures that even if multiple CTA Journeys are linked to a behaviour, the overall exposure is controlled.
 
-#### 3. Journey Validation Rule (CTA Relation)
+#### 3. Journey Validation Rule (CTA Journey Relation)
 
-This section allows you to define relationships between CTAs:
+This section allows you to define relationships between CTA Journeys:
 
-**Show CTA Rules**
-- Define when certain CTAs should be shown
+**Show CTA Journey Rules**
+- Define when certain CTA Journeys should be shown
 - Options:
-  - **ANY**: Show if any of the specified CTAs meet conditions
-  - **LIST**: Show only if specific CTAs from the list meet conditions
-  - **REST**: Show if CTAs not in the specified list meet conditions
+  - **ANY**: Show if any of the specified CTA Journeys meet conditions
+  - **LIST**: Show only if specific CTA Journeys from the list meet conditions
+  - **REST**: Show if CTA Journeys not in the specified list meet conditions
 
-**Hide CTA Rules**
-- Define when certain CTAs should be hidden
+**Hide CTA Journey Rules**
+- Define when certain CTA Journeys should be hidden
 - Uses the same rule types (ANY, LIST, REST)
-- Helps prevent conflicting or overlapping CTAs from showing simultaneously
+- Helps prevent conflicting or overlapping CTA Journeys from showing simultaneously
 
 ### Example Use Case
 
-Imagine you have a "New User Onboarding" behaviour tag:
+Imagine you have a "New User Onboarding" behaviour:
 
-1. **Linked CTAs**: 
+1. **Linked CTA Journeys**: 
    - "Welcome Screen"
    - "Tutorial Guide"
    - "First Action Prompt"
 
 2. **Frequency**: 
-   - Session limit: 3 (total across all three CTAs)
+   - Session limit: 3 (total across all three CTA Journeys)
    - Window limit: 5 per day
 
-3. **CTA Relations**:
+3. **CTA Journey Relations**:
    - Show "Tutorial Guide" only if "Welcome Screen" was shown
    - Hide "First Action Prompt" if "Tutorial Guide" is active
 
@@ -226,23 +226,6 @@ Thunder provides a preview feature for nudges, allowing you to:
 - Ensure proper rendering before deployment
 - Preview different states and scenarios
 
-### Pre-requisites
-
-To access the Real-Time Nudge management panel:
-
-1. **Raise a Request on Shield**
-   - Request access with group name: `manageUserCom`
-   - Link: [Shield Request Portal](https://shield.dream11.com) (or your organization's Shield portal)
-   
-2. **Get Approvals**
-   - Wait for all required approvals
-   - Once approved, you'll have access to the Nudge management interface
-
-3. **Access the Panel**
-   - View and manage nudges through the Admin API
-   - Create, update, and preview nudges
-   - Monitor nudge performance
-
 ### State Machine in Nudges
 
 A **State Machine** is a tool used to model the behavior of a system or feature that moves through a series of predefined stages (or "states") based on specific user actions or events.
@@ -272,13 +255,13 @@ This state-based approach ensures that nudges are delivered at the right time, i
 ## Relationships Between Entities
 
 ```
-Behaviour Tag
-    ├── Links to multiple CTAs
+Behaviour
+    ├── Links to multiple CTA Journeys
     ├── Controls overall frequency
-    └── Manages CTA visibility rules
+    └── Manages CTA Journey visibility rules
 
-CTA
-    ├── Can be linked to Behaviour Tags
+CTA Journey
+    ├── Can be linked to Behaviour
     ├── Has its own state machine
     └── Defines user journey flow
 
@@ -289,21 +272,21 @@ Nudge
 ## Best Practices
 
 1. **Naming Conventions**
-   - Use descriptive, unique names for CTAs and Behaviour Tags
+   - Use descriptive, unique names for CTA Journeys and Behaviour
    - Include team or project prefixes for easier filtering
 
 2. **Frequency Management**
    - Set appropriate frequency limits to avoid user fatigue
-   - Consider both individual CTA and Behaviour Tag frequencies
+   - Consider both individual CTA Journey and Behaviour frequencies
 
-3. **CTA Relationships**
-   - Use Behaviour Tags to group related CTAs logically
-   - Leverage CTA relations to prevent conflicting experiences
+3. **CTA Journey Relationships**
+   - Use Behaviour to group related CTA Journeys logically
+   - Leverage CTA Journey relations to prevent conflicting experiences
 
 4. **Status Management**
-   - Keep CTAs in DRAFT while testing
+   - Keep CTA Journeys in DRAFT while testing
    - Use SCHEDULED for time-based campaigns
-   - Monitor LIVE CTAs regularly
+   - Monitor LIVE CTA Journeys regularly
 
 5. **Testing**
    - Use preview features before going live
@@ -314,8 +297,8 @@ Nudge
 
 ## Next Steps
 
-- Learn how to create your first CTA (to be added)
-- Understand Behaviour Tag creation (to be added)
-- Explore the [API contracts](/docs/raven-thunder/api/overview) for integration
+- Learn how to create your first CTA Journey (to be added)
+- Understand Behaviour creation (to be added)
+- Explore the [API Documentation](/docs/raven-thunder/api/admin-contracts) for integration
 - Review [architecture details](/docs/raven-thunder/architecture/modules) for deeper understanding
 

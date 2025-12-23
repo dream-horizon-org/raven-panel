@@ -148,7 +148,6 @@ const sidebars: SidebarsConfig = {
               items: [
                 'raven-thunder/architecture/modules',
                 'raven-thunder/architecture/configuration',
-                'raven-thunder/architecture/data-model',
               ],
             },
             {
@@ -156,7 +155,7 @@ const sidebars: SidebarsConfig = {
               label: 'API',
               collapsed: true,
               items: [
-                'raven-thunder/api/overview',
+                'raven-thunder/api/scalar',
                 'raven-thunder/api/admin-contracts',
                 'raven-thunder/api/thunder-api-contracts',
               ],
