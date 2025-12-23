@@ -551,9 +551,9 @@
   transform: translate(-50%, -50%) scale(1.1);
 }
 
-/* Features Section - Colorful */
+/* Features Section - Masonry Grid */
 .features {
-  padding: 8rem 0;
+  padding: 6rem 0;
   background: var(--ifm-background-color);
   position: relative;
 }
@@ -568,20 +568,26 @@
   background: linear-gradient(90deg, transparent, var(--ifm-color-emphasis-200), transparent);
 }
 
-.feature {
-  margin-bottom: 2rem;
+.featuresMasonry {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-auto-rows: auto;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .featureCard {
-  padding: 2.5rem 2rem;
+  padding: 2rem;
   border-radius: 18px;
   background: var(--ifm-background-surface-color);
   border: 1.5px solid var(--ifm-color-emphasis-200);
-  height: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .featureCard::before {
@@ -591,9 +597,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, transparent 100%);
+  background: linear-gradient(135deg, 
+    rgba(var(--feature-color-rgb, 99, 102, 241), 0.05) 0%, 
+    transparent 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .featureCard:hover::before {
@@ -601,21 +610,21 @@
 }
 
 .featureCard:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.1),
     0 0 0 1px var(--ifm-color-emphasis-300);
   border-color: var(--ifm-color-emphasis-300);
 }
 
 [data-theme='dark'] .featureCard:hover {
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.3),
+    0 16px 40px rgba(0, 0, 0, 0.3),
     0 0 0 1px var(--ifm-color-emphasis-300);
 }
 
 .featureIcon {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -632,7 +641,7 @@
 }
 
 .featureCard:hover .featureIcon {
-  transform: scale(1.05) translateY(-2px);
+  transform: scale(1.1) rotate(5deg);
 }
 
 .featureTitle {
@@ -652,6 +661,7 @@
   margin: 0;
   position: relative;
   z-index: 1;
+  flex: 1;
 }
 
 /* CTA Section - Colorful Gradient */
@@ -863,6 +873,11 @@
     font-size: 1rem;
   }
 
+  .featuresMasonry {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
   .components,
   .useCases,
   .features,
@@ -924,6 +939,28 @@
 
   .useCaseDescription {
     font-size: 0.9375rem;
+  }
+
+  .featuresMasonry {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .featureCard {
+    padding: 1.75rem;
+  }
+
+  .featureIcon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .featureTitle {
+    font-size: 1.25rem;
+  }
+
+  .featureDescription {
+    font-size: 1rem;
   }
 
   .ctaContent h2 {

@@ -415,63 +415,78 @@ type FeatureItem = {
 
 const Features: FeatureItem[] = [
   {
-    title: 'Event-Driven Architecture',
+    title: 'Trigger Engagements at the Perfect Moment',
     icon: <EventIcon color="#6366f1" />,
-    description: 'Trigger contextual engagements based on user actions, page views, or custom events in real-time. Respond instantly to user behavior.',
+    description: 'Automatically display nudges and tooltips when users perform specific actions or visit key screens. Show the right engagement exactly when it matters most.',
     color: '#6366f1',
   },
   {
-    title: 'Visual Journey Builder',
+    title: 'Build Journeys Visually, No Code Needed',
     icon: <VisualIcon color="#8b5cf6" />,
-    description: 'Create complex multi-step user journeys with an intuitive drag-and-drop interface. No coding required—perfect for product teams.',
+    description: 'Create multi-step user journeys with a simple drag-and-drop interface. Design complex flows visually—perfect for product teams who want to move fast.',
     color: '#8b5cf6',
   },
   {
-    title: 'Smart Targeting',
+    title: 'Reach the Right Users Every Time',
     icon: <TargetIcon color="#f59e0b" />,
-    description: 'Target specific user segments with precision using cohorts, behavior tags, and advanced filters. Reach the right users at the right time.',
+    description: 'Target specific user groups based on their behavior, attributes, or lifecycle stage. Deliver personalized experiences to different segments automatically.',
     color: '#f59e0b',
   },
   {
-    title: 'State Machine DSL',
+    title: 'Create Multi-Step Flows with Ease',
     icon: <StateIcon color="#10b981" />,
-    description: 'Define sophisticated engagement flows with a powerful state machine system. Build complex, conditional user journeys with ease.',
+    description: 'Build sophisticated engagement sequences that adapt based on user actions. Create conditional flows that guide users through complex processes step-by-step.',
     color: '#10b981',
   },
   {
-    title: 'Cross-Platform SDK',
+    title: 'Works on All Mobile Platforms',
     icon: <PlatformIcon color="#06b6d4" />,
-    description: 'Works seamlessly on iOS and Android with a single React Native codebase. Write once, deploy everywhere.',
+    description: 'Deploy the same engagement campaigns across iOS and Android simultaneously. One setup, consistent experiences everywhere.',
     color: '#06b6d4',
   },
   {
-    title: 'Real-Time Analytics',
+    title: 'Track Performance in Real-Time',
     icon: <AnalyticsIcon color="#ec4899" />,
-    description: 'Track engagement performance, user interactions, and conversion metrics in real-time. Make data-driven decisions.',
+    description: 'Monitor how your campaigns perform with instant insights into user engagement, interactions, and conversions. Make informed decisions quickly.',
     color: '#ec4899',
   },
   {
-    title: 'Frequency Control',
+    title: 'Control How Often Engagements Appear',
     icon: <ClockIcon color="#f59e0b" />,
-    description: 'Control engagement frequency with session, window, or lifespan-based rules. Prevent user fatigue and maximize impact.',
+    description: 'Set rules to prevent engagement overload. Control frequency per session, daily, or across the app lifetime to keep users engaged without annoying them.',
     color: '#f59e0b',
   },
   {
-    title: 'Fully Customizable',
+    title: 'Match Your Brand Perfectly',
     icon: <CustomizeIcon color="#6366f1" />,
-    description: 'Customize every aspect of nudges, tooltips, and bottom sheets to match your brand. Complete design control.',
+    description: 'Customize the look and feel of every engagement—nudges, tooltips, and bottom sheets—to match your brand identity. Full control over colors, fonts, and styling.',
     color: '#6366f1',
   },
 ];
 
 function Feature({title, icon, description, color}: FeatureItem) {
+  // Convert hex color to RGB for CSS variables
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 99, g: 102, b: 241 };
+  };
+  
+  const rgb = hexToRgb(color);
+  
   return (
-    <div className={clsx('col col--3', styles.feature)}>
-      <div className={styles.featureCard}>
-        <div className={styles.featureIcon} style={{ color: color }}>{icon}</div>
-        <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
-        <p className={styles.featureDescription}>{description}</p>
-      </div>
+    <div 
+      className={styles.featureCard}
+      style={{ 
+        '--feature-color-rgb': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
+        '--feature-color': color
+      } as React.CSSProperties}>
+      <div className={styles.featureIcon} style={{ color: color }}>{icon}</div>
+      <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
+      <p className={styles.featureDescription}>{description}</p>
     </div>
   );
 }
@@ -482,10 +497,10 @@ function HomepageFeatures() {
       <div className="container">
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Features</div>
-          <Heading as="h2">Standout Capabilities</Heading>
-          <p>Enterprise-grade features designed to help you build sophisticated customer engagement flows without complexity</p>
+          <Heading as="h2">Everything You Need to Drive Growth</Heading>
+          <p>Powerful capabilities that help product managers, marketers, and growth teams create effective engagement campaigns—no technical expertise required.</p>
         </div>
-        <div className="row">
+        <div className={styles.featuresMasonry}>
           {Features.map((props, idx) => (
             <Feature key={idx} {...props} />
           ))}
