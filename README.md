@@ -282,8 +282,3 @@ Copyright © 2025 Dream Horizon.
 - 📖 [Full Documentation](https://dream-horizon-org.github.io/raven-panel/)
 - 🐛 [Report Bugs](https://github.com/dream-horizon-org/raven-panel/issues)
 - 💬 [GitHub Discussions](https://github.com/dream-horizon-org/raven-panel/discussions)
-- 📧 Contact: [Your contact information]
-
----
-
-**Built with ❤️ by Horizon Engineering**
