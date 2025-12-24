@@ -251,21 +251,6 @@ mvn test
 mvn verify
 ```
 
-## 🤝 Contributing
-
-We welcome contributions! Please read our contributing guidelines:
-
-- **Raven Panel**: [Contributing Guide](https://raven.dreamhorizon.org/docs/raven-panel/development/contributing)
-- **Raven Client**: [CONTRIBUTING.md](https://github.com/dream-horizon-org/raven-client/blob/main/CONTRIBUTING.md)
-- **Raven Thunder**: [CONTRIBUTING.md](https://github.com/dream-horizon-org/raven-thunder/blob/main/CONTRIBUTING.md)
-
-### Quick Contribution Steps
-
-1. 🐛 Found a bug? [Report it](https://github.com/dream-horizon-org/raven-panel/issues/new)
-2. ✨ Have a feature idea? [Request it](https://github.com/dream-horizon-org/raven-panel/issues/new)
-3. ❓ Need help? [Ask a question](https://github.com/dream-horizon-org/raven-panel/discussions)
-4. 🔀 Ready to submit code? [Create a Pull Request](https://github.com/dream-horizon-org/raven-panel/compare)
-
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
