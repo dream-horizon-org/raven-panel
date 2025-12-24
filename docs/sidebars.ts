@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
       label: 'Raven',
       collapsed: false,
       items: [
+        'introduction',
         'getting-started',
         {
           type: 'category',
@@ -129,6 +130,7 @@ const sidebars: SidebarsConfig = {
           label: 'Backend',
           collapsed: true,
           items: [
+            'raven-thunder/index',
             {
               type: 'category',
               label: 'Getting Started',

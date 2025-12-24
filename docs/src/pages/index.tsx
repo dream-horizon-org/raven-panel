@@ -1,7 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
@@ -181,27 +180,28 @@ const ReengageIcon = ({ color = '#c4b5fd' }: { color?: string }) => (
 );
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
   const docsUrl = useBaseUrl('/docs');
   return (
     <header className={clsx('hero', styles.heroBanner)}>
       <div className="container">
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            <span>Complete Customer Engagement Platform</span>
+            <span>🚀 Open Source Customer Engagement Platform</span>
           </div>
           <Heading as="h1" className="hero__title">
-            Guide Users. Drive Conversions.
+            Build Intelligent Customer Journeys
+            <br />
+            <span className={styles.heroTitleAccent}>That Drive Growth</span>
           </Heading>
           <p className="hero__subtitle">
-            Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. 
-            Everything you need to guide users and drive conversions all in one platform.
+            Create event-driven user experiences with personalized engagement formats. 
+            Everything product teams need to guide users, increase adoption, and boost conversions all in one powerful platform.
           </p>
           <div className={styles.buttons}>
             <Link
-              className={clsx('button button--lg button--primary', styles.getStartedButton)}
-              to={`${docsUrl}/getting-started`}>
-              Get Started
+              className={clsx('button button--lg', styles.docsButton)}
+              to={`${docsUrl}/raven-client/introduction`}>
+              View Documentation
             </Link>
           </div>
         </div>
@@ -223,31 +223,31 @@ type ComponentItem = {
 
 const Components: ComponentItem[] = [
   {
-    title: 'Web Dashboard',
+    title: 'Web Panel',
     icon: <DashboardIcon color="#6366f1" />,
-    description: 'Visual journey builder and web dashboard for orchestrating customer engagement flows',
+    description: 'A web-based dashboard where product managers and marketers create, manage, and optimize customer engagement campaigns. Build journeys visually with drag and drop no coding skills needed.',
     link: 'raven-panel/intro',
     color: '#6366f1',
-    useCase: 'Create and manage customer journeys without code',
-    features: ['Visual Journey Builder', 'Cohort Targeting', 'Content Editor', 'Smart Scheduling'],
+    useCase: 'For Product Teams: Create campaigns without code',
+    features: ['Visual Journey Builder', 'User Targeting', 'Content Editor', 'Performance Tracking'],
   },
   {
     title: 'Mobile SDK',
     icon: <MobileIcon color="#10b981" />,
-    description: 'React Native SDK for in-app messaging, nudges, tooltips, and event-driven engagements',
+    description: 'A mobile app integration that displays your engagements to users. Works on both iOS and Android, showing nudges, tooltips, and messages exactly when you configure them in the dashboard.',
     link: 'raven-client/introduction',
     color: '#10b981',
-    useCase: 'Deliver contextual experiences in your mobile app',
-    features: ['State Machine DSL', 'Event-Driven', 'Cross-Platform', 'Customizable UI'],
+    useCase: 'For Your Mobile App: Show engagements to users',
+    features: ['Works on iOS & Android', 'Real-Time Updates', 'Fully Customizable', 'Easy Integration'],
   },
   {
     title: 'Backend',
     icon: <BackendIcon color="#f59e0b" />,
-    description: 'High-performance backend service for managing CTAs, nudges, and behavior tags at scale',
+    description: 'The backend service that powers everything. Handles all the technical work managing user data, processing events, and delivering engagements at scale. Your engineering team can deploy it easily.',
     link: 'raven-thunder/getting-started/overview',
     color: '#f59e0b',
-    useCase: 'Power your engagement platform with enterprise-grade APIs',
-    features: ['REST APIs', 'Aerospike Integration', 'Multi-Module Architecture', 'Docker Ready'],
+    useCase: 'For Your Infrastructure: Powers the entire platform',
+    features: ['High Performance', 'Easy Deployment', 'Scalable', 'Production Ready'],
   },
 ];
 
@@ -262,7 +262,10 @@ function ComponentCard({title, icon, description, link, color, features, useCase
         <div className={styles.componentIcon} style={{ backgroundColor: `${color}10`, color: color }}>
           {icon}
         </div>
-        <Heading as="h3" className={styles.componentTitle}>{title}</Heading>
+        <div className={styles.componentTitleWrapper}>
+          <Heading as="h3" className={styles.componentTitle}>{title}</Heading>
+          <span className={styles.openSourceBadge}>Open Source</span>
+        </div>
         <p className={styles.componentUseCase}>{useCase}</p>
       </div>
       <p className={styles.componentDescription}>{description}</p>
@@ -288,8 +291,9 @@ function HomepageComponents() {
     <section className={styles.components}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <Heading as="h2">One Platform, Three Powerful Components</Heading>
-          <p>Raven consists of three integrated components that work seamlessly together to deliver exceptional customer engagement</p>
+          <div className={styles.sectionLabel}>Raven Components</div>
+          <Heading as="h2">Three Open Source Components, One Complete Platform</Heading>
+          <p>Raven consists of three fully open source components that work together seamlessly. Use them all for a complete solution, or integrate individual components into your existing tools.</p>
         </div>
         <div className={styles.componentsGrid}>
           {Components.map((component, idx) => (
@@ -304,43 +308,79 @@ function HomepageComponents() {
 type UseCaseItem = {
   title: string;
   description: string;
-  icon: React.ReactNode;
+  image: string;
   color: string;
 };
 
 const UseCases: UseCaseItem[] = [
   {
-    title: 'Onboarding New Users',
-    description: 'Guide new users through your app with contextual tooltips and step-by-step nudges',
-    icon: <OnboardingIcon color="#a5b4fc" />,
-    color: '#a5b4fc',
+    title: 'Onboard New Users with Guided Tours',
+    description: 'Create step-by-step onboarding journeys that guide first-time users through your app. Show contextual tooltips when users land on key screens, display bottom sheets explaining core features, and use multi-step flows to ensure users reach their "aha moment" faster.',
+    image: 'img/use-cases/onboarding.svg',
+    color: '#6366f1',
   },
   {
-    title: 'Feature Discovery',
-    description: 'Highlight new features and capabilities at the right moment to increase adoption',
-    icon: <DiscoveryIcon color="#fcd34d" />,
-    color: '#fcd34d',
+    title: 'Drive Feature Discovery at the Right Moment',
+    description: 'Highlight new or underused features exactly when users need them. Show tooltips when users navigate to relevant screens, trigger bottom sheets after specific actions, and guide users to discover features that solve their immediate problems.',
+    image: 'img/use-cases/feature-discovery.svg',
+    color: '#f59e0b',
   },
   {
-    title: 'Conversion Optimization',
-    description: 'Reduce cart abandonment and drive conversions with timely prompts and offers',
-    icon: <ConversionIcon color="#6ee7b7" />,
-    color: '#6ee7b7',
+    title: 'Reduce Drop-offs in Critical Flows',
+    description: 'Deploy targeted nudges during checkout, signup, or upgrade flows to minimize abandonment. Show helpful tooltips explaining form fields, display bottom sheets with special offers, or use popups to address concerns that might cause users to leave.',
+    image: 'img/use-cases/conversion.svg',
+    color: '#10b981',
   },
   {
-    title: 'User Re-engagement',
-    description: 'Re-engage inactive users with personalized messages and relevant content',
-    icon: <ReengageIcon color="#c4b5fd" />,
-    color: '#c4b5fd',
+    title: 'Re-engage Inactive Users with Personalized Campaigns',
+    description: 'Win back users who haven\'t logged in recently by targeting them with relevant messages. Create journeys that trigger when inactive users return, show them what\'s new, highlight features they haven\'t tried, or offer incentives to re-engage.',
+    image: 'img/use-cases/re-engagement.svg',
+    color: '#8b5cf6',
   },
 ];
 
-function UseCaseCard({title, description, icon, color}: UseCaseItem) {
+function UseCaseCard({title, description, image, color, index}: UseCaseItem & { index: number }) {
+  const isEven = index % 2 === 0;
+  const imageUrl = useBaseUrl(image);
+  
+  // Convert hex color to RGB for CSS variables
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 99, g: 102, b: 241 };
+  };
+  
+  const rgb = hexToRgb(color);
+  
   return (
-    <div className={styles.useCaseCard}>
-      <div className={styles.useCaseIcon} style={{ color: color }}>{icon}</div>
-      <Heading as="h3" className={styles.useCaseTitle}>{title}</Heading>
-      <p className={styles.useCaseDescription}>{description}</p>
+    <div className={clsx(styles.useCaseRow, isEven ? styles.useCaseRowLeft : styles.useCaseRowRight)}>
+      <div className={styles.useCaseContent}>
+        <div className={styles.useCaseNumber}>0{index + 1}</div>
+        <Heading as="h3" className={styles.useCaseTitle}>{title}</Heading>
+        <p className={styles.useCaseDescription}>{description}</p>
+      </div>
+      <div 
+        className={styles.useCaseVisual} 
+        style={{ 
+          '--use-case-color-rgb': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
+          '--use-case-color': color
+        } as React.CSSProperties}>
+        <div className={styles.useCaseImageWrapper}>
+          <img 
+            src={imageUrl} 
+            alt={title}
+            className={styles.useCaseImage}
+            onError={(e) => {
+              // Fallback to hide broken image
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+        <div className={styles.useCaseGradient}></div>
+      </div>
     </div>
   );
 }
@@ -350,12 +390,13 @@ function HomepageUseCases() {
     <section className={styles.useCases}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <Heading as="h2">Use Cases</Heading>
-          <p>Common scenarios where Raven helps you create better user experiences</p>
+          <div className={styles.sectionLabel}>Use Cases</div>
+          <Heading as="h2">What Teams Build with Raven</Heading>
+          <p>Product managers, marketers, and growth teams use Raven to create engagement campaigns that guide users, drive adoption, and boost conversions all without waiting for engineering resources.</p>
         </div>
-        <div className={styles.useCasesGrid}>
+        <div className={styles.useCasesList}>
           {UseCases.map((useCase, idx) => (
-            <UseCaseCard key={idx} {...useCase} />
+            <UseCaseCard key={idx} {...useCase} index={idx} />
           ))}
         </div>
       </div>
@@ -372,63 +413,78 @@ type FeatureItem = {
 
 const Features: FeatureItem[] = [
   {
-    title: 'Event-Driven Architecture',
-    icon: <EventIcon color="#fca5a5" />,
-    description: 'Trigger engagements based on user actions, page views, or custom events in real-time',
-    color: '#fca5a5',
+    title: 'Trigger Engagements at the Perfect Moment',
+    icon: <EventIcon color="#6366f1" />,
+    description: 'Automatically display nudges and tooltips when users perform specific actions or visit key screens. Show the right engagement exactly when it matters most.',
+    color: '#6366f1',
   },
   {
-    title: 'Visual Journey Builder',
-    icon: <VisualIcon color="#a5b4fc" />,
-    description: 'Create complex user journeys with an intuitive drag-and-drop interface. No code required.',
-    color: '#a5b4fc',
+    title: 'Build Journeys Visually, No Code Needed',
+    icon: <VisualIcon color="#8b5cf6" />,
+    description: 'Create multi-step user journeys with a simple drag and drop interface. Design complex flows visually perfect for product teams who want to move fast.',
+    color: '#8b5cf6',
   },
   {
-    title: 'Smart Targeting',
-    icon: <TargetIcon color="#fcd34d" />,
-    description: 'Target specific user segments with precision using cohorts, behavior tags, and filters',
-    color: '#fcd34d',
+    title: 'Reach the Right Users Every Time',
+    icon: <TargetIcon color="#f59e0b" />,
+    description: 'Target specific user groups based on their behavior, attributes, or lifecycle stage. Deliver personalized experiences to different segments automatically.',
+    color: '#f59e0b',
   },
   {
-    title: 'State Machine DSL',
-    icon: <StateIcon color="#c4b5fd" />,
-    description: 'Define sophisticated engagement flows with a powerful state machine system',
-    color: '#c4b5fd',
+    title: 'Create Multi-Step Flows with Ease',
+    icon: <StateIcon color="#10b981" />,
+    description: 'Build sophisticated engagement sequences that adapt based on user actions. Create conditional flows that guide users through complex processes step-by-step.',
+    color: '#10b981',
   },
   {
-    title: 'Cross-Platform SDK',
-    icon: <PlatformIcon color="#6ee7b7" />,
-    description: 'Works seamlessly on iOS and Android with a single React Native codebase',
-    color: '#6ee7b7',
+    title: 'Works on All Mobile Platforms',
+    icon: <PlatformIcon color="#06b6d4" />,
+    description: 'Deploy the same engagement campaigns across iOS and Android simultaneously. One setup, consistent experiences everywhere.',
+    color: '#06b6d4',
   },
   {
-    title: 'Real-Time Analytics',
-    icon: <AnalyticsIcon color="#67e8f9" />,
-    description: 'Track engagement performance, user interactions, and conversion metrics',
-    color: '#67e8f9',
+    title: 'Track Performance in Real-Time',
+    icon: <AnalyticsIcon color="#ec4899" />,
+    description: 'Monitor how your campaigns perform with instant insights into user engagement, interactions, and conversions. Make informed decisions quickly.',
+    color: '#ec4899',
   },
   {
-    title: 'Frequency Control',
-    icon: <ClockIcon color="#fdba74" />,
-    description: 'Control how often engagements are shown with session, window, or lifespan-based rules',
-    color: '#fdba74',
+    title: 'Control How Often Engagements Appear',
+    icon: <ClockIcon color="#f59e0b" />,
+    description: 'Set rules to prevent engagement overload. Control frequency per session, daily, or across the app lifetime to keep users engaged without annoying them.',
+    color: '#f59e0b',
   },
   {
-    title: 'Customizable UI',
-    icon: <CustomizeIcon color="#f9a8d4" />,
-    description: 'Fully customizable nudges, tooltips, and bottom sheets to match your brand',
-    color: '#f9a8d4',
+    title: 'Match Your Brand Perfectly',
+    icon: <CustomizeIcon color="#6366f1" />,
+    description: 'Customize the look and feel of every engagement—nudges, tooltips, and bottom sheets—to match your brand identity. Full control over colors, fonts, and styling.',
+    color: '#6366f1',
   },
 ];
 
 function Feature({title, icon, description, color}: FeatureItem) {
+  // Convert hex color to RGB for CSS variables
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 99, g: 102, b: 241 };
+  };
+  
+  const rgb = hexToRgb(color);
+  
   return (
-    <div className={clsx('col col--3', styles.feature)}>
-      <div className={styles.featureCard}>
-        <div className={styles.featureIcon} style={{ color: color }}>{icon}</div>
-        <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
-        <p className={styles.featureDescription}>{description}</p>
-      </div>
+    <div 
+      className={styles.featureCard}
+      style={{ 
+        '--feature-color-rgb': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
+        '--feature-color': color
+      } as React.CSSProperties}>
+      <div className={styles.featureIcon} style={{ color: color }}>{icon}</div>
+      <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
+      <p className={styles.featureDescription}>{description}</p>
     </div>
   );
 }
@@ -438,10 +494,11 @@ function HomepageFeatures() {
     <section className={styles.features}>
       <div className="container">
         <div className={styles.sectionHeader}>
-          <Heading as="h2">Powerful Features</Heading>
-          <p>Everything you need to create engaging customer experiences</p>
+          <div className={styles.sectionLabel}>Features</div>
+          <Heading as="h2">Everything You Need to Drive Growth</Heading>
+          <p>Powerful capabilities that help product managers, marketers, and growth teams create effective engagement campaigns no technical expertise required.</p>
         </div>
-        <div className="row">
+        <div className={styles.featuresMasonry}>
           {Features.map((props, idx) => (
             <Feature key={idx} {...props} />
           ))}
@@ -457,13 +514,18 @@ function HomepageCTA() {
     <section className={styles.cta}>
       <div className="container">
         <div className={styles.ctaContent}>
-          <Heading as="h2">Ready to Transform Your User Experience?</Heading>
-          <p>Start building intelligent customer journeys today. Get up and running in minutes.</p>
+          <Heading as="h2">Ready to Start Building with Raven?</Heading>
+          <p>Everything you need to get started is in our documentation. Set up your first engagement campaign, integrate the SDK, and start guiding users all in one open source platform.</p>
           <div className={styles.ctaButtons}>
             <Link
               className={clsx('button button--lg button--primary', styles.ctaButton)}
               to={`${docsUrl}/getting-started`}>
-              Get Started Now
+              Start Building
+            </Link>
+            <Link
+              className={clsx('button button--lg', styles.ctaButtonSecondary)}
+              href="https://github.com/dream-horizon-org/raven-panel">
+              View on GitHub
             </Link>
           </div>
         </div>
@@ -472,11 +534,10 @@ function HomepageCTA() {
   );
 }
 
-export default function Home(): JSX.Element {
-  const {siteConfig} = useDocusaurusContext();
+export default function Home(): React.JSX.Element {
   return (
     <Layout
-      title="Raven - Customer Engagement Platform"
+      title="Raven Customer Engagement Platform"
       description="Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. Complete platform with Panel, Client SDK, and Thunder backend.">
       <HomepageHeader />
       <main>
