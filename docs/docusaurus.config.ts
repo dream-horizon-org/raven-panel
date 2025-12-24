@@ -8,7 +8,7 @@ const config: Config = {
   favicon: 'img/favicon.svg',
 
   url: 'https://dream-horizon-org.github.io',
-  baseUrl: '/raven-panel/',  
+  baseUrl: '/',  
 
   organizationName: 'dream-horizon-org',
   projectName: 'raven-panel',
