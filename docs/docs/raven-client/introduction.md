@@ -59,13 +59,6 @@ The SDK follows a clean, event-driven architecture:
 
 Ready to get started? Check out our [Installation Guide](/docs/raven-client/getting-started/installation) to begin integrating Raven Client into your React Native application.
 
-## Support
-
-- 📖 Read the [full documentation](/docs/raven-client/getting-started/installation)
-- 🐛 Report bugs on [GitHub Issues](https://github.com/Devanshj11/RTN-SDK/issues)
-- 💬 Ask questions in [GitHub Discussions](https://github.com/Devanshj11/RTN-SDK/discussions)
-- 📝 Check out [Contributing Guidelines](https://github.com/Devanshj11/RTN-SDK/blob/main/CONTRIBUTING.md)
-
 ---
 
 Made with ❤️ by Horizon Engineering

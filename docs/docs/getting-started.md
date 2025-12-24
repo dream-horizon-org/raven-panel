@@ -273,12 +273,6 @@ For more help, see:
 - **Raven Client Documentation**: [Installation Guide](/docs/raven-client/getting-started/installation)
 - **Raven Thunder Documentation**: [Quickstart Guide](/docs/raven-thunder/getting-started/quickstart)
 
-## Support
-
-- 📖 Read the [full documentation](/docs)
-- 🐛 Report bugs on [GitHub Issues](https://github.com/dream-horizon-org/raven-panel/issues)
-- 💬 Ask questions in [GitHub Discussions](https://github.com/dream-horizon-org/raven-panel/discussions)
-
 ---
 
 Made with ❤️ by Horizon Engineering
