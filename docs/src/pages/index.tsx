@@ -194,23 +194,9 @@ function HomepageHeader() {
             <span className={styles.heroTitleAccent}>That Drive Growth</span>
           </Heading>
           <p className="hero__subtitle">
-            Create event-driven user experiences with contextual nudges, tooltips, and personalized engagements. 
-            Everything product teams need to guide users, increase adoption, and boost conversions—all in one powerful platform.
+            Create event-driven user experiences with personalized engagement formats. 
+            Everything product teams need to guide users, increase adoption, and boost conversions all in one powerful platform.
           </p>
-          <div className={styles.heroStats}>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>3</div>
-              <div className={styles.statLabel}>Integrated Components</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>100%</div>
-              <div className={styles.statLabel}>Open Source</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statNumber}>∞</div>
-              <div className={styles.statLabel}>Customizable</div>
-            </div>
-          </div>
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--lg', styles.docsButton)}
@@ -239,7 +225,7 @@ const Components: ComponentItem[] = [
   {
     title: 'Web Panel',
     icon: <DashboardIcon color="#6366f1" />,
-    description: 'A web-based dashboard where product managers and marketers create, manage, and optimize customer engagement campaigns. Build journeys visually with drag-and-drop—no coding skills needed.',
+    description: 'A web-based dashboard where product managers and marketers create, manage, and optimize customer engagement campaigns. Build journeys visually with drag and drop no coding skills needed.',
     link: 'raven-panel/intro',
     color: '#6366f1',
     useCase: 'For Product Teams: Create campaigns without code',
@@ -257,7 +243,7 @@ const Components: ComponentItem[] = [
   {
     title: 'Backend',
     icon: <BackendIcon color="#f59e0b" />,
-    description: 'The backend service that powers everything. Handles all the technical work—managing user data, processing events, and delivering engagements at scale. Your engineering team can deploy it easily.',
+    description: 'The backend service that powers everything. Handles all the technical work managing user data, processing events, and delivering engagements at scale. Your engineering team can deploy it easily.',
     link: 'raven-thunder/getting-started/overview',
     color: '#f59e0b',
     useCase: 'For Your Infrastructure: Powers the entire platform',
@@ -406,7 +392,7 @@ function HomepageUseCases() {
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Use Cases</div>
           <Heading as="h2">What Teams Build with Raven</Heading>
-          <p>Product managers, marketers, and growth teams use Raven to create engagement campaigns that guide users, drive adoption, and boost conversions—all without waiting for engineering resources.</p>
+          <p>Product managers, marketers, and growth teams use Raven to create engagement campaigns that guide users, drive adoption, and boost conversions all without waiting for engineering resources.</p>
         </div>
         <div className={styles.useCasesList}>
           {UseCases.map((useCase, idx) => (
@@ -435,7 +421,7 @@ const Features: FeatureItem[] = [
   {
     title: 'Build Journeys Visually, No Code Needed',
     icon: <VisualIcon color="#8b5cf6" />,
-    description: 'Create multi-step user journeys with a simple drag-and-drop interface. Design complex flows visually—perfect for product teams who want to move fast.',
+    description: 'Create multi-step user journeys with a simple drag and drop interface. Design complex flows visually perfect for product teams who want to move fast.',
     color: '#8b5cf6',
   },
   {
@@ -510,7 +496,7 @@ function HomepageFeatures() {
         <div className={styles.sectionHeader}>
           <div className={styles.sectionLabel}>Features</div>
           <Heading as="h2">Everything You Need to Drive Growth</Heading>
-          <p>Powerful capabilities that help product managers, marketers, and growth teams create effective engagement campaigns—no technical expertise required.</p>
+          <p>Powerful capabilities that help product managers, marketers, and growth teams create effective engagement campaigns no technical expertise required.</p>
         </div>
         <div className={styles.featuresMasonry}>
           {Features.map((props, idx) => (
@@ -529,7 +515,7 @@ function HomepageCTA() {
       <div className="container">
         <div className={styles.ctaContent}>
           <Heading as="h2">Ready to Start Building with Raven?</Heading>
-          <p>Everything you need to get started is in our documentation. Set up your first engagement campaign, integrate the SDK, and start guiding users—all in one open source platform.</p>
+          <p>Everything you need to get started is in our documentation. Set up your first engagement campaign, integrate the SDK, and start guiding users all in one open source platform.</p>
           <div className={styles.ctaButtons}>
             <Link
               className={clsx('button button--lg button--primary', styles.ctaButton)}
@@ -551,7 +537,7 @@ function HomepageCTA() {
 export default function Home(): React.JSX.Element {
   return (
     <Layout
-      title="Raven - Customer Engagement Platform"
+      title="Raven Customer Engagement Platform"
       description="Build intelligent, event-driven customer journeys with in-app nudges, tooltips, and personalized engagements. Complete platform with Panel, Client SDK, and Thunder backend.">
       <HomepageHeader />
       <main>

@@ -31,6 +31,16 @@ const config: Config = {
         theme: {
           customCss: './src/css/custom.css',
         },
+        // Google Analytics - uncomment and add your tracking ID
+        // googleAnalytics: {
+        //   trackingID: 'G-XXXXXXXXXX',
+        //   anonymizeIP: true,
+        // },
+        // Google Tag Manager - alternative to GA
+        // gtag: {
+        //   trackingID: 'G-XXXXXXXXXX',
+        //   anonymizeIP: true,
+        // },
       } satisfies Preset.Options,
     ],
   ],
@@ -46,6 +56,20 @@ const config: Config = {
 
   themeConfig: {
     image: 'img/raven-social-card.png',
+    // Analytics configuration
+    // Uncomment and configure one of the following:
+    
+    // Google Analytics 4
+    // googleAnalytics: {
+    //   trackingID: 'G-XXXXXXXXXX',
+    //   anonymizeIP: true,
+    // },
+    
+    // Plausible Analytics (privacy-friendly)
+    // plausibleAnalytics: {
+    //   domain: 'your-domain.com',
+    // },
+    
     navbar: {
       title: 'Raven',
       logo: {
