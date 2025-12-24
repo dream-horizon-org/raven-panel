@@ -256,8 +256,8 @@ mvn verify
 We welcome contributions! Please read our contributing guidelines:
 
 - **Raven Panel**: [Contributing Guide](https://dream-horizon-org.github.io/raven-panel/docs/raven-panel/development/contributing)
-- **Raven Client**: [CONTRIBUTING.md](../raven-client/CONTRIBUTING.md)
-- **Raven Thunder**: [CONTRIBUTING.md](../raven-thunder/CONTRIBUTING.md)
+- **Raven Client**: [CONTRIBUTING.md](https://github.com/dream-horizon-org/raven-client/blob/main/CONTRIBUTING.md)
+- **Raven Thunder**: [CONTRIBUTING.md](https://github.com/dream-horizon-org/raven-thunder/blob/main/CONTRIBUTING.md)
 
 ### Quick Contribution Steps
 
