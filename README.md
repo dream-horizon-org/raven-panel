@@ -32,7 +32,7 @@ A powerful Next.js web application for creating, managing, and orchestrating cus
 - ⏰ Scheduling and automation
 - 📈 Analytics and engagement tracking
 
-**📖 [Raven Panel Documentation →](https://dream-horizon-org.github.io/raven-panel/docs/raven-panel/intro)**
+**📖 [Raven Panel Documentation →](https://raven.dreamhorizon.org/docs/raven-panel/intro)**
 
 ### 2. **Raven Client** (Mobile SDK)
 A React Native SDK that integrates seamlessly into your mobile applications to display nudges, tooltips, and event-driven engagements.
@@ -139,7 +139,7 @@ Comprehensive documentation is available on our [Documentation Site](https://dre
 ### Documentation Sections
 
 - **[Getting Started](https://dream-horizon-org.github.io/raven-panel/docs/getting-started)** - Complete platform setup guide
-- **[Raven Panel](https://dream-horizon-org.github.io/raven-panel/docs/raven-panel/intro)** - Web dashboard documentation
+- **[Raven Panel](https://raven.dreamhorizon.org/docs/raven-panel/intro)** - Web dashboard documentation
 - **[Raven Client](https://dream-horizon-org.github.io/raven-panel/docs/raven-client/introduction)** - Mobile SDK documentation
 - **[Raven Thunder](https://dream-horizon-org.github.io/raven-panel/docs/raven-thunder/getting-started/overview)** - Backend service documentation
 

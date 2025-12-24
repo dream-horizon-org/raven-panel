@@ -7,7 +7,7 @@
   text-align: center;
   position: relative;
   overflow: hidden;
-  background: 
+  background:
     linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4338ca 100%),
     radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.2) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.15) 0%, transparent 50%);
@@ -15,7 +15,7 @@
 }
 
 [data-theme='dark'] .heroBanner {
-  background: 
+  background:
     linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #334155 100%),
     radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.12) 0%, transparent 50%);
@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
   pointer-events: none;
@@ -96,7 +96,7 @@
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: 0;
+  margin-top: 4rem;
   margin-bottom: 0;
 }
 
@@ -109,7 +109,7 @@
   font-weight: 600;
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(16, 185, 129, 0.3),
     0 0 0 0 rgba(16, 185, 129, 0);
   letter-spacing: 0.01em;
@@ -118,7 +118,7 @@
 .getStartedButton:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 8px 28px rgba(16, 185, 129, 0.4),
     0 0 0 4px rgba(16, 185, 129, 0.15);
   color: #ffffff;
@@ -279,7 +279,7 @@
 
 .componentCard:hover {
   transform: translateY(-6px);
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.08),
     0 0 0 1px var(--ifm-color-emphasis-300);
   border-color: var(--ifm-color-emphasis-300);
@@ -296,7 +296,7 @@
 }
 
 [data-theme='dark'] .componentCard:hover {
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.4),
     0 0 0 1px var(--ifm-color-emphasis-300);
 }
@@ -533,9 +533,9 @@
   min-height: 300px;
   padding-top: 2rem;
   border-radius: 20px;
-  overflow: visible;
-  background: linear-gradient(135deg, 
-    rgba(var(--use-case-color-rgb, 99, 102, 241), 0.05) 0%, 
+  overflow: hidden;
+  background: linear-gradient(135deg,
+    rgba(var(--use-case-color-rgb, 99, 102, 241), 0.05) 0%,
     rgba(var(--use-case-color-rgb, 99, 102, 241), 0.02) 100%);
 }
 
@@ -569,26 +569,26 @@
   border-radius: 20px;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 20px;
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .useCaseRow:hover .useCaseImage {
   transform: scale(1.05);
-  box-shadow: 
+  box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 [data-theme='dark'] .useCaseImage {
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 [data-theme='dark'] .useCaseRow:hover .useCaseImage {
-  box-shadow: 
+  box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
@@ -604,7 +604,7 @@
   border-radius: 20px;
   background: var(--ifm-background-surface-color);
   border: 2px solid var(--ifm-color-emphasis-200);
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.05);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -612,19 +612,19 @@
 
 .useCaseRow:hover .useCaseIconWrapper {
   transform: scale(1.05) rotate(3deg);
-  box-shadow: 
+  box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 [data-theme='dark'] .useCaseIconWrapper {
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 [data-theme='dark'] .useCaseRow:hover .useCaseIconWrapper {
-  box-shadow: 
+  box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
@@ -637,8 +637,8 @@
   width: 250px;
   height: 250px;
   border-radius: 50%;
-  background: radial-gradient(circle, 
-    rgba(var(--use-case-color-rgb, 99, 102, 241), 0.15) 0%, 
+  background: radial-gradient(circle,
+    rgba(var(--use-case-color-rgb, 99, 102, 241), 0.15) 0%,
     transparent 70%);
   opacity: 0.6;
   transition: opacity 0.4s ease;
@@ -1232,8 +1232,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(var(--feature-color-rgb, 99, 102, 241), 0.05) 0%, 
+  background: linear-gradient(135deg,
+    rgba(var(--feature-color-rgb, 99, 102, 241), 0.05) 0%,
     transparent 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1246,14 +1246,14 @@
 
 .featureCard:hover {
   transform: translateY(-6px);
-  box-shadow: 
+  box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.1),
     0 0 0 1px var(--ifm-color-emphasis-300);
   border-color: var(--ifm-color-emphasis-300);
 }
 
 [data-theme='dark'] .featureCard:hover {
-  box-shadow: 
+  box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.3),
     0 0 0 1px var(--ifm-color-emphasis-300);
 }
@@ -1302,7 +1302,7 @@
 /* CTA Section - Enhanced Dark Gradient */
 .cta {
   padding: 8rem 0;
-  background: 
+  background:
     linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%),
     radial-gradient(ellipse at 20% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 60%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
@@ -1313,7 +1313,7 @@
 }
 
 [data-theme='dark'] .cta {
-  background: 
+  background:
     linear-gradient(135deg, #0a0e1a 0%, #0f172a 25%, #1e293b 50%, #334155 75%, #475569 100%),
     radial-gradient(ellipse at 20% 40%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 60%, rgba(16, 185, 129, 0.15) 0%, transparent 60%),
@@ -1337,7 +1337,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 30% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
@@ -1389,7 +1389,7 @@
   font-weight: 600;
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(16, 185, 129, 0.35),
     0 0 0 0 rgba(16, 185, 129, 0);
   letter-spacing: 0.01em;
@@ -1398,7 +1398,7 @@
 .ctaButton:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(16, 185, 129, 0.45),
     0 0 0 4px rgba(16, 185, 129, 0.2);
   color: #ffffff;
