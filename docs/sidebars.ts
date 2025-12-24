@@ -130,7 +130,6 @@ const sidebars: SidebarsConfig = {
           label: 'Backend',
           collapsed: true,
           items: [
-            'raven-thunder/index',
             {
               type: 'category',
               label: 'Getting Started',
