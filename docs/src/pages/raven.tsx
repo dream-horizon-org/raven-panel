@@ -79,9 +79,9 @@ export default function RavenPromo() {
                 buttonText="Learn More"
               />
               <FeatureCard 
-                title="Raven Panel"
+                title="Raven Dashboard"
                 icon="📊"
-                description="Intuitive dashboard for managing customer journeys. Create, configure, and monitor your engagement campaigns."
+                description="Intuitive web dashboard for managing customer journeys. Create, configure, and monitor your engagement campaigns."
                 link="/"
                 buttonText="Learn More"
               />
@@ -154,7 +154,7 @@ export default function RavenPromo() {
               <Link
                 className={styles.primaryButton}
                 to="/docs/">
-                Get Started with Raven Panel
+                Get Started with Raven Dashboard
               </Link>
               <Link
                 className={styles.secondaryButton}

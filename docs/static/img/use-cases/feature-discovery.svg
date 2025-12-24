@@ -1,0 +1,37 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="discoveryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.06" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.02" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background box -->
+  <rect x="0" y="0" width="400" height="300" fill="url(#discoveryGrad)" rx="16"/>
+  
+  <!-- App frame - centered and contained -->
+  <rect x="80" y="50" width="240" height="200" rx="10" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5" opacity="0.9"/>
+  
+  <!-- Feature boxes - inside app -->
+  <rect x="110" y="80" width="70" height="55" rx="5" fill="#f59e0b" opacity="0.08" stroke="#f59e0b" stroke-width="1.5"/>
+  <rect x="110" y="80" width="70" height="12" rx="5" fill="#f59e0b" opacity="0.15"/>
+  
+  <rect x="190" y="80" width="70" height="55" rx="5" fill="#f59e0b" opacity="0.08" stroke="#f59e0b" stroke-width="1.5"/>
+  <rect x="190" y="80" width="70" height="12" rx="5" fill="#f59e0b" opacity="0.15"/>
+  
+  <!-- Highlighted feature - inside app -->
+  <rect x="110" y="150" width="150" height="60" rx="5" fill="#f59e0b" opacity="0.1" stroke="#f59e0b" stroke-width="2"/>
+  <rect x="110" y="150" width="150" height="15" rx="5" fill="#f59e0b" opacity="0.2"/>
+  
+  <!-- Sparkle - inside app -->
+  <path d="M105 155 L108 155 L108 158 L105 158 Z" fill="#f59e0b" opacity="0.4"/>
+  <path d="M265 155 L268 155 L268 158 L265 158 Z" fill="#f59e0b" opacity="0.4"/>
+  
+  <!-- Tooltip - contained within bounds -->
+  <rect x="150" y="220" width="60" height="25" rx="5" fill="#f59e0b" opacity="0.12" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="180" y="236" font-family="Arial, sans-serif" font-size="9" font-weight="500" fill="#f59e0b" text-anchor="middle" opacity="0.6">Try it!</text>
+  
+  <!-- Arrow - contained -->
+  <path d="M180 220 L180 185" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.3"/>
+  <path d="M176 190 L180 185 L184 190" stroke="#f59e0b" stroke-width="1.5" fill="none" opacity="0.3"/>
+</svg>
