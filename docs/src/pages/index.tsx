@@ -200,7 +200,7 @@ function HomepageHeader() {
           <div className={styles.buttons}>
             <Link
               className={clsx('button button--lg', styles.docsButton)}
-              to={`${docsUrl}/raven-client/introduction`}>
+              to={`${docsUrl}/introduction`}>
               View Documentation
             </Link>
           </div>
