@@ -322,7 +322,7 @@ function HomepageComponents() {
 type UseCaseItem = {
   title: string;
   description: string;
-  icon: React.ReactNode;
+  image: string;
   color: string;
 };
 
@@ -330,31 +330,32 @@ const UseCases: UseCaseItem[] = [
   {
     title: 'Onboard New Users with Guided Tours',
     description: 'Create step-by-step onboarding journeys that guide first-time users through your app. Show contextual tooltips when users land on key screens, display bottom sheets explaining core features, and use multi-step flows to ensure users reach their "aha moment" faster.',
-    icon: <OnboardingIcon color="#6366f1" />,
+    image: 'img/use-cases/onboarding.svg',
     color: '#6366f1',
   },
   {
     title: 'Drive Feature Discovery at the Right Moment',
     description: 'Highlight new or underused features exactly when users need them. Show tooltips when users navigate to relevant screens, trigger bottom sheets after specific actions, and guide users to discover features that solve their immediate problems.',
-    icon: <DiscoveryIcon color="#f59e0b" />,
+    image: 'img/use-cases/feature-discovery.svg',
     color: '#f59e0b',
   },
   {
     title: 'Reduce Drop-offs in Critical Flows',
     description: 'Deploy targeted nudges during checkout, signup, or upgrade flows to minimize abandonment. Show helpful tooltips explaining form fields, display bottom sheets with special offers, or use popups to address concerns that might cause users to leave.',
-    icon: <ConversionIcon color="#10b981" />,
+    image: 'img/use-cases/conversion.svg',
     color: '#10b981',
   },
   {
     title: 'Re-engage Inactive Users with Personalized Campaigns',
     description: 'Win back users who haven\'t logged in recently by targeting them with relevant messages. Create journeys that trigger when inactive users return, show them what\'s new, highlight features they haven\'t tried, or offer incentives to re-engage.',
-    icon: <ReengageIcon color="#8b5cf6" />,
+    image: 'img/use-cases/re-engagement.svg',
     color: '#8b5cf6',
   },
 ];
 
-function UseCaseCard({title, description, icon, color, index}: UseCaseItem & { index: number }) {
+function UseCaseCard({title, description, image, color, index}: UseCaseItem & { index: number }) {
   const isEven = index % 2 === 0;
+  const imageUrl = useBaseUrl(image);
   
   // Convert hex color to RGB for CSS variables
   const hexToRgb = (hex: string) => {
@@ -381,8 +382,16 @@ function UseCaseCard({title, description, icon, color, index}: UseCaseItem & { i
           '--use-case-color-rgb': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
           '--use-case-color': color
         } as React.CSSProperties}>
-        <div className={styles.useCaseIconWrapper}>
-          {icon}
+        <div className={styles.useCaseImageWrapper}>
+          <img 
+            src={imageUrl} 
+            alt={title}
+            className={styles.useCaseImage}
+            onError={(e) => {
+              // Fallback to hide broken image
+              e.currentTarget.style.display = 'none';
+            }}
+          />
         </div>
         <div className={styles.useCaseGradient}></div>
       </div>
