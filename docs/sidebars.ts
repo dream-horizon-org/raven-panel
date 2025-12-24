@@ -136,18 +136,7 @@ const sidebars: SidebarsConfig = {
               collapsed: true,
               items: [
                 'raven-thunder/getting-started/overview',
-                'raven-thunder/getting-started/core-entities',
                 'raven-thunder/getting-started/quickstart',
-                'raven-thunder/getting-started/running',
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Architecture',
-              collapsed: true,
-              items: [
-                'raven-thunder/architecture/modules',
-                'raven-thunder/architecture/configuration',
               ],
             },
             {
@@ -158,14 +147,6 @@ const sidebars: SidebarsConfig = {
                 'raven-thunder/api/scalar',
                 'raven-thunder/api/admin-contracts',
                 'raven-thunder/api/thunder-api-contracts',
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Admin',
-              collapsed: true,
-              items: [
-                'raven-thunder/admin/overview',
               ],
             },
             {
