@@ -5,8 +5,9 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Raven',
-      collapsed: true,
+      collapsed: false,
       items: [
+        'introduction',
         'getting-started',
         {
           type: 'category',
