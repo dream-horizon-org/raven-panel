@@ -134,7 +134,7 @@ cd ios && pod install && cd ..
 
 ## 📚 Documentation
 
-Comprehensive documentation is available on our [Documentation Site](https://raven.dreamhorizon.org/).
+Comprehensive documentation is available on our [Documentation Site](https://raven.dreamhorizon.org/docs/introduction).
 
 ### Documentation Sections
 
