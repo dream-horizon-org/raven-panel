@@ -339,6 +339,260 @@ const UseCases: UseCaseItem[] = [
   },
 ];
 
+// Animated Mobile Tooltip Component for Guided Tours
+function AnimatedMobileTooltip({ color }: { color: string }) {
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3000); // Show for 3 seconds
+    }, 5000); // Repeat every 5 seconds
+
+    // Initial delay
+    setTimeout(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className={styles.mobileFrame}>
+      <div className={styles.mobileScreen}>
+        {/* Mock app content */}
+        <div className={styles.mockAppContent}>
+          <div className={styles.mockHeader}>
+            <div className={styles.mockStatusBar}>
+              <span>9:41</span>
+              <div className={styles.mockBattery}></div>
+            </div>
+            <div className={styles.mockNavBar}>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+            </div>
+          </div>
+          <div className={styles.mockContent}>
+            <div className={styles.mockCard}></div>
+            <div className={styles.mockCard}></div>
+            <div className={styles.mockCard}></div>
+          </div>
+        </div>
+        
+        {/* Animated Tooltip */}
+        <div 
+          className={clsx(styles.animatedTooltip, isVisible && styles.animatedTooltipVisible)}
+          style={{ '--tooltip-color': color } as React.CSSProperties}>
+          <div className={styles.tooltipArrow}></div>
+          <div className={styles.tooltipContent}>
+            <div className={styles.tooltipTitle}>Start Your Journey</div>
+            <div className={styles.tooltipText}>Follow this guide to explore key features and reach your aha moment faster</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Animated Bottom Sheet Component for Feature Discovery
+function AnimatedBottomSheet({ color }: { color: string }) {
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3500); // Show for 3.5 seconds
+    }, 5500); // Repeat every 5.5 seconds
+
+    // Initial delay
+    setTimeout(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3500);
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className={styles.mobileFrame}>
+      <div className={styles.mobileScreen}>
+        {/* Mock app content */}
+        <div className={styles.mockAppContent}>
+          <div className={styles.mockHeader}>
+            <div className={styles.mockStatusBar}>
+              <span>9:41</span>
+              <div className={styles.mockBattery}></div>
+            </div>
+            <div className={styles.mockNavBar}>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+            </div>
+          </div>
+          <div className={styles.mockContent}>
+            <div className={styles.mockCard}></div>
+            <div className={styles.mockCard}></div>
+            <div className={styles.mockCard}></div>
+          </div>
+        </div>
+        
+        {/* Animated Bottom Sheet */}
+        <div 
+          className={clsx(styles.animatedBottomSheet, isVisible && styles.animatedBottomSheetVisible)}
+          style={{ '--bottom-sheet-color': color } as React.CSSProperties}>
+          <div className={styles.bottomSheetHandle}></div>
+          <div className={styles.bottomSheetContent}>
+            <div className={styles.bottomSheetTitle}>Discover New Features</div>
+            <div className={styles.bottomSheetText}>Try our new advanced search to find exactly what you need. It&apos;s faster and more intuitive!</div>
+            <div className={styles.bottomSheetButton}>Explore Feature</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Animated Popup Component for Reducing Drop-offs
+function AnimatedPopup({ color }: { color: string }) {
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 4000); // Show for 4 seconds
+    }, 6000); // Repeat every 6 seconds
+
+    // Initial delay
+    setTimeout(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 4000);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className={styles.mobileFrame}>
+      <div className={styles.mobileScreen}>
+        {/* Mock app content */}
+        <div className={styles.mockAppContent}>
+          <div className={styles.mockHeader}>
+            <div className={styles.mockStatusBar}>
+              <span>9:41</span>
+              <div className={styles.mockBattery}></div>
+            </div>
+            <div className={styles.mockNavBar}>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+            </div>
+          </div>
+          <div className={styles.mockContent}>
+            <div className={styles.mockCard}></div>
+            <div className={styles.mockCard}></div>
+            <div className={styles.mockCard}></div>
+          </div>
+        </div>
+        
+        {/* Backdrop overlay */}
+        <div 
+          className={clsx(styles.popupBackdrop, isVisible && styles.popupBackdropVisible)}
+        ></div>
+        
+        {/* Animated Popup */}
+        <div 
+          className={clsx(styles.animatedPopup, isVisible && styles.animatedPopupVisible)}
+          style={{ '--popup-color': color } as React.CSSProperties}>
+          <div className={styles.popupContent}>
+            <div className={styles.popupIcon}>🎁</div>
+            <div className={styles.popupTitle}>Special Offer!</div>
+            <div className={styles.popupText}>Complete your checkout now and get 20% off your first purchase. Limited time only!</div>
+            <div className={styles.popupButtons}>
+              <div className={styles.popupButtonPrimary}>Claim Offer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Animated Element Spotlight Component for Re-engagement
+function AnimatedElementSpotlight({ color, colorRgb }: { color: string; colorRgb: string }) {
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3000); // Show for 3 seconds
+    }, 5000); // Repeat every 5 seconds
+
+    // Initial delay
+    setTimeout(() => {
+      setIsVisible(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className={styles.mobileFrame}>
+      <div className={styles.mobileScreen}>
+        {/* Mock app content */}
+        <div className={styles.mockAppContent}>
+          <div className={styles.mockHeader}>
+            <div className={styles.mockStatusBar}>
+              <span>9:41</span>
+              <div className={styles.mockBattery}></div>
+            </div>
+            <div className={styles.mockNavBar}>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+              <div className={styles.mockNavItem}></div>
+            </div>
+          </div>
+          <div className={styles.mockContent}>
+            <div 
+              className={clsx(
+                styles.mockCard, 
+                styles.spotlightCard,
+                isVisible && styles.spotlightCardActive
+              )}
+              style={{ 
+                '--spotlight-color': color,
+                '--spotlight-color-rgb': colorRgb
+              } as React.CSSProperties}
+            >
+              {isVisible && <div className={styles.spotlightBadge}>New</div>}
+            </div>
+            <div className={clsx(styles.mockCard, styles.spotlightCard)}></div>
+            <div className={clsx(styles.mockCard, styles.spotlightCard)}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function UseCaseCard({title, description, image, color, index}: UseCaseItem & { index: number }) {
   const isEven = index % 2 === 0;
   const imageUrl = useBaseUrl(image);
@@ -369,15 +623,25 @@ function UseCaseCard({title, description, image, color, index}: UseCaseItem & { 
           '--use-case-color': color
         } as React.CSSProperties}>
         <div className={styles.useCaseImageWrapper}>
-          <img 
-            src={imageUrl} 
-            alt={title}
-            className={styles.useCaseImage}
-            onError={(e) => {
-              // Fallback to hide broken image
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+          {index === 0 ? (
+            <AnimatedMobileTooltip color={color} />
+          ) : index === 1 ? (
+            <AnimatedBottomSheet color={color} />
+          ) : index === 2 ? (
+            <AnimatedPopup color={color} />
+          ) : index === 3 ? (
+            <AnimatedElementSpotlight color={color} colorRgb={`${rgb.r}, ${rgb.g}, ${rgb.b}`} />
+          ) : (
+            <img 
+              src={imageUrl} 
+              alt={title}
+              className={styles.useCaseImage}
+              onError={(e) => {
+                // Fallback to hide broken image
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
         </div>
         <div className={styles.useCaseGradient}></div>
       </div>
