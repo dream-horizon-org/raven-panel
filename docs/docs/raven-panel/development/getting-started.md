@@ -47,7 +47,7 @@ cp .env.template .env
 # Edit .env and replace {VARIABLE_NAME} placeholders with your actual values
 ```
 
-The `.env.template` file contains all required and optional variables with `{VARIABLE_NAME}` placeholders. Replace each placeholder with your actual configuration values. See the [Deployment](/docs/development/deployment#environment-configuration) page for detailed variable descriptions.
+The `.env.template` file contains all required and optional variables with `{VARIABLE_NAME}` placeholders. Replace each placeholder with your actual configuration values. See the [Deployment](/docs/raven-panel/development/deployment#environment-configuration) page for detailed variable descriptions.
 
 **3. Build and run with Docker Compose:**
 ```bash
