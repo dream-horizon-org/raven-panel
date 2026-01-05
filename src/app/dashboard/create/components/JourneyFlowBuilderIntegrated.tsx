@@ -128,6 +128,7 @@ interface JourneyFlowBuilderIntegratedProps {
     (() => boolean) | null
   >;
   checkUnconnectedNodesRef?: React.MutableRefObject<(() => boolean) | null>;
+  syncFlowToFormRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export default function JourneyFlowBuilderIntegrated({
@@ -141,6 +142,7 @@ export default function JourneyFlowBuilderIntegrated({
   syncTemplateRef,
   checkAllEngagementsHaveTemplatesRef,
   checkUnconnectedNodesRef,
+  syncFlowToFormRef,
 }: JourneyFlowBuilderIntegratedProps) {
   const theme = useTheme();
   const { setValue, getValues } = useFormContext<CreateJourneyFormData>();
@@ -193,6 +195,7 @@ export default function JourneyFlowBuilderIntegrated({
     string | null
   >(null);
   const panelCloseHandlerRef = useRef<(() => void) | null>(null);
+  const saveNodePanelRef = useRef<(() => void) | null>(null);
   const hasOpenedInitialNodeRef = useRef(false);
   const [eventStateMap, setEventStateMap] = useState<EventStateMap>(new Map());
   const [nodeStateMap, setNodeStateMap] = useState<NodeStateMap>(new Map());
@@ -918,7 +921,11 @@ export default function JourneyFlowBuilderIntegrated({
   // Auto-open configuration panel for initial node
   useEffect(() => {
     // Only open once, if panel is not already open, and we have nodes
-    if (hasOpenedInitialNodeRef.current || configPanelOpen || nodes.length === 0) {
+    if (
+      hasOpenedInitialNodeRef.current ||
+      configPanelOpen ||
+      nodes.length === 0
+    ) {
       return;
     }
 
@@ -976,8 +983,9 @@ export default function JourneyFlowBuilderIntegrated({
 
   const syncFlowToForm = useCallback(() => {
     // Only run if initialization is complete
-    if (!isInitializedRef.current) return; // Rebuild state maps first to ensure they're up to date
+    if (!isInitializedRef.current) return;
 
+    // Rebuild state maps first to ensure they're up to date
     const esm = buildEventStateMap(nodes as Node<JourneyNodeData>[]);
     const nsm = buildNodeStateMap(nodes as Node<JourneyNodeData>[], esm);
     setEventStateMap(esm);
@@ -1360,6 +1368,19 @@ export default function JourneyFlowBuilderIntegrated({
 
     replaceActions(updatedActions);
   }, [nodes, edges, setValue, getValues]);
+
+  useEffect(() => {
+    if (syncFlowToFormRef) {
+      syncFlowToFormRef.current = () => {
+        if (configPanelOpen && saveNodePanelRef.current) {
+          saveNodePanelRef.current();
+        }
+        setTimeout(() => {
+          syncFlowToForm();
+        }, 100);
+      };
+    }
+  }, [syncFlowToForm, syncFlowToFormRef, configPanelOpen]);
 
   // FIX: This effect now ONLY runs when nodes/edges (the React Flow graph state) change due to user interaction,
   // triggering the sync *back* to the form state.
@@ -2827,6 +2848,7 @@ export default function JourneyFlowBuilderIntegrated({
             highlightedBranchId={highlightedBranchId}
             highlightedEngagementId={highlightedEngagementId}
             onRequestClose={panelCloseHandlerRef}
+            saveNodePanelRef={saveNodePanelRef}
             onEngagementTemplateSelect={(
               engagementId: string,
               _engagementType: string

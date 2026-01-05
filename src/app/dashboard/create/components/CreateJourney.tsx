@@ -196,8 +196,14 @@ export default function CreateJourneyPage({
   }, [journeyId, isLoadingJourney, eventsData, setValue, getValues]);
 
   const onFormSubmit = async (data: CreateJourneyFormData) => {
+    if (syncFlowToFormRef.current) {
+      syncFlowToFormRef.current();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    const latestFormData = getValues() as CreateJourneyFormData;
+
     await submitJourney({
-      data,
+      data: latestFormData,
       errors,
       setError,
       clearErrors,
@@ -244,6 +250,7 @@ export default function CreateJourneyPage({
   const checkAllEngagementsHaveTemplatesRef = useRef<(() => boolean) | null>(
     null
   );
+  const syncFlowToFormRef = useRef<(() => void) | null>(null);
 
   const handleTemplateSaved = async () => {
     if (syncTemplateRef.current) {
@@ -376,6 +383,7 @@ export default function CreateJourneyPage({
                     checkAllEngagementsHaveTemplatesRef
                   }
                   checkUnconnectedNodesRef={checkUnconnectedNodesRef}
+                  syncFlowToFormRef={syncFlowToFormRef}
                 />
               </Box>
               {activeTab === "setup" && (

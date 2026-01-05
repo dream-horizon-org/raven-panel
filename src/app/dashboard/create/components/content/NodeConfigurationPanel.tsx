@@ -71,6 +71,7 @@ interface NodeConfigurationPanelProps {
     engagementId: string,
     engagementType: string
   ) => void;
+  saveNodePanelRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export default function NodeConfigurationPanel({
@@ -89,6 +90,7 @@ export default function NodeConfigurationPanel({
   highlightedEngagementId,
   onRequestClose,
   onEngagementTemplateSelect,
+  saveNodePanelRef,
 }: NodeConfigurationPanelProps) {
   const theme = useTheme();
   // Initialize form data
@@ -127,6 +129,7 @@ export default function NodeConfigurationPanel({
     getValues,
     setError,
     clearErrors,
+    trigger,
     formState: { isDirty, errors },
   } = useForm<JourneyNodeData & Record<string, unknown>>({
     defaultValues: getInitialData(),
@@ -363,8 +366,16 @@ export default function NodeConfigurationPanel({
 
   const onSubmit = useCallback(
     (data: JourneyNodeData) => {
+      const latestData = getValues() as JourneyNodeData;
+      const formData = {
+        ...latestData,
+        branches: latestData.branches || data.branches || [],
+        engagements: latestData.engagements || data.engagements || [],
+        eventName: latestData.eventName || data.eventName || "",
+      };
+
       // Validate that event name is selected before allowing save
-      const currentEventName = data.eventName || "";
+      const currentEventName = formData.eventName || "";
       if (!currentEventName || currentEventName.trim() === "") {
         setError("eventName", {
           type: "required",
@@ -378,10 +389,10 @@ export default function NodeConfigurationPanel({
 
       // First, clear all existing filter errors to start fresh
       // This prevents stale errors from deleted filters
-      if (data.branches && Array.isArray(data.branches)) {
+      if (formData.branches && Array.isArray(formData.branches)) {
         for (
           let branchIndex = 0;
-          branchIndex < data.branches.length;
+          branchIndex < formData.branches.length;
           branchIndex++
         ) {
           // Clear errors for up to 20 filters per branch to catch any stale errors
@@ -404,10 +415,10 @@ export default function NodeConfigurationPanel({
       if (data.branches && Array.isArray(data.branches)) {
         for (
           let branchIndex = 0;
-          branchIndex < data.branches.length;
+          branchIndex < formData.branches.length;
           branchIndex++
         ) {
-          const branch = data.branches[branchIndex];
+          const branch = formData.branches[branchIndex];
           // Only validate if branch has filters
           if (
             branch.filters &&
@@ -501,7 +512,7 @@ export default function NodeConfigurationPanel({
       if (formErrors?.branches) {
         for (
           let branchIndex = 0;
-          branchIndex < (data.branches?.length || 0);
+          branchIndex < (formData.branches?.length || 0);
           branchIndex++
         ) {
           if (formErrors.branches[branchIndex]?.filters) {
@@ -526,18 +537,18 @@ export default function NodeConfigurationPanel({
       savingNodeIdRef.current = node.id;
 
       // Store the data we're saving to compare later
-      const dataStr = JSON.stringify(data);
+      const dataStr = JSON.stringify(formData);
       lastSavedDataRef.current = dataStr;
       previousNodeIdRef.current = node.id;
 
-      // Update the node first
-      onUpdate(node.id, data);
+      // Update the node first with the latest form data
+      onUpdate(node.id, formData);
 
       // Close panel immediately after update
       // The component will unmount, preventing any further re-renders
       onClose();
     },
-    [node.id, onUpdate, onClose, setError, clearErrors]
+    [node.id, onUpdate, onClose, setError, clearErrors, getValues]
   );
 
   // Wrapper to clear stale errors before calling handleSubmit
@@ -678,7 +689,13 @@ export default function NodeConfigurationPanel({
             }
           : branch
       );
-      setValue("branches", updatedBranches, { shouldDirty: true });
+      setValue("branches", updatedBranches, {
+        shouldDirty: true,
+        shouldValidate: true,
+        shouldTouch: true,
+      });
+
+      trigger("branches");
 
       // Clear errors for fields that are being updated
       if (branchIndex >= 0 && filterIndex >= 0) {
@@ -699,7 +716,7 @@ export default function NodeConfigurationPanel({
         }
       }
     },
-    [getValues, setValue, clearErrors]
+    [getValues, setValue, clearErrors, trigger]
   );
 
   const handleDeleteBranchFilter = useCallback(
@@ -844,13 +861,21 @@ export default function NodeConfigurationPanel({
       const valueError = (errors as any)?.branches?.[branchIndex]?.filters?.[
         filterIndex
       ]?.value;
-      const selectedProperty = filter.property || "";
+
+      const currentBranches = getValues("branches") || [];
+      const currentBranch = currentBranches[branchIndex];
+      const currentFilter = currentBranch?.filters?.[filterIndex];
+
+      const selectedProperty = currentFilter?.property || filter.property || "";
+      const currentOperator = currentFilter?.operator || filter.operator || "=";
+      const currentValue =
+        currentFilter?.value !== undefined ? currentFilter.value : filter.value;
+
       const propertyType = propertyTypeMap.get(selectedProperty) || "string";
       const inputType = getInputType(propertyType);
       const normalizedType = normalizePropertyType(propertyType);
 
       // Convert value to number if property type is numeric
-      const currentValue = filter.value;
       const displayValue =
         isNumericType(propertyType) && currentValue
           ? typeof currentValue === "string"
@@ -866,14 +891,26 @@ export default function NodeConfigurationPanel({
               value={selectedProperty || null}
               onChange={(_: unknown, newValue: string | null) => {
                 const newProperty = newValue || "";
+                console.log(
+                  "Property onChange:",
+                  newProperty,
+                  "branchIndex:",
+                  branchIndex,
+                  "filterIndex:",
+                  filterIndex
+                );
                 onUpdate({ property: newProperty });
 
                 // Convert value if property type changes
                 if (newProperty && propertyTypeMap.has(newProperty)) {
                   const newPropertyType =
                     propertyTypeMap.get(newProperty) || "string";
-                  if (isNumericType(newPropertyType) && currentValue) {
-                    const numValue = parseFloat(String(currentValue));
+                  const latestBranches = getValues("branches") || [];
+                  const latestFilter =
+                    latestBranches[branchIndex]?.filters?.[filterIndex];
+                  const latestValue = latestFilter?.value;
+                  if (isNumericType(newPropertyType) && latestValue) {
+                    const numValue = parseFloat(String(latestValue));
                     if (!isNaN(numValue)) {
                       onUpdate({ value: String(numValue) });
                     }
@@ -905,10 +942,11 @@ export default function NodeConfigurationPanel({
           <TextField
             select
             label="Operator"
-            value={filter.operator}
-            onChange={(e) =>
-              onUpdate({ operator: e.target.value as Condition["operator"] })
-            }
+            value={currentOperator}
+            onChange={(e) => {
+              const newOperator = e.target.value as Condition["operator"];
+              onUpdate({ operator: newOperator });
+            }}
             size="small"
             sx={styles.filterOperatorFieldStyles}
             error={!!operatorError}
@@ -920,8 +958,6 @@ export default function NodeConfigurationPanel({
             <MenuItem value="<">&lt;</MenuItem>
             <MenuItem value=">=">≥</MenuItem>
             <MenuItem value="<=">≤</MenuItem>
-            <MenuItem value="in">In</MenuItem>
-            <MenuItem value="not in">Not In</MenuItem>
           </TextField>
           {inputType === "select" ? (
             <FormControl
@@ -933,7 +969,10 @@ export default function NodeConfigurationPanel({
               <Select
                 value={String(displayValue || "")}
                 label="Value"
-                onChange={(e) => onUpdate({ value: String(e.target.value) })}
+                onChange={(e) => {
+                  const newValue = String(e.target.value);
+                  onUpdate({ value: newValue });
+                }}
               >
                 <MenuItem value="true">True</MenuItem>
                 <MenuItem value="false">False</MenuItem>
@@ -980,7 +1019,7 @@ export default function NodeConfigurationPanel({
         </Box>
       );
     },
-    [availableProperties, propertyTypeMap, errors]
+    [availableProperties, propertyTypeMap, errors, getValues, branches]
   );
 
   // Generate dynamic header label based on node state
@@ -1289,7 +1328,8 @@ export default function NodeConfigurationPanel({
                 Transitions
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Set up what happens next in your journey. Choose where users go after this step and add rules to control the flow.
+                Set up what happens next in your journey. Choose where users go
+                after this step and add rules to control the flow.
               </Typography>
             </Box>
             <Button
@@ -1316,7 +1356,8 @@ export default function NodeConfigurationPanel({
             >
               <Typography variant="caption">
                 <strong>How it works:</strong> When a user performs{" "}
-                <strong>'{eventName || "selected event"}'</strong> and meets all your rules, they move to the next step.
+                <strong>'{eventName || "selected event"}'</strong> and meets all
+                your rules, they move to the next step.
               </Typography>
             </Alert>
           )}
