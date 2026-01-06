@@ -36,7 +36,6 @@ export const FEATURES = [
 ];
 
 export const ORGANIZATIONS = getOrganizations();
-console.log("ORGANIZATIONS", ORGANIZATIONS);
 
 export const TENANTS = ORGANIZATIONS.map((name) => ({ name }));
 
