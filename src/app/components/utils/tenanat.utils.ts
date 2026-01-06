@@ -1,8 +1,27 @@
 export const getOrganizations = (): readonly string[] => {
   const orgsEnv = process.env.NEXT_PUBLIC_ORGANIZATIONS;
   if (orgsEnv) {
-    return orgsEnv
-      .split(",")
+    const trimmed = orgsEnv.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(trimmed) as string[];
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map((org) => String(org).trim())
+            .filter(Boolean) as readonly string[];
+        }
+      } catch (e) {
+        console.warn("Failed to parse NEXT_PUBLIC_ORGANIZATIONS as JSON:", e);
+      }
+    }
+    if (trimmed.includes(",")) {
+      return trimmed
+        .split(",")
+        .map((org) => org.trim())
+        .filter(Boolean) as readonly string[];
+    }
+    return trimmed
+      .split(/\s+/)
       .map((org) => org.trim())
       .filter(Boolean) as readonly string[];
   }
