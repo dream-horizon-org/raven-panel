@@ -1,5 +1,6 @@
 export const getOrganizations = (): readonly string[] => {
   const orgsEnv = process.env.NEXT_PUBLIC_ORGANIZATIONS;
+  console.log("orgsEnv", orgsEnv);
   if (orgsEnv) {
     const trimmed = orgsEnv.trim();
     if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
