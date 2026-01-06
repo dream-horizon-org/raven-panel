@@ -3,7 +3,6 @@ export const getOrganizations = (): readonly string[] => {
   console.log("orgsEnv", orgsEnv);
   if (orgsEnv) {
     const trimmed = orgsEnv.trim();
-    // Check if it's a JSON array format: ["dream11", "criq"]
     if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
       try {
         const parsed = JSON.parse(trimmed) as string[];
@@ -16,14 +15,12 @@ export const getOrganizations = (): readonly string[] => {
         console.warn("Failed to parse NEXT_PUBLIC_ORGANIZATIONS as JSON:", e);
       }
     }
-    // Handle comma-separated format: dream11,criq
     if (trimmed.includes(",")) {
       return trimmed
         .split(",")
         .map((org) => org.trim())
         .filter(Boolean) as readonly string[];
     }
-    // Handle space-separated format: dream11 criq
     return trimmed
       .split(/\s+/)
       .map((org) => org.trim())
