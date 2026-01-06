@@ -331,8 +331,9 @@ export const transformFormDataToTestApiFormat = (
 
   // Build request payload - previousCtaId is not included in body
   // For updates, it's in the URL path; for creates, it's not needed
+  // Note: expiresInMinutes is NOT in the request body per API contract
+  // It's only used internally to calculate ctaValidTill
   const requestPayload: TestJourneyRequest = {
-    expiresInMinutes: expiresInMinutesToUse, // Always a valid number
     userIds,
     rule: {
       stateToAction,

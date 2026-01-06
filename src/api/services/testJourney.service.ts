@@ -5,7 +5,6 @@ import { transformFormDataToTestApiFormat } from "@/app/dashboard/create/utils/t
 
 export interface TestJourneyRequest {
   previousCtaId?: number | null;
-  expiresInMinutes: number; // Required - test journey must have expiration time
   userIds: number[];
   rule: {
     stateToAction: Record<string, string>;
@@ -64,7 +63,7 @@ export const createTestJourney = async (
 ): Promise<TestJourneyResponse> => {
   const apiPayload = transformFormDataToTestApiFormat(formData);
 
-  const endpoint = `${TEST_JOURNEY_BASE_URL}/ctas/test`; // Rewrites to http://thunder-master.dream11.local/thunder/ctas/test
+  const endpoint = `${TEST_JOURNEY_BASE_URL}/ctas/test/create`; // Rewrites to http://thunder-master.dream11.local/thunder/ctas/test
 
   const response = await axiosInstance.post<TestJourneyResponse>(
     endpoint,
@@ -80,12 +79,17 @@ export const updateTestJourney = async (
 ): Promise<TestJourneyResponse> => {
   const apiPayload = transformFormDataToTestApiFormat(formData);
 
-  // const endpoint = `${API_BASE_URLS.THUNDER}/thunder/ctas/test/${ctaId}`;
-  const endpoint = `${TEST_JOURNEY_BASE_URL}/ctas/test/${ctaId}`; // Rewrites to http://thunder-master.dream11.local/thunder/ctas/test/${ctaId}
+  // Updates use POST to the same create endpoint with previousCtaId in the body
+  const updatePayload: TestJourneyRequest = {
+    ...apiPayload,
+    previousCtaId: ctaId,
+  };
 
-  const response = await axiosInstance.put<TestJourneyResponse>(
+  const endpoint = `${TEST_JOURNEY_BASE_URL}/ctas/test/create`; // Same endpoint as create
+
+  const response = await axiosInstance.post<TestJourneyResponse>(
     endpoint,
-    apiPayload
+    updatePayload
   );
 
   return response.data;
