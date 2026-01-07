@@ -39,31 +39,26 @@ const getBaseUrlForEvents = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
   const baseUrl = getBaseUrl();
 
-  let eventPath: string | undefined;
+  let eventUrl: string | undefined;
   if (env === "production") {
-    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+    eventUrl = `${baseUrl}${process.env.NEXT_PUBLIC_EVENT_URL_PROD}`;
   } else if (env === "uat") {
-    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+    eventUrl = `${baseUrl}${process.env.NEXT_PUBLIC_EVENT_URL_UAT}`;
   } else {
-    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+    eventUrl = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
   }
 
-  if (!eventPath) {
+  if (!eventUrl) {
     return;
   }
 
-  if (!baseUrl) {
-    return;
-  }
-
-  return `${baseUrl}${eventPath}`;
+  return eventUrl.replace(/\/+$/, "");
 };
 
 export const API_BASE_URLS = {
   THUNDER: getBaseUrl(),
   USER_COHORTS: getBaseUrlForCohorts(),
   EVENTS: getBaseUrlForEvents(),
-  CONCORD: getBaseUrl(),
 };
 
 export const API_ENDPOINTS = {

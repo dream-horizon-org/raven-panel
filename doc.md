@@ -136,7 +136,7 @@ export interface SystemPropertiesResponse {
   - `x-tenant-id: string`
   - `x-skip-validation: false`
 - **Environment Variable**: `NEXT_PUBLIC_SYSTEM_PROPERTIES_URL` (base URL for system properties API)
-  - If not set, falls back to `NEXT_PUBLIC_EVENT_URL` (both typically use the Concord service base URL)
+  - If not set, falls back to `NEXT_PUBLIC_EVENT_URL`
 - **Note**: The app extracts property names and types from any of the supported formats. If objects are provided, it uses the `propertyName` and `type` properties. If strings are provided, it uses them directly as property names.
 
 ---

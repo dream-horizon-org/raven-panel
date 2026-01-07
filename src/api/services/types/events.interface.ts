@@ -4,29 +4,11 @@ export interface EventProperty {
   expectedValue: string;
   isMandatory: boolean;
   description: string;
-  archived: boolean;
-}
-
-export interface EventMetadata {
-  eventName: string;
-  eventType: string;
-  description: string;
-  eventSources: string[];
-  screenNames: string[];
-  featureName?: string;
-  tags?: string[];
-  createdBy: string;
-  createdAt: string;
-  owners: string[];
-  dtName: string;
-  companyName: string;
-  archived: boolean;
-  isActive: boolean;
 }
 
 export interface EventListItem {
+  eventName: string;
   properties: EventProperty[];
-  metadata: EventMetadata;
 }
 
 export interface EventsSchemaResponse {

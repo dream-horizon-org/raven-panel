@@ -58,7 +58,7 @@ interface NodeConfigurationPanelProps {
   onDeleteEdge: (edgeId: string) => void;
   mockEventNames: string[];
   events?: Array<{
-    metadata: { eventName: string };
+    eventName: string;
     properties: Array<{ propertyName: string; type: string }>;
   }>;
   isLoadingEvents?: boolean;
@@ -794,9 +794,9 @@ export default function NodeConfigurationPanel({
     if (eventName && events.length > 0) {
       const selectedEvent = events.find(
         (e: {
-          metadata: { eventName: string };
+          eventName: string;
           properties: Array<{ propertyName: string; type: string }>;
-        }) => e.metadata.eventName === eventName
+        }) => e.eventName === eventName
       );
       if (selectedEvent?.properties) {
         selectedEvent.properties.forEach(
@@ -1289,7 +1289,8 @@ export default function NodeConfigurationPanel({
                 Transitions
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Set up what happens next in your journey. Choose where users go after this step and add rules to control the flow.
+                Set up what happens next in your journey. Choose where users go
+                after this step and add rules to control the flow.
               </Typography>
             </Box>
             <Button
@@ -1316,7 +1317,8 @@ export default function NodeConfigurationPanel({
             >
               <Typography variant="caption">
                 <strong>How it works:</strong> When a user performs{" "}
-                <strong>'{eventName || "selected event"}'</strong> and meets all your rules, they move to the next step.
+                <strong>'{eventName || "selected event"}'</strong> and meets all
+                your rules, they move to the next step.
               </Typography>
             </Alert>
           )}

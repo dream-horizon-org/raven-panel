@@ -110,7 +110,7 @@ interface JourneyFlowBuilderIntegratedProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
   events: Array<{
-    metadata: { eventName: string };
+    eventName: string;
     properties: Array<{ propertyName: string; type: string }>;
   }>;
   isLoadingEvents?: boolean;
@@ -918,7 +918,11 @@ export default function JourneyFlowBuilderIntegrated({
   // Auto-open configuration panel for initial node
   useEffect(() => {
     // Only open once, if panel is not already open, and we have nodes
-    if (hasOpenedInitialNodeRef.current || configPanelOpen || nodes.length === 0) {
+    if (
+      hasOpenedInitialNodeRef.current ||
+      configPanelOpen ||
+      nodes.length === 0
+    ) {
       return;
     }
 
@@ -2748,7 +2752,7 @@ export default function JourneyFlowBuilderIntegrated({
     }
   }, [checkUnconnectedNodes, checkUnconnectedNodesRef]); // Get event names from events prop
 
-  const eventNames = events.map((e) => e.metadata.eventName);
+  const eventNames = events.map((e) => e.eventName);
 
   return (
     <Box

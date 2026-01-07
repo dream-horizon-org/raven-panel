@@ -8,10 +8,12 @@ export const getAnalyticsEventsForCTA = async ({
   const url = API_BASE_URLS.EVENTS;
   if (!url) {
     console.warn(
-      "Events API URL is not configured. Please set NEXT_PUBLIC_EVENT_URL_PROD in your environment variables."
+      "Events API URL is not configured. Please check your environment configuration."
     );
+    return { data: { eventList: [] } };
   }
-  const res = await axiosInstance.get<EventsSchemaResponse>(url as string, {
+
+  const res = await axiosInstance.get<EventsSchemaResponse>(url, {
     signal,
   });
   return res.data;
