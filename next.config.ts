@@ -5,12 +5,9 @@ const nextConfig = {
     const isProduction = process.env.NODE_ENV === "production";
     const isUAT = process.env.NEXT_PUBLIC_ENV === "uat";
 
-    const permissionsUrl =
-      process.env.NEXT_PUBLIC_PERMISSIONS_URL ||
-      `${process.env.NEXT_PUBLIC_BASE_URL_PROD}/raven-permissions.json`;
     const permissionsRewrite = {
       source: "/raven-permissions.json",
-      destination: permissionsUrl,
+      destination: process.env.NEXT_PUBLIC_PERMISSION_S3_URL,
     };
 
     const getEventsRewriteDestination = () => {
@@ -41,9 +38,6 @@ const nextConfig = {
     }
 
     const rewrites = [permissionsRewrite];
-    const thunderBaseUrl =
-      process.env.NEXT_PUBLIC_THUNDER_BASE_URL ||
-      process.env.NEXT_PUBLIC_BASE_URL_PROD;
 
     if (eventsRewrite) {
       rewrites.push(eventsRewrite);
@@ -52,21 +46,6 @@ const nextConfig = {
         source: "/v1/events",
         // TODO: Need to remove api and add base url once the api is onboard to kong
         destination: "http://thunder-master-uat.dream11.local/v1/events",
-      });
-    }
-
-    if (thunderBaseUrl) {
-      rewrites.push({
-        source: "/thunder/:path*",
-        destination: `${thunderBaseUrl}/thunder/:path*`,
-      });
-    }
-
-    const cohortsBaseUrl = process.env.NEXT_PUBLIC_COHORTS_BASE_URL;
-    if (cohortsBaseUrl) {
-      rewrites.push({
-        source: "/user-cohorts/:path*",
-        destination: `${cohortsBaseUrl}/:path*`,
       });
     }
 
