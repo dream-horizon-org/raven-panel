@@ -69,6 +69,11 @@ const config: Config = {
           label: 'GitHub',
           position: 'right',
         },
+        {
+          href: 'https://discord.gg/NryqGzJU',
+          label: 'Discord',
+          position: 'right',
+        },
       ],
     },
     footer: {
@@ -119,6 +124,10 @@ const config: Config = {
             {
               label: 'GitHub',
               href: 'https://github.com/dream-horizon-org/raven-panel',
+            },
+            {
+              label: 'Discord',
+              href: 'https://discord.gg/NryqGzJU',
             },
           ],
         },
