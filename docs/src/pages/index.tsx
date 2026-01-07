@@ -791,6 +791,11 @@ function HomepageCTA() {
               href="https://github.com/dream-horizon-org/raven-panel">
               View on GitHub
             </Link>
+            <Link
+              className={clsx('button button--lg', styles.ctaButtonSecondary)}
+              href="https://discord.gg/NryqGzJU">
+              Join Discord
+            </Link>
           </div>
         </div>
       </div>
