@@ -267,3 +267,4 @@ Copyright © 2025 Dream Horizon.
 - 📖 [Full Documentation](https://raven.dreamhorizon.org/)
 - 🐛 [Report Bugs](https://github.com/dream-horizon-org/raven-panel/issues)
 - 💬 [GitHub Discussions](https://github.com/dream-horizon-org/raven-panel/discussions)
+- 💬 [Discord Community](https://discord.gg/NryqGzJU)
