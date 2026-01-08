@@ -106,7 +106,6 @@ export const API_BASE_URLS = {
 
 export const API_ENDPOINTS = {
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
-  EVENTS_SCHEMA: API_BASE_URLS.EVENTS,
   EVENTS_NAMES: EVENTS_API_BASE_URL || "/v1/events/details/names",
   EVENT_DETAILS: (eventName: string) => getEventDetailsUrl(eventName),
   COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
