@@ -11,6 +11,19 @@ export interface EventListItem {
   properties: EventProperty[];
 }
 
+export interface EventNamesResponse {
+  data: {
+    eventNames: string[];
+  };
+}
+
+export interface EventDetailsResponse {
+  data: {
+    eventName: string;
+    properties: EventProperty[];
+  };
+}
+
 export interface EventsSchemaResponse {
   data: {
     eventList: EventListItem[];

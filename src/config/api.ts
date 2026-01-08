@@ -11,6 +11,44 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_BASE_URL_PROD;
 };
 
+const getEventsApiBaseUrl = () => {
+  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+
+  if (env === "production") {
+    return process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+  } else if (env === "uat") {
+    return process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+  }
+  return undefined;
+};
+
+export const EVENTS_API_BASE_URL = getEventsApiBaseUrl();
+
+const getEventDetailsUrl = (eventName: string): string => {
+  if (!EVENTS_API_BASE_URL) {
+    return `/v1/events/${eventName}`;
+  }
+
+  const baseUrl = EVENTS_API_BASE_URL.replace(/\/+$/, "");
+
+  if (baseUrl.includes("/details/names")) {
+    return baseUrl.replace("/details/names", `/${eventName}`);
+  }
+  if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+    try {
+      const url = new URL(baseUrl);
+      return `${url.protocol}//${url.host}/v1/events/${eventName}`;
+    } catch {
+      return `/v1/events/${eventName}`;
+    }
+  }
+  if (baseUrl.endsWith("/v1/events")) {
+    return `${baseUrl}/${eventName}`;
+  }
+
+  return `/v1/events/${eventName}`;
+};
+
 const getBaseUrlForCohorts = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
   const baseUrl = getBaseUrl();
@@ -37,22 +75,27 @@ const getBaseUrlForCohorts = () => {
 
 const getBaseUrlForEvents = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-  const baseUrl = getBaseUrl();
-
-  let eventUrl: string | undefined;
-  if (env === "production") {
-    eventUrl = `${baseUrl}${process.env.NEXT_PUBLIC_EVENT_URL_PROD}`;
-  } else if (env === "uat") {
-    eventUrl = `${baseUrl}${process.env.NEXT_PUBLIC_EVENT_URL_UAT}`;
-  } else {
-    eventUrl = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+  if (env !== "production" && env !== "uat") {
+    return "";
   }
+
+  const baseUrl = getBaseUrl();
+  const eventUrl = getEventsApiBaseUrl();
 
   if (!eventUrl) {
-    return;
+    return "";
   }
 
-  return eventUrl.replace(/\/+$/, "");
+  if (eventUrl.startsWith("http://") || eventUrl.startsWith("https://")) {
+    try {
+      const url = new URL(eventUrl);
+      return `${url.protocol}//${url.host}`;
+    } catch {
+      return "";
+    }
+  }
+
+  return `${eventUrl}`;
 };
 
 export const API_BASE_URLS = {
@@ -64,7 +107,8 @@ export const API_BASE_URLS = {
 export const API_ENDPOINTS = {
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
   EVENTS_SCHEMA: API_BASE_URLS.EVENTS,
-  SYSTEM_PROPERTIES: `${API_BASE_URLS.THUNDER}/${process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL}`,
+  EVENTS_NAMES: EVENTS_API_BASE_URL || "/v1/events/details/names",
+  EVENT_DETAILS: (eventName: string) => getEventDetailsUrl(eventName),
   COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
 };
 

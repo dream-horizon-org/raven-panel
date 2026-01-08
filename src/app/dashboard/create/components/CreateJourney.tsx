@@ -3,7 +3,6 @@
 import { Box, CircularProgress } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import { useEventsList } from "@/app/dashboard/create/hooks/useEventsList";
-import { useSystemProperties } from "@/app/dashboard/create/hooks/useSystemProperties";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "./content/styles/createJourneyPageStyles";
@@ -26,7 +25,6 @@ import { getJourneyById } from "@/api/services/getJourney.service";
 import { toast } from "sonner";
 import { parseJourneyDataToFormData } from "../utils/parseJourneyData.utils";
 import { useWatch, Path } from "react-hook-form";
-import { extractSystemProperties } from "../utils/propertyType.utils";
 import { submitJourney } from "../utils/journeySubmission.utils";
 import {
   hasTemplateErrors as checkTemplateErrors,
@@ -85,15 +83,8 @@ export default function CreateJourneyPage({
     isFetching: isFetchingEvents,
   } = useEventsList();
 
-  const {
-    data: systemPropertiesData,
-    isFetching: isFetchingSystemProperties,
-  } = useSystemProperties();
-
-  const { systemPropertyNames, systemPropertyTypes } = useMemo(
-    () => extractSystemProperties(systemPropertiesData),
-    [systemPropertiesData]
-  );
+  const systemPropertyNames: string[] = [];
+  const systemPropertyTypes = new Map<string, string>();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);

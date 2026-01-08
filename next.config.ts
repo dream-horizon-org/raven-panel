@@ -1,3 +1,45 @@
+const getEventsApiBasePath = () => {
+  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+  let eventUrl;
+
+  if (env === "production") {
+    eventUrl = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+  } else if (env === "uat") {
+    eventUrl = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+  } else {
+    eventUrl =
+      process.env.NEXT_PUBLIC_EVENT_URL_UAT ||
+      process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+  }
+
+  if (eventUrl) {
+    if (eventUrl.startsWith("http://") || eventUrl.startsWith("https://")) {
+      try {
+        const url = new URL(eventUrl);
+        const pathname = url.pathname.replace(/\/+$/, "");
+        if (pathname.includes("/v1/events")) {
+          const v1EventsIndex = pathname.indexOf("/v1/events");
+          return pathname.substring(0, v1EventsIndex + 10);
+        }
+        return "/v1/events";
+      } catch {
+        return "/v1/events";
+      }
+    } else if (eventUrl.startsWith("/")) {
+      const path = eventUrl.replace(/\/+$/, "");
+      if (path.includes("/v1/events")) {
+        const v1EventsIndex = path.indexOf("/v1/events");
+        return path.substring(0, v1EventsIndex + 10);
+      }
+      return "/v1/events";
+    }
+  }
+
+  return "/v1/events";
+};
+
+const EVENTS_API_BASE_PATH = getEventsApiBasePath();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -26,10 +68,25 @@ const nextConfig = {
     };
 
     const eventsRewriteDestination = getEventsRewriteDestination();
-    const eventsRewrite = eventsRewriteDestination
+    let normalizedDestination = null;
+    if (eventsRewriteDestination) {
+      if (
+        eventsRewriteDestination.startsWith("http://") ||
+        eventsRewriteDestination.startsWith("https://")
+      ) {
+        try {
+          const url = new URL(eventsRewriteDestination);
+          normalizedDestination = `${url.protocol}//${url.host}`;
+        } catch {
+          normalizedDestination = null;
+        }
+      }
+    }
+
+    const eventsRewrite = normalizedDestination
       ? {
-          source: "/v1/events",
-          destination: eventsRewriteDestination,
+          source: `${EVENTS_API_BASE_PATH}/:path*`,
+          destination: `${normalizedDestination}${EVENTS_API_BASE_PATH}/:path*`,
         }
       : null;
 
@@ -43,9 +100,8 @@ const nextConfig = {
       rewrites.push(eventsRewrite);
     } else {
       rewrites.push({
-        source: "/v1/events",
-        // TODO: Need to remove api and add base url once the api is onboard to kong
-        destination: "http://thunder-master-uat.dream11.local/v1/events",
+        source: "/v1/events/:path*",
+        destination: "http://thunder-master-uat.dream11.local/v1/events/:path*",
       });
     }
 
