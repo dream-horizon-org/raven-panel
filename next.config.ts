@@ -101,6 +101,7 @@ const nextConfig = {
     } else {
       rewrites.push({
         source: "/v1/events/:path*",
+        // change this to kong once api is onboarded
         destination: "http://thunder-master-uat.dream11.local/v1/events/:path*",
       });
     }
