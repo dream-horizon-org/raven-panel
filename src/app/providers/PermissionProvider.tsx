@@ -101,14 +101,36 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     let hasEditAccess = false;
     let hasPublishAccess = false;
 
-    const userPermission = permissions.find(
-      (p) => p.user.toLowerCase() === userEmail.toLowerCase()
-    );
+    const normalizedUserEmail = userEmail.toLowerCase().trim();
+
+    const userPermission = permissions.find((p) => {
+      const normalizedPermissionUser = String(p.user)
+        .toLowerCase()
+        .trim();
+      return normalizedPermissionUser === normalizedUserEmail;
+    });
 
     if (userPermission) {
-      hasViewAccess = userPermission.view;
-      hasEditAccess = userPermission.edit;
-      hasPublishAccess = userPermission.publish;
+      const toBoolean = (value: unknown): boolean => {
+        if (typeof value === "boolean") return value;
+        if (typeof value === "string") {
+          return value.toLowerCase() === "true";
+        }
+        return Boolean(value);
+      };
+
+      hasViewAccess = toBoolean(userPermission.view);
+      hasEditAccess = toBoolean(userPermission.edit);
+      hasPublishAccess = toBoolean(userPermission.publish);
+    } else {
+      console.warn(
+        `[PermissionProvider] No permission entry found for user: ${normalizedUserEmail}. Available users:`,
+        permissions.map((p) =>
+          String(p.user)
+            .toLowerCase()
+            .trim()
+        )
+      );
     }
 
     return { hasViewAccess, hasEditAccess, hasPublishAccess };
