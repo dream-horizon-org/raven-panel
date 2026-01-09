@@ -37,7 +37,7 @@ export const getPermissions = async (): Promise<UserPermission[]> => {
 
     console.log("[getPermissions] 📡 Making API call to:", PERMISSIONS_URL);
     const response = await axiosInstance.get<
-      PermissionsResponse | UserPermission[]
+      PermissionsResponse | UserPermission[] | string
     >(PERMISSIONS_URL);
 
     console.log("[getPermissions] ✅ API response received:", {
@@ -47,31 +47,69 @@ export const getPermissions = async (): Promise<UserPermission[]> => {
       dataType: Array.isArray(response.data) ? "array" : typeof response.data,
       dataLength: Array.isArray(response.data) ? response.data.length : "N/A",
       responseHeaders: response.headers,
+      contentType:
+        response.headers?.["content-type"] ||
+        response.headers?.["Content-Type"],
     });
 
     let permissions: UserPermission[] = [];
+    let parsedData: unknown = response.data;
 
-    // Handle different response formats
-    if (Array.isArray(response.data)) {
-      permissions = response.data;
+    // Handle case where response.data is a JSON string (needs parsing)
+    if (typeof response.data === "string") {
+      console.log(
+        "[getPermissions] 🔄 Response is string, attempting to parse JSON..."
+      );
+      try {
+        parsedData = JSON.parse(response.data);
+        console.log("[getPermissions] ✅ Successfully parsed JSON string:", {
+          parsedType: Array.isArray(parsedData) ? "array" : typeof parsedData,
+          parsedLength: Array.isArray(parsedData) ? parsedData.length : "N/A",
+        });
+      } catch (parseError) {
+        const stringPreview =
+          typeof response.data === "string"
+            ? response.data.substring(0, 200)
+            : String(response.data).substring(0, 200);
+        console.error("[getPermissions] ❌ Failed to parse JSON string:", {
+          error: parseError,
+          errorMessage:
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError),
+          stringPreview,
+        });
+        return [];
+      }
+    }
+
+    // Handle different response formats after parsing
+    if (Array.isArray(parsedData)) {
+      permissions = parsedData;
       console.log(
         "[getPermissions] ✅ Response is array format, length:",
         permissions.length
       );
-    } else if (response.data?.data && Array.isArray(response.data.data)) {
-      permissions = response.data.data;
+    } else if (
+      parsedData &&
+      typeof parsedData === "object" &&
+      "data" in parsedData &&
+      Array.isArray((parsedData as { data: unknown }).data)
+    ) {
+      permissions = (parsedData as { data: UserPermission[] }).data;
       console.log(
         "[getPermissions] ✅ Response is wrapped format, length:",
         permissions.length
       );
     } else {
       console.warn("[getPermissions] ⚠️ Unexpected response format:", {
-        data: response.data,
-        dataType: typeof response.data,
+        parsedData,
+        dataType: typeof parsedData,
         dataKeys:
-          response.data && typeof response.data === "object"
-            ? Object.keys(response.data)
+          parsedData && typeof parsedData === "object"
+            ? Object.keys(parsedData)
             : [],
+        originalDataType: typeof response.data,
       });
     }
 
