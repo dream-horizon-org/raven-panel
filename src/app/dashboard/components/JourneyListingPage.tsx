@@ -22,7 +22,22 @@ import { useJourneysList } from "@/app/dashboard/hooks/useJourneysList";
 import { usePermissions } from "@/app/providers/PermissionProvider";
 
 export default function JourneyListingPage() {
-  const { hasEditAccess, isLoading: isPermissionsLoading } = usePermissions();
+  const { hasEditAccess, isLoading: isPermissionsLoading, userEmail, hasViewAccess, hasPublishAccess } = usePermissions();
+  
+  // Debug logging for all users
+  const createButtonDisabled = !hasEditAccess || isPermissionsLoading;
+  console.log("[JourneyListingPage] 🔘 Create Button State:", {
+    userEmail,
+    hasViewAccess,
+    hasEditAccess,
+    hasPublishAccess,
+    isPermissionsLoading,
+    createButtonDisabled,
+    disabledReason: {
+      noEditAccess: !hasEditAccess,
+      isLoading: isPermissionsLoading,
+    },
+  });
   const router = useRouter();
   const searchParams = useSearchParams();
   

@@ -50,18 +50,36 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
   const permissionEnabled = isPermissionEnabled();
 
   useEffect(() => {
+    console.log(
+      "[PermissionProvider] useEffect: Reading user email from localStorage"
+    );
     try {
       const userData = localStorage.getItem("google_user");
+      console.log("[PermissionProvider] localStorage data:", {
+        hasData: !!userData,
+        dataLength: userData?.length || 0,
+      });
+
       if (userData) {
         const user = JSON.parse(userData);
-        setUserEmail(user.email || null);
+        const email = user.email || null;
+        console.log("[PermissionProvider] User email extracted:", {
+          email,
+          hasEmail: !!email,
+        });
+        setUserEmail(email);
       } else {
+        console.log("[PermissionProvider] No user data in localStorage");
         setUserEmail(null);
       }
     } catch (error) {
-      console.error("Error parsing user data:", error);
+      console.error("[PermissionProvider] Error parsing user data:", {
+        error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
       setUserEmail(null);
     } finally {
+      console.log("[PermissionProvider] Email resolution complete");
       setIsEmailResolved(true);
     }
   }, []);
@@ -77,7 +95,25 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     refetchOnWindowFocus: false,
   });
 
+  console.log("[PermissionProvider] React Query state:", {
+    permissionsCount: permissions.length,
+    isPermissionsLoading,
+    userEmail,
+    permissionEnabled,
+    queryEnabled: permissionEnabled && !!userEmail,
+    hasPermissions: permissions.length > 0,
+    samplePermissions: permissions.slice(0, 2),
+  });
+
   const { hasViewAccess, hasEditAccess, hasPublishAccess } = useMemo(() => {
+    console.log("[PermissionProvider] useMemo execution:", {
+      permissionEnabled,
+      isEmailResolved,
+      isPermissionsLoading,
+      userEmail,
+      permissionsLength: permissions.length,
+    });
+
     if (!permissionEnabled) {
       return {
         hasViewAccess: true,
@@ -87,6 +123,14 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     }
 
     if (!isEmailResolved || isPermissionsLoading || !userEmail) {
+      console.log(
+        "[PermissionProvider] Early return - permissions set to false:",
+        {
+          isEmailResolved,
+          isPermissionsLoading,
+          userEmail,
+        }
+      );
       return {
         hasViewAccess: false,
         hasEditAccess: false,
@@ -122,6 +166,30 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
       hasViewAccess = toBoolean(userPermission.view);
       hasEditAccess = toBoolean(userPermission.edit);
       hasPublishAccess = toBoolean(userPermission.publish);
+
+      // Log permissions for all users
+      console.log(
+        `[PermissionProvider] ✅ User permissions resolved for ${normalizedUserEmail}:`,
+        {
+          userEmail: normalizedUserEmail,
+          userPermission: userPermission,
+          rawValues: {
+            view: userPermission.view,
+            edit: userPermission.edit,
+            publish: userPermission.publish,
+          },
+          types: {
+            viewType: typeof userPermission.view,
+            editType: typeof userPermission.edit,
+            publishType: typeof userPermission.publish,
+          },
+          convertedValues: {
+            view: hasViewAccess,
+            edit: hasEditAccess,
+            publish: hasPublishAccess,
+          },
+        }
+      );
     } else {
       console.warn(
         `[PermissionProvider] No permission entry found for user: ${normalizedUserEmail}. Available users:`,
@@ -153,6 +221,23 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
       : !isEmailResolved || isPermissionsLoading,
     setUserEmailFromOutside: setUserEmail,
   };
+
+  // Log final context values for all users
+  console.log("[PermissionProvider] ✅ FINAL CONTEXT VALUES:", {
+    userEmail: value.userEmail,
+    hasViewAccess: value.hasViewAccess,
+    hasEditAccess: value.hasEditAccess,
+    hasPublishAccess: value.hasPublishAccess,
+    isLoading: value.isLoading,
+    permissionsCount: value.permissions.length,
+    typeOfHasEditAccess: typeof value.hasEditAccess,
+    typeOfHasPublishAccess: typeof value.hasPublishAccess,
+    typeOfHasViewAccess: typeof value.hasViewAccess,
+    isEmailResolved,
+    isPermissionsLoading,
+    permissionEnabled,
+  });
+
   return (
     <PermissionContext.Provider value={value}>
       {children}

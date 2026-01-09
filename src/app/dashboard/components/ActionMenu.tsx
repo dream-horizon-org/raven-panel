@@ -95,6 +95,28 @@ export default function ActionMenu({
           (requiresPublishAccess && !hasPublishAccess) ||
           (requiresEditAccess && !hasEditAccess);
 
+        // Log menu item state for debugging
+        if (anchorEl) {
+          console.log(
+            `[ActionMenu] 🔘 Menu Item "${action.label}" (${action.id}):`,
+            {
+              journeyId,
+              hasEditAccess,
+              hasPublishAccess,
+              requiresPublishAccess,
+              requiresEditAccess,
+              isDisabled,
+              disabledReason: isDisabled
+                ? requiresPublishAccess
+                  ? "No publish access"
+                  : requiresEditAccess
+                  ? "No edit access"
+                  : "Unknown"
+                : "Enabled",
+            }
+          );
+        }
+
         return (
           <MenuItem
             key={action.id}

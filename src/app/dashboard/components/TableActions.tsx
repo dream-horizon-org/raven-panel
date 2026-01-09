@@ -26,6 +26,18 @@ export default function TableActions({
   onClone,
   onMenuOpen,
 }: TableActionsProps) {
+  // Log button states for debugging
+  console.log(
+    `[TableActions] 🔘 Action Buttons State for Journey ${journeyId}:`,
+    {
+      journeyId,
+      hasEditAccess,
+      editButtonDisabled: !hasEditAccess,
+      cloneButtonDisabled: !hasEditAccess,
+      menuButtonEnabled: true, // Menu button is always enabled
+    }
+  );
+
   return (
     <Box sx={tableActionsContainerStyles}>
       <Tooltip title={TOOLTIP_LABELS.editJourney} placement="top" arrow>

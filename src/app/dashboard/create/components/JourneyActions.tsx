@@ -27,7 +27,34 @@ export default function JourneyActions({
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { hasEditAccess } = usePermissions();
+  const {
+    hasEditAccess,
+    isLoading,
+    userEmail,
+    hasViewAccess,
+    hasPublishAccess,
+  } = usePermissions();
+
+  // Debug logging for all users
+  const createButtonDisabled =
+    isSubmitting || !isTemplateValid || !hasEditAccess;
+  console.log("[JourneyActions] 🔘 Create/Update Button State:", {
+    userEmail,
+    hasViewAccess,
+    hasEditAccess,
+    hasPublishAccess,
+    isLoading,
+    isSubmitting,
+    isTemplateValid,
+    activeTab,
+    isEditMode,
+    buttonDisabled: createButtonDisabled,
+    disabledReason: {
+      isSubmitting,
+      isTemplateInvalid: !isTemplateValid,
+      noEditAccess: !hasEditAccess,
+    },
+  });
 
   const handleCancel = () => {
     const statusParam = searchParams?.get("status");
