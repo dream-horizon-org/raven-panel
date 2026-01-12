@@ -5,6 +5,7 @@ import { transformFormDataToTestApiFormat } from "@/app/dashboard/create/utils/t
 
 export interface TestJourneyRequest {
   previousCtaId?: number | null;
+  expiresInMinutes?: number;
   userIds: number[];
   rule: {
     stateToAction: Record<string, string>;
@@ -32,11 +33,13 @@ export interface TestJourneyRequest {
     stateMachineTTL: number;
     ctaValidTill: number;
     actions: Array<{
-      [actionId: string]: {
-        type: string;
-        nudgeId: string;
-        nudgeTemplate: any; // ReactNativeJson template with config.triggerDelay
+      config: {
+        triggerDelay: number;
       };
+      actionId: string;
+      type: string; // "NUDGE_UI", "POPUP", "TOOLTIP"
+      variant?: string;
+      template: any; // ReactNativeJson with type field (e.g., "BottomSheet", "POPUP", "TOOLTIP")
     }>;
     frequency: {
       session: {
@@ -77,19 +80,22 @@ export const updateTestJourney = async (
   ctaId: number,
   formData: CreateJourneyFormData
 ): Promise<TestJourneyResponse> => {
-  const apiPayload = transformFormDataToTestApiFormat(formData);
-
-  // Updates use POST to the same create endpoint with previousCtaId in the body
-  const updatePayload: TestJourneyRequest = {
-    ...apiPayload,
-    previousCtaId: ctaId,
+  // Set previousCtaId in formData before transformation
+  const formDataWithCtaId = {
+    ...formData,
+    testFeature: {
+      ...formData.testFeature,
+      prevCtaId: String(ctaId),
+    },
   };
+
+  const apiPayload = transformFormDataToTestApiFormat(formDataWithCtaId);
 
   const endpoint = `${TEST_JOURNEY_BASE_URL}/ctas/test/create`; // Same endpoint as create
 
   const response = await axiosInstance.post<TestJourneyResponse>(
     endpoint,
-    updatePayload
+    apiPayload
   );
 
   return response.data;

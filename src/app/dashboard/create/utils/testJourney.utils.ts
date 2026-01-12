@@ -16,6 +16,9 @@ export const transformFormDataToTestApiFormat = (
   // Extract test journey values from formData
   const userIdsString = formData.testFeature?.userIds || "";
   const expireInMins = formData.testFeature?.expireInMins || 30;
+  const previousCtaId = formData.testFeature?.prevCtaId
+    ? parseInt(formData.testFeature.prevCtaId, 10)
+    : null;
 
   // Validate and convert userIds string to array
   if (!userIdsString.trim()) {
@@ -222,6 +225,12 @@ export const transformFormDataToTestApiFormat = (
       const actionId = actionIds[index];
       let templateToStringify: ReactNativeJson = action.template;
 
+      // Extract variant before removing templateVariantId
+      let variant: string | undefined = action.variant;
+      if (!variant && templateToStringify?.props?.templateVariantId) {
+        variant = String(templateToStringify.props.templateVariantId);
+      }
+
       // Remove templateVariantId from props
       if (templateToStringify?.props?.templateVariantId) {
         const {
@@ -235,65 +244,33 @@ export const transformFormDataToTestApiFormat = (
         void _removed;
       }
 
-      // Extract type for action level, but remove it from nudgeTemplate
-      // The API contract requires type at action level, NOT in nudgeTemplate
-      let actionTypeString: string;
+      // Map template type for template level (NUDGE_UI -> BottomSheet)
       if (templateToStringify?.type) {
         const templateTypeMapping: Record<string, string> = {
           NUDGE_UI: "BottomSheet",
           POPUP: "POPUP",
           TOOLTIP: "TOOLTIP",
         };
-        // Extract type for action level
-        actionTypeString = 
-          templateTypeMapping[templateToStringify.type] ||
-          templateToStringify.type;
-        
-        // Remove type from template (it should NOT be in nudgeTemplate per API contract)
-        const { type: _removedType, ...restTemplate } = templateToStringify;
-        templateToStringify = restTemplate as ReactNativeJson;
-        void _removedType;
-      } else {
-        // If no type in template, derive from action.type
-        const apiActionType: NudgeType = action.type;
-        const typeMapping: Record<string, string> = {
-          NUDGE_UI: "BottomSheet",
-          POPUP: "POPUP",
-          TOOLTIP: "TOOLTIP",
+        templateToStringify = {
+          ...templateToStringify,
+          type: templateTypeMapping[templateToStringify.type] || templateToStringify.type,
         };
-        actionTypeString = typeMapping[apiActionType] || String(apiActionType);
       }
 
       templateToStringify = transformDeeplinkParams(templateToStringify);
 
-      // Add triggerDelay to nudgeTemplate.config if not present
-      const templateWithConfig = templateToStringify as any;
-      if (!templateWithConfig.config) {
-        templateToStringify = {
-          ...templateToStringify,
-          config: {
-            triggerDelay: action.config?.triggerDelay || 1000,
-          },
-        } as ReactNativeJson;
-      } else if (!templateWithConfig.config.triggerDelay) {
-        templateToStringify = {
-          ...templateToStringify,
-          config: {
-            ...templateWithConfig.config,
-            triggerDelay: action.config?.triggerDelay || 1000,
-          },
-        } as ReactNativeJson;
-      }
+      // Use original action type for action level (NUDGE_UI, POPUP, TOOLTIP)
+      const apiActionType: NudgeType = action.type;
 
-      // Transform to API contract format: { actionId: { type, nudgeId, nudgeTemplate } }
-      // Note: nudgeId might be optional or derived from actionId - using actionId as nudgeId for now
-      // nudgeTemplate should NOT contain type field (type is only at action level)
+      // Return same format as regular journey
       return {
-        [actionId]: {
-          type: actionTypeString,
-          nudgeId: actionId, // Using actionId as nudgeId - adjust if you have a different source
-          nudgeTemplate: templateToStringify, // No type field in nudgeTemplate
+        config: {
+          triggerDelay: action.config?.triggerDelay || 1000,
         },
+        actionId,
+        type: apiActionType, // "NUDGE_UI", "POPUP", "TOOLTIP"
+        variant: variant || undefined,
+        template: templateToStringify, // Template with type field (e.g., "BottomSheet")
       };
     }) || [];
 
@@ -329,11 +306,10 @@ export const transformFormDataToTestApiFormat = (
   // You may need to adjust this based on where groupBy is stored in your form
   const groupBy: string[] = []; // Extract from formData if available
 
-  // Build request payload - previousCtaId is not included in body
-  // For updates, it's in the URL path; for creates, it's not needed
-  // Note: expiresInMinutes is NOT in the request body per API contract
-  // It's only used internally to calculate ctaValidTill
+  // Build request payload
   const requestPayload: TestJourneyRequest = {
+    ...(previousCtaId && { previousCtaId }), // Include if exists (for updates)
+    expiresInMinutes: expiresInMinutesToUse, // Include in request body
     userIds,
     rule: {
       stateToAction,

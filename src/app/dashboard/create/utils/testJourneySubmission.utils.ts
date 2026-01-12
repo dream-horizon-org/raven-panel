@@ -1,21 +1,29 @@
 import { CreateJourneyFormData } from "../types/journey.interface";
 import { Path } from "react-hook-form";
-import { validateTemplates } from "./templateValidation.utils";
-import { TestJourneyResponse } from "@/api/services/testJourney.service";
+import { transformFormDataToTestApiFormat } from "./testJourney.utils";
 import { UseMutationResult } from "@tanstack/react-query";
+import { TestJourneyResponse } from "@/api/services/testJourney.service";
+import { AxiosError } from "axios";
 import { toast } from "sonner";
-import { UseTestJourneyParams } from "../hooks/useTestJourney";
 
-interface TestJourneySubmissionParams {
+interface SubmitTestJourneyParams {
   formData: CreateJourneyFormData;
   setError: (
     path: Path<CreateJourneyFormData>,
     error: { type: string; message: string }
   ) => void;
-  clearErrors: (path: Path<CreateJourneyFormData>) => void;
-  setValue: (path: Path<CreateJourneyFormData>, value: any) => void;
-  mutation: UseMutationResult<TestJourneyResponse, Error, UseTestJourneyParams>;
-  onSuccess: () => void;
+  clearErrors: (path?: Path<CreateJourneyFormData>) => void;
+  setValue: <T extends Path<CreateJourneyFormData>>(
+    path: T,
+    value: any,
+    options?: { shouldValidate?: boolean; shouldDirty?: boolean }
+  ) => void;
+  mutation: UseMutationResult<
+    TestJourneyResponse,
+    Error,
+    { formData: CreateJourneyFormData; ctaId?: number }
+  >;
+  onSuccess?: () => void;
 }
 
 export const submitTestJourney = async ({
@@ -25,79 +33,86 @@ export const submitTestJourney = async ({
   setValue,
   mutation,
   onSuccess,
-}: TestJourneySubmissionParams): Promise<void> => {
-  // Only validate templates - no schedule validation needed for test
-  if (!validateTemplates({ data: formData, setError, clearErrors })) {
-    return;
-  }
-
-  // Read all test journey values from formData for validation
-  const userIdsString = formData.testFeature?.userIds || "";
-  const expireInMins = formData.testFeature?.expireInMins || 30;
-  const previousCtaId = formData.testFeature?.prevCtaId
-    ? parseInt(formData.testFeature.prevCtaId, 10)
-    : null;
-
-  // Validate userIds
-  if (!userIdsString.trim()) {
-    toast.error("User IDs are required");
-    return;
-  }
-
-  // Parse and validate user IDs
-  const userIdsArray = userIdsString
-    .split(',')
-    .map(id => id.trim())
-    .filter(Boolean);
-
-  if (userIdsArray.length === 0) {
-    toast.error("At least one user ID is required");
-    return;
-  }
-
-  const invalidIds = userIdsArray.filter(id => isNaN(parseInt(id, 10)));
-  if (invalidIds.length > 0) {
-    toast.error(`Invalid user IDs: ${invalidIds.join(', ')}`);
-    return;
-  }
-
-  // Validate expireInMins
-  if (!expireInMins || expireInMins <= 0) {
-    toast.error("Invalid expiration time");
-    return;
-  }
-
-  // Check if this is an update (has valid previousCtaId)
-  const isUpdate = previousCtaId && !isNaN(previousCtaId);
-  const ctaIdToUse = isUpdate ? previousCtaId : undefined;
-
+}: SubmitTestJourneyParams): Promise<void> => {
   try {
-    // Pass formData and ctaId (if updating) to the mutation
+    // Clear any previous errors
+    clearErrors();
+
+    // Transform form data to API format (this will throw if validation fails)
+    transformFormDataToTestApiFormat(formData);
+
+    // Get the previous CTA ID if it exists (for updates)
+    const previousCtaId = formData.testFeature?.prevCtaId
+      ? parseInt(formData.testFeature.prevCtaId, 10)
+      : undefined;
+
+    // Call the mutation
     const response = await mutation.mutateAsync({
       formData,
-      ctaId: ctaIdToUse,
+      ctaId: previousCtaId,
     });
 
+    // If we got a response with a CTA ID, store it for potential updates
     if (response?.data) {
-      // Store the created CTA ID in the form for future updates
-      setValue("testFeature.prevCtaId", String(response.data));
-      setValue("testFeature.isTestFeatureEnabled", true);
-      // userId and expireInMins are already stored in formData, no need to set again
-
-      toast.success(
-        `Test journey ${isUpdate ? "updated" : "created"} successfully! CTA ID: ${response.data}. It will expire in ${expireInMins} minutes.`
-      );
-      onSuccess();
-    } else {
-      toast.error("Failed to create test journey");
+      setValue("testFeature.prevCtaId", String(response.data), {
+        shouldValidate: false,
+      });
     }
-  } catch (error: any) {
-    console.error("Error creating test journey:", error);
+
+    // Show success message
+    toast.success(
+      previousCtaId
+        ? "Test journey updated successfully"
+        : "Test journey created successfully"
+    );
+
+    // Call success callback if provided
+    if (onSuccess) {
+      onSuccess();
+    }
+  } catch (error) {
+    console.error("Error submitting test journey:", error);
+
+    // Handle validation errors from transformFormDataToTestApiFormat
+    if (error instanceof Error) {
+      const errorMessage = error.message;
+
+      // Check if it's a validation error for user IDs
+      if (
+        errorMessage.includes("User ID") ||
+        errorMessage.includes("user ID")
+      ) {
+        setError("testFeature.userIds" as Path<CreateJourneyFormData>, {
+          type: "validation",
+          message: errorMessage,
+        });
+        toast.error(errorMessage);
+        return;
+      }
+
+      // Check if it's a general validation error
+      if (
+        errorMessage.includes("required") ||
+        errorMessage.includes("Invalid")
+      ) {
+        toast.error(errorMessage);
+        return;
+      }
+    }
+
+    // Handle API errors
+    const axiosError = error as AxiosError<{ error: { message: string } }>;
     const errorMessage =
-      error?.response?.data?.error?.message ||
-      error?.message ||
+      axiosError.response?.data?.error?.message ||
+      axiosError.message ||
       "Failed to create test journey. Please try again.";
+
     toast.error(errorMessage);
+
+    // Set a general error on the form if needed
+    setError("testFeature" as Path<CreateJourneyFormData>, {
+      type: "server",
+      message: errorMessage,
+    });
   }
 };
-
