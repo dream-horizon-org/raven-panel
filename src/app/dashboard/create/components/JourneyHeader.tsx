@@ -11,7 +11,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SchoolIcon from "@mui/icons-material/School";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, FieldValues, useFormContext } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
@@ -36,7 +36,8 @@ export default function JourneyHeader({
   control,
   errors,
   isEditMode = false,
-  hasTemplate = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  hasTemplate: _hasTemplate = false, // Keep prop for backward compatibility but use hasValidTemplate instead
 }: JourneyHeaderProps) {
   const router = useRouter();
   const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
@@ -46,6 +47,34 @@ export default function JourneyHeader({
   const { getValues, setError, clearErrors, setValue, watch } = useFormContext<CreateJourneyFormData>();
   const testJourneyMutation = useTestJourney();
   const testFeature = watch("testFeature");
+  
+  // Watch actions to check template content
+  const watchedActions = watch("nudgeSelection.actions");
+  
+  // Check if templates have actual content (not just selected but configured)
+  const hasValidTemplate = useMemo(() => {
+    if (!watchedActions || watchedActions.length === 0) return false;
+    
+    return watchedActions.some((action) => {
+      if (!action?.template) return false;
+      
+      const template = action.template as {
+        children?: unknown[];
+        props?: Record<string, unknown>;
+        styles?: Record<string, unknown>;
+        type?: unknown;
+      };
+      
+      // Check if template has type AND actual content
+      const hasType = !!template.type;
+      const hasContent =
+        (template.children && Array.isArray(template.children) && template.children.length > 0) ||
+        (template.props && Object.keys(template.props).length > 1) || // More than just testID
+        (template.styles && Object.keys(template.styles).length > 0);
+      
+      return hasType && hasContent;
+    });
+  }, [watchedActions]);
 
   const handleBack = () => {
     const statusParam = searchParams?.get("status");
@@ -125,7 +154,7 @@ export default function JourneyHeader({
             <Button
               variant="outlined"
               onClick={() => setIsTestDialogOpen(true)}
-              disabled={!hasTemplate || !hasEditAccess}
+              disabled={!hasValidTemplate || !hasEditAccess}
               sx={journeyHeaderStyles.actionButton}
             >
               Test Journey
