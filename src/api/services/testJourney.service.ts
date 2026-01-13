@@ -51,6 +51,7 @@ export interface TestJourneyRequest {
         value: number;
       };
     };
+    resetStates: string[];
   };
 }
 

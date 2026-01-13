@@ -287,14 +287,21 @@ export const transformFormDataToTestApiFormat = (
   });
 
   // Frequency - only session and window (no lifespan)
+  // Use 999 as default when frequency options are disabled or values are not set
   const frequency = {
     session: {
-      limit: formData.journeyFrequency?.timesInSession || 1,
+      limit: formData.journeyFrequency?.enableTimesInSession 
+        ? (formData.journeyFrequency?.timesInSession ?? 999)
+        : 999,
     },
     window: {
-      limit: formData.journeyFrequency?.maxTimesInPeriod || 1,
+      limit: formData.journeyFrequency?.enableMaxTimesInPeriod
+        ? (formData.journeyFrequency?.maxTimesInPeriod ?? 999)
+        : 999,
       unit: formData.journeyFrequency?.periodUnit || "days",
-      value: formData.journeyFrequency?.periodValue || 2,
+      value: formData.journeyFrequency?.enableMaxTimesInPeriod
+        ? (formData.journeyFrequency?.periodValue ?? 999)
+        : 999,
     },
   };
 
@@ -305,6 +312,14 @@ export const transformFormDataToTestApiFormat = (
   // Based on your API spec, it seems groupBy should come from formData
   // You may need to adjust this based on where groupBy is stored in your form
   const groupBy: string[] = []; // Extract from formData if available
+
+  // Extract resetStates - critical for allowing engagement to show multiple times
+  // If resetStates are not provided, default to ["1"] to allow state machine to reset
+  const resetStates =
+    formData.nudgeSelection.resetStates &&
+    formData.nudgeSelection.resetStates.length > 0
+      ? formData.nudgeSelection.resetStates
+      : ["1"];
 
   // Build request payload
   const requestPayload: TestJourneyRequest = {
@@ -321,6 +336,7 @@ export const transformFormDataToTestApiFormat = (
       ctaValidTill,
       actions,
       frequency,
+      resetStates,
     },
   };
 
