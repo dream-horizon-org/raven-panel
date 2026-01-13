@@ -9,13 +9,14 @@ import {
   ReactNativeJson,
 } from "../types/journey.interface";
 import { TestJourneyRequest } from "@/api/services/testJourney.service";
+import { DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
 
 export const transformFormDataToTestApiFormat = (
   formData: CreateJourneyFormData
 ): TestJourneyRequest => {
   // Extract test journey values from formData
   const userIdsString = formData.testFeature?.userIds || "";
-  const expireInMins = formData.testFeature?.expireInMins || 30;
+  const expireInMins = formData.testFeature?.expireInMins || DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS;
   const previousCtaId = formData.testFeature?.prevCtaId
     ? parseInt(formData.testFeature.prevCtaId, 10)
     : null;
@@ -44,10 +45,10 @@ export const transformFormDataToTestApiFormat = (
     return numId;
   });
 
-  // Ensure expiresInMinutes is always a valid positive number (default 30)
+  // Ensure expiresInMinutes is always a valid positive number
   const expiresInMinutesToUse = expireInMins && expireInMins > 0 
     ? expireInMins 
-    : 30;
+    : DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS;
   // Only extract contextParams - no cohorts needed
   const contextParams: string[] =
     formData.contextParams?.map((param) => param.label).filter(Boolean) || [];

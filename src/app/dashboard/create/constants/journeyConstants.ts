@@ -131,6 +131,9 @@ export const JOURNEY_TEXT = {
   CONTENT: "Content",
 } as const;
 
+// Default expiration time for test journeys (in minutes)
+export const DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS = 30;
+
 export const getJourneyFormDefaults = () => ({
   ctaMetadata: {
     ctaTitle: "",
@@ -187,7 +190,7 @@ export const getJourneyFormDefaults = () => ({
   testFeature: {
     isTestFeatureEnabled: false,
     prevCtaId: "",
-    expireInMins: 30,
+    expireInMins: DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS,
     userIds: "",
   },
 });

@@ -10,6 +10,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useState, useEffect } from "react";
+import { DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
 
 interface TestFeatureDialogProps {
   open: boolean;
@@ -26,10 +27,10 @@ export default function TestFeatureDialog({
   onSubmit,
   isLoading = false,
   existingUserIds = "",
-  existingExpireInMins = 30,
+  existingExpireInMins = DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS,
 }: TestFeatureDialogProps) {
   const [userIds, setUserIds] = useState("");
-  const [expireInMins, setExpireInMins] = useState("30");
+  const [expireInMins, setExpireInMins] = useState(String(DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS));
   const [errors, setErrors] = useState<{
     userIds?: string;
     expireInMins?: string;
@@ -39,7 +40,7 @@ export default function TestFeatureDialog({
   useEffect(() => {
     if (open) {
       setUserIds(existingUserIds || "");
-      setExpireInMins(existingExpireInMins ? String(existingExpireInMins) : "30");
+      setExpireInMins(existingExpireInMins ? String(existingExpireInMins) : String(DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS));
       setErrors({});
     }
   }, [open, existingUserIds, existingExpireInMins]);
@@ -77,7 +78,7 @@ export default function TestFeatureDialog({
 
   const handleClose = () => {
     setUserIds("");
-    setExpireInMins("30");
+    setExpireInMins(String(DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS));
     setErrors({});
     onClose();
   };

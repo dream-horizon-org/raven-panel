@@ -11,14 +11,14 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SchoolIcon from "@mui/icons-material/School";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, FieldValues, useFormContext } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { journeyHeaderStyles } from "./content/styles/journeyHeaderStyles";
 import { JOURNEY_ICONS } from "@/lib/mockData";
 import { CreateJourneyFormData } from "../types/journey.interface";
-import { JOURNEY_TEXT } from "../constants/journeyConstants";
+import { JOURNEY_TEXT, DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
 import JourneyTutorialDialog from "./content/JourneyTutorialDialog";
 import TestFeatureDialog from "./TestFeatureDialog";
 import { submitTestJourney } from "../utils/testJourneySubmission.utils";
@@ -56,18 +56,25 @@ export default function JourneyHeader({
     }
   };
 
-  const handleTestJourney = async (
+  const handleTestJourney = useCallback(async (
     userIds: string,
     expireInMins: number
   ) => {
-    // Store values in formData first
-    setValue("testFeature.userIds", userIds);
-    setValue("testFeature.expireInMins", expireInMins);
-    
-    // Now get formData which includes the stored values
+    // Get current form data
     const formData = getValues();
+    
+    // Merge test journey values directly into formData without setting form state
+    const formDataWithTestValues = {
+      ...formData,
+      testFeature: {
+        ...formData.testFeature,
+        userIds,
+        expireInMins,
+      },
+    };
+    
     await submitTestJourney({
-      formData,
+      formData: formDataWithTestValues,
       setError,
       clearErrors,
       setValue,
@@ -76,7 +83,7 @@ export default function JourneyHeader({
         setIsTestDialogOpen(false);
       },
     });
-  };
+  }, [getValues, setError, clearErrors, setValue, testJourneyMutation]);
 
   return (
     <>
@@ -119,17 +126,7 @@ export default function JourneyHeader({
               variant="outlined"
               onClick={() => setIsTestDialogOpen(true)}
               disabled={!hasTemplate || !hasEditAccess}
-              sx={{
-                bgcolor: "rgba(99, 102, 241, 0.25)",
-                borderColor: "rgba(99, 102, 241, 0.4)",
-                color: "primary.main",
-                textTransform: "none",
-                fontWeight: 500,
-                "&:hover": {
-                  bgcolor: "rgba(99, 102, 241, 0.3)",
-                  borderColor: "primary.main",
-                },
-              }}
+              sx={journeyHeaderStyles.actionButton}
             >
               Test Journey
             </Button>
@@ -138,17 +135,7 @@ export default function JourneyHeader({
             variant="outlined"
             startIcon={<SchoolIcon />}
             onClick={() => setTutorialDialogOpen(true)}
-            sx={{
-              bgcolor: "rgba(99, 102, 241, 0.25)",
-              borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "primary.main",
-              textTransform: "none",
-              fontWeight: 500,
-              "&:hover": {
-                bgcolor: "rgba(99, 102, 241, 0.3)",
-                borderColor: "primary.main",
-              },
-            }}
+            sx={journeyHeaderStyles.actionButton}
           >
             Learn How Journeys Work
           </Button>
@@ -166,7 +153,7 @@ export default function JourneyHeader({
         onSubmit={handleTestJourney}
         isLoading={testJourneyMutation.isPending}
         existingUserIds={testFeature?.userIds || ""}
-        existingExpireInMins={testFeature?.expireInMins || 30}
+        existingExpireInMins={testFeature?.expireInMins || DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS}
       />
     </>
   );
