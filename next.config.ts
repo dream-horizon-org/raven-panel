@@ -9,7 +9,8 @@ const getEventsApiBasePath = () => {
   } else {
     eventUrl =
       process.env.NEXT_PUBLIC_EVENT_URL_UAT ||
-      process.env.NEXT_PUBLIC_EVENT_URL_PROD;
+      process.env.NEXT_PUBLIC_EVENT_URL_PROD ||
+      undefined;
   }
 
   if (eventUrl) {
@@ -35,7 +36,7 @@ const getEventsApiBasePath = () => {
     }
   }
 
-  return "/v1/events";
+  return undefined;
 };
 
 const EVENTS_API_BASE_PATH = getEventsApiBasePath();
@@ -58,13 +59,16 @@ const nextConfig = {
       } else if (isUAT) {
         return process.env.NEXT_PUBLIC_EVENT_URL_UAT;
       }
-      const envUrl = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+      const envUrl =
+        process.env.NEXT_PUBLIC_EVENT_URL_UAT ||
+        process.env.NEXT_PUBLIC_EVENT_URL_PROD;
       if (
         envUrl &&
         (envUrl.startsWith("http://") || envUrl.startsWith("https://"))
       ) {
         return envUrl;
       }
+      return undefined;
     };
 
     const eventsRewriteDestination = getEventsRewriteDestination();
@@ -98,11 +102,12 @@ const nextConfig = {
 
     if (eventsRewrite) {
       rewrites.push(eventsRewrite);
-    } else {
+    }
+
+    if (normalizedDestination && EVENTS_API_BASE_PATH) {
       rewrites.push({
-        source: "/v1/events/:path*",
-        // change this to kong once api is onboarded
-        destination: "http://thunder-master-uat.dream11.local/v1/events/:path*",
+        source: "/thunder/events/:path*",
+        destination: `${normalizedDestination}/thunder/events/:path*`,
       });
     }
 

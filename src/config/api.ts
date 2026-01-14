@@ -19,34 +19,51 @@ const getEventsApiBaseUrl = () => {
   } else if (env === "uat") {
     return process.env.NEXT_PUBLIC_EVENT_URL_UAT;
   }
-  return undefined;
+
+  return (
+    process.env.NEXT_PUBLIC_EVENT_URL_UAT ||
+    process.env.NEXT_PUBLIC_EVENT_URL_PROD ||
+    undefined
+  );
 };
 
 export const EVENTS_API_BASE_URL = getEventsApiBaseUrl();
 
-const getEventDetailsUrl = (eventName: string): string => {
+const getEventDetailsUrl = (eventName: string): string | undefined => {
   if (!EVENTS_API_BASE_URL) {
-    return `/v1/events/${eventName}`;
+    return undefined;
   }
 
-  const baseUrl = EVENTS_API_BASE_URL.replace(/\/+$/, "");
+  const eventUrl = EVENTS_API_BASE_URL.replace(/\/+$/, "");
 
-  if (baseUrl.includes("/details/names")) {
-    return baseUrl.replace("/details/names", `/${eventName}`);
-  }
-  if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+  if (eventUrl.startsWith("http://") || eventUrl.startsWith("https://")) {
+    if (eventUrl.includes("/list/names")) {
+      return eventUrl.replace("/list/names", `/${eventName}`);
+    }
     try {
-      const url = new URL(baseUrl);
-      return `${url.protocol}//${url.host}/v1/events/${eventName}`;
+      const url = new URL(eventUrl);
+      return `${url.protocol}//${url.host}/thunder/events/${eventName}`;
     } catch {
-      return `/v1/events/${eventName}`;
+      return undefined;
     }
   }
-  if (baseUrl.endsWith("/v1/events")) {
-    return `${baseUrl}/${eventName}`;
+
+  let eventPath: string;
+  if (eventUrl.includes("/list/names")) {
+    eventPath = eventUrl.replace("/list/names", `/${eventName}`);
+  } else {
+    eventPath = `thunder/events/${eventName}`;
   }
 
-  return `/v1/events/${eventName}`;
+  const baseUrl = API_BASE_URLS.THUNDER;
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  const base = baseUrl.replace(/\/+$/, "");
+  const path = eventPath.startsWith("/") ? eventPath : `/${eventPath}`;
+
+  return `${base}${path}`;
 };
 
 const getBaseUrlForCohorts = () => {
@@ -74,12 +91,6 @@ const getBaseUrlForCohorts = () => {
 };
 
 const getBaseUrlForEvents = () => {
-  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-  if (env !== "production" && env !== "uat") {
-    return "";
-  }
-
-  const baseUrl = getBaseUrl();
   const eventUrl = getEventsApiBaseUrl();
 
   if (!eventUrl) {
@@ -104,9 +115,31 @@ export const API_BASE_URLS = {
   EVENTS: getBaseUrlForEvents(),
 };
 
+const getEventsNamesUrl = (): string | undefined => {
+  const eventUrl = EVENTS_API_BASE_URL;
+
+  if (!eventUrl) {
+    return undefined;
+  }
+
+  if (eventUrl.startsWith("http://") || eventUrl.startsWith("https://")) {
+    return eventUrl;
+  }
+
+  const baseUrl = API_BASE_URLS.THUNDER;
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  const base = baseUrl.replace(/\/+$/, "");
+  const path = eventUrl.startsWith("/") ? eventUrl : `/${eventUrl}`;
+
+  return `${base}${path}`;
+};
+
 export const API_ENDPOINTS = {
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
-  EVENTS_NAMES: EVENTS_API_BASE_URL || "/v1/events/details/names",
+  EVENTS_NAMES: getEventsNamesUrl(),
   EVENT_DETAILS: (eventName: string) => getEventDetailsUrl(eventName),
   COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
 };
