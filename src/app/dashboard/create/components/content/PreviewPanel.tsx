@@ -169,6 +169,10 @@ export default function PreviewPanel({
             cssStyles["border-top-right-radius"] = borderRadiusPx;
             cssStyles["border-bottom-left-radius"] = "0px";
             cssStyles["border-bottom-right-radius"] = "0px";
+          } else if (k === "aspectRatio") {
+            if (typeof v === "number") {
+              cssStyles["aspect-ratio"] = v;
+            }
           } else {
             // Convert dp/pt to px for all numeric values (matches React Native device rendering)
             cssStyles[cssKey] = convertStyleValue(v);
