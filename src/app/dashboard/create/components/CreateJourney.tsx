@@ -411,6 +411,7 @@ export default function CreateJourneyPage({
                 onNext={handleNext}
                 isSubmitting={isSubmitting}
                 isEditMode={!!journeyId && !isCloneMode}
+                isCloneMode={isCloneMode}
                 isTemplateValid={isTemplateValid}
                 hasTemplate={hasTemplate}
               />
