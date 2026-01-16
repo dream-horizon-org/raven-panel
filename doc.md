@@ -125,7 +125,7 @@ export interface SystemPropertiesResponse {
 
 ### API Details
 
-- **Endpoint**: `{SYSTEM_PROPERTIES_URL}/getSystemProperties` or `{EVENT_URL}/getSystemProperties` (if SYSTEM_PROPERTIES_URL is not set)
+- **Endpoint**: `{SYSTEM_PROPERTIES_URL}/getSystemProperties`
 - **Method**: `GET`
 - **Query Parameters**:
   - `limit=10000`
@@ -135,8 +135,6 @@ export interface SystemPropertiesResponse {
   - `Content-Type: application/json`
   - `x-tenant-id: string`
   - `x-skip-validation: false`
-- **Environment Variable**: `NEXT_PUBLIC_SYSTEM_PROPERTIES_URL` (base URL for system properties API)
-  - If not set, falls back to `NEXT_PUBLIC_EVENT_URL`
 - **Note**: The app extracts property names and types from any of the supported formats. If objects are provided, it uses the `propertyName` and `type` properties. If strings are provided, it uses them directly as property names.
 
 ---
