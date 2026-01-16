@@ -342,13 +342,24 @@ export default function CreateJourneyPage({
         <Box sx={createJourneyPageStyles.mainLayout}>
           <Box sx={createJourneyPageStyles.contentArea}>
             <JourneyTabs activeTab={activeTab} onTabChange={handleTabChange} />
-            <form onSubmit={handleSubmit(onFormSubmit)}>
+            <form
+              onSubmit={handleSubmit(onFormSubmit)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                overflow: "hidden",
+                minHeight: 0,
+              }}
+            >
               <Box
                 sx={{
                   ...createJourneyPageStyles.formContent,
-                  height: "calc(100vh - 200px)",
-                  minHeight: "600px",
-                  display: activeTab === "ui" ? "block" : "none",
+                  flex: 1,
+                  display: activeTab === "ui" ? "flex" : "none",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                  minHeight: 0,
                 }}
               >
                 <JourneyFlowBuilderIntegrated
@@ -370,7 +381,14 @@ export default function CreateJourneyPage({
                 />
               </Box>
               {activeTab === "setup" && (
-                <Box sx={createJourneyPageStyles.formContent}>
+                <Box
+                  sx={{
+                    ...createJourneyPageStyles.formContent,
+                    flex: 1,
+                    overflow: "auto",
+                    minHeight: 0,
+                  }}
+                >
                   <CohortSection control={control} errors={errors} />
                   <ScheduleSection control={control} errors={errors} />
                   <JourneyFrequencySection control={control} errors={errors} />
@@ -393,6 +411,7 @@ export default function CreateJourneyPage({
                 onNext={handleNext}
                 isSubmitting={isSubmitting}
                 isEditMode={!!journeyId && !isCloneMode}
+                isCloneMode={isCloneMode}
                 isTemplateValid={isTemplateValid}
                 hasTemplate={hasTemplate}
               />

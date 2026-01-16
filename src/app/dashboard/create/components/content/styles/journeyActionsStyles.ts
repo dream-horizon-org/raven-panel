@@ -11,6 +11,7 @@ export const journeyActionsStyles = {
     borderTop: 1,
     borderColor: "divider",
     width: "100%",
+    flexShrink: 0,
   },
   cancelButton: {
     textTransform: "none",
