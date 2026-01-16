@@ -5,11 +5,6 @@ const nextConfig = {
     const isProduction = process.env.NODE_ENV === "production";
     const isUAT = process.env.NEXT_PUBLIC_ENV === "uat";
 
-    const permissionsRewrite = {
-      source: "/raven-permissions.json",
-      destination: process.env.NEXT_PUBLIC_PERMISSION_S3_URL,
-    };
-
     const getThunderBaseUrl = () => {
       const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
       if (env === "production") {
@@ -37,11 +32,7 @@ const nextConfig = {
       }
     }
 
-    if (isProduction || isUAT) {
-      return [permissionsRewrite];
-    }
-
-    const rewrites = [permissionsRewrite];
+    const rewrites = [];
 
     if (normalizedThunderDestination) {
       rewrites.push({
