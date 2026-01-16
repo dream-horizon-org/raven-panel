@@ -2779,7 +2779,9 @@ export default function JourneyFlowBuilderIntegrated({
         },
       }}
     >
-      <Box sx={{ flex: 1, position: "relative" }}>
+      <Box
+        sx={{ flex: 1, position: "relative", overflow: "hidden", minHeight: 0 }}
+      >
         <ReactFlowProvider>
           <ReactFlow
             nodes={nodes}
@@ -2793,6 +2795,7 @@ export default function JourneyFlowBuilderIntegrated({
             defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
             edgesFocusable={true}
             defaultEdgeOptions={{ type: "bezier" }}
+            style={{ width: "100%", height: "100%" }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             <Controls

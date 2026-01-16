@@ -85,7 +85,7 @@ export default function PreviewPanel({
 
   const template = useWatch({
     control,
-    name: `nudgeSelection.actions.${actionIndex}.template` ,
+    name: `nudgeSelection.actions.${actionIndex}.template`,
   }) as ReactNativeJson | undefined;
 
   const actions = useWatch({
@@ -169,6 +169,10 @@ export default function PreviewPanel({
             cssStyles["border-top-right-radius"] = borderRadiusPx;
             cssStyles["border-bottom-left-radius"] = "0px";
             cssStyles["border-bottom-right-radius"] = "0px";
+          } else if (k === "aspectRatio") {
+            if (typeof v === "number") {
+              cssStyles["aspect-ratio"] = v;
+            }
           } else {
             // Convert dp/pt to px for all numeric values (matches React Native device rendering)
             cssStyles[cssKey] = convertStyleValue(v);
@@ -215,6 +219,20 @@ export default function PreviewPanel({
           ? "left"
           : undefined);
 
+      const getAlignmentMargins = () => {
+        if (!ai) return {};
+        if (ai === "flex-start") {
+          return { marginRight: "auto" };
+        }
+        if (ai === "flex-end") {
+          return { marginLeft: "auto" };
+        }
+        if (ai === "center") {
+          return { marginLeft: "auto", marginRight: "auto" };
+        }
+        return {};
+      };
+
       const textStyles: React.CSSProperties = {
         ...cssStyles,
         ...(weight ? { fontWeight: weight } : {}),
@@ -226,7 +244,15 @@ export default function PreviewPanel({
         ...(nodeProps.fontFamily
           ? { fontFamily: `${nodeProps.fontFamily}, sans-serif` }
           : {}),
+
+        ...(ai
+          ? {
+              ...getAlignmentMargins(),
+              display: "block",
+            }
+          : {}),
         // Apply text alignment - ensure it's set correctly
+
         ...(mappedTextAlign
           ? {
               textAlign: mappedTextAlign as
@@ -234,9 +260,13 @@ export default function PreviewPanel({
                 | "center"
                 | "right"
                 | "justify",
-              ...(cssStyles.width ? {} : { display: "block", width: "100%" }),
+              ...(ai ? {} : { display: cssStyles.width ? "block" : "block" }),
+
+              ...(cssStyles.width || ai ? {} : { width: "100%" }),
             }
-          : {}),
+          : {
+              ...(cssStyles.width && !ai ? { display: "block" } : {}),
+            }),
         ...(isHighlighted
           ? {
               outline: "1px dashed #F44336",
@@ -259,6 +289,26 @@ export default function PreviewPanel({
       const src = nodeProps.uri || nodeProps.src || nodeProps.source;
       if (!src) return null;
 
+      const imageAlignItems = (styles as any)?.alignItems as
+        | "center"
+        | "flex-start"
+        | "flex-end"
+        | undefined;
+
+      const getImageAlignmentMargins = () => {
+        if (!imageAlignItems) return {};
+        if (imageAlignItems === "flex-start") {
+          return { marginRight: "auto" };
+        }
+        if (imageAlignItems === "flex-end") {
+          return { marginLeft: "auto" };
+        }
+        if (imageAlignItems === "center") {
+          return { marginLeft: "auto", marginRight: "auto" };
+        }
+        return {};
+      };
+
       return (
         <img
           key={key}
@@ -268,6 +318,7 @@ export default function PreviewPanel({
             ...cssStyles,
             display: "block", // NEW: no inline baseline gap
             maxWidth: "100%", // safe guard
+            ...getImageAlignmentMargins(),
             ...(isHighlighted
               ? {
                   outline: "1px dashed #F44336",
@@ -309,6 +360,23 @@ export default function PreviewPanel({
           ? "left"
           : undefined);
 
+      const buttonHasWidth = cssStyles.width != null;
+      const buttonAlignItems = (styles as any)?.alignItems;
+
+      const getButtonAlignmentMargins = () => {
+        if (!buttonAlignItems) return {};
+        if (buttonAlignItems === "flex-start") {
+          return { marginRight: "auto" };
+        }
+        if (buttonAlignItems === "flex-end") {
+          return { marginLeft: "auto" };
+        }
+        if (buttonAlignItems === "center") {
+          return { marginLeft: "auto", marginRight: "auto" };
+        }
+        return {};
+      };
+
       return (
         <button
           key={key}
@@ -324,7 +392,15 @@ export default function PreviewPanel({
             ...(nodeProps.fontFamily
               ? { fontFamily: `${nodeProps.fontFamily}, sans-serif` }
               : {}),
+
+            ...(buttonAlignItems
+              ? {
+                  ...getButtonAlignmentMargins(),
+                  display: "block",
+                }
+              : {}),
             // Apply text alignment - ensure it's set correctly
+
             ...(mappedTextAlign
               ? {
                   textAlign: mappedTextAlign as
@@ -332,8 +408,11 @@ export default function PreviewPanel({
                     | "center"
                     | "right"
                     | "justify",
+                  ...(buttonHasWidth ? { display: "block" } : {}),
                 }
-              : {}),
+              : {
+                  ...(buttonHasWidth ? { display: "block" } : {}),
+                }),
             border: "none",
             cursor: "default",
             ...(isHighlighted
@@ -406,8 +485,25 @@ export default function PreviewPanel({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (styles as any).borderBottomRightRadius != null;
 
+      const alignItems = (styles as any)?.alignItems;
+
+      const hasChildWithAlignItems =
+        nodeChildren &&
+        Array.isArray(nodeChildren) &&
+        nodeChildren.some(
+          (child: ReactNativeJson) =>
+            child.styles && (child.styles as any)?.alignItems
+        );
+
+      const shouldUseFlex =
+        hasFlexProps || !!alignItems || !!hasChildWithAlignItems;
+
+      const hasFlexDirection = !!(styles as any)?.flexDirection;
+      const shouldDefaultToColumn = !!alignItems && !hasFlexDirection;
+
       const viewStyles = {
-        ...(hasFlexProps ? { display: "flex" } : {}),
+        ...(shouldUseFlex ? { display: "flex" } : {}),
+        ...(shouldDefaultToColumn ? { flexDirection: "column" } : {}),
         ...cssStyles,
         ...(hasRadius
           ? {

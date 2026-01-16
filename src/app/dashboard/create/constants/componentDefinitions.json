@@ -20,7 +20,8 @@
         "paddingRight",
         "paddingTop",
         "paddingBottom",
-        "alignItems"
+        "alignItems",
+        "aspectRatio"
       ]
     },
     {
@@ -43,7 +44,8 @@
         "paddingRight",
         "paddingTop",
         "paddingBottom",
-        "alignItems"
+        "alignItems",
+        "aspectRatio"
       ]
     },
     {
@@ -90,7 +92,8 @@
         "paddingBottom",
         "alignItems",
         "color",
-        "fontSize"
+        "fontSize",
+        "aspectRatio"
       ],
       "actions": [
         {
@@ -235,7 +238,8 @@
         "paddingRight",
         "paddingTop",
         "paddingBottom",
-        "alignItems"
+        "alignItems",
+        "aspectRatio"
       ]
     },
     {
