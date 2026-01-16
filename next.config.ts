@@ -1,46 +1,3 @@
-const getEventsApiBasePath = () => {
-  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-  let eventUrl;
-
-  if (env === "production") {
-    eventUrl = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
-  } else if (env === "uat") {
-    eventUrl = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
-  } else {
-    eventUrl =
-      process.env.NEXT_PUBLIC_EVENT_URL_UAT ||
-      process.env.NEXT_PUBLIC_EVENT_URL_PROD ||
-      undefined;
-  }
-
-  if (eventUrl) {
-    if (eventUrl.startsWith("http://") || eventUrl.startsWith("https://")) {
-      try {
-        const url = new URL(eventUrl);
-        const pathname = url.pathname.replace(/\/+$/, "");
-        if (pathname.includes("/v1/events")) {
-          const v1EventsIndex = pathname.indexOf("/v1/events");
-          return pathname.substring(0, v1EventsIndex + 10);
-        }
-        return "/v1/events";
-      } catch {
-        return "/v1/events";
-      }
-    } else if (eventUrl.startsWith("/")) {
-      const path = eventUrl.replace(/\/+$/, "");
-      if (path.includes("/v1/events")) {
-        const v1EventsIndex = path.indexOf("/v1/events");
-        return path.substring(0, v1EventsIndex + 10);
-      }
-      return "/v1/events";
-    }
-  }
-
-  return undefined;
-};
-
-const EVENTS_API_BASE_PATH = getEventsApiBasePath();
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -53,46 +10,32 @@ const nextConfig = {
       destination: process.env.NEXT_PUBLIC_PERMISSION_S3_URL,
     };
 
-    const getEventsRewriteDestination = () => {
-      if (isProduction) {
-        return process.env.NEXT_PUBLIC_EVENT_URL_PROD;
-      } else if (isUAT) {
-        return process.env.NEXT_PUBLIC_EVENT_URL_UAT;
+    const getThunderBaseUrl = () => {
+      const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
+      if (env === "production") {
+        return process.env.NEXT_PUBLIC_BASE_URL_PROD;
       }
-      const envUrl =
-        process.env.NEXT_PUBLIC_EVENT_URL_UAT ||
-        process.env.NEXT_PUBLIC_EVENT_URL_PROD;
-      if (
-        envUrl &&
-        (envUrl.startsWith("http://") || envUrl.startsWith("https://"))
-      ) {
-        return envUrl;
+      if (env === "uat") {
+        return process.env.NEXT_PUBLIC_BASE_URL_UAT;
       }
-      return undefined;
+      return process.env.NEXT_PUBLIC_BASE_URL_PROD;
     };
 
-    const eventsRewriteDestination = getEventsRewriteDestination();
-    let normalizedDestination = null;
-    if (eventsRewriteDestination) {
+    const thunderBaseUrl = getThunderBaseUrl();
+    let normalizedThunderDestination = null;
+    if (thunderBaseUrl) {
       if (
-        eventsRewriteDestination.startsWith("http://") ||
-        eventsRewriteDestination.startsWith("https://")
+        thunderBaseUrl.startsWith("http://") ||
+        thunderBaseUrl.startsWith("https://")
       ) {
         try {
-          const url = new URL(eventsRewriteDestination);
-          normalizedDestination = `${url.protocol}//${url.host}`;
+          const url = new URL(thunderBaseUrl);
+          normalizedThunderDestination = `${url.protocol}//${url.host}`;
         } catch {
-          normalizedDestination = null;
+          normalizedThunderDestination = null;
         }
       }
     }
-
-    const eventsRewrite = normalizedDestination
-      ? {
-          source: `${EVENTS_API_BASE_PATH}/:path*`,
-          destination: `${normalizedDestination}${EVENTS_API_BASE_PATH}/:path*`,
-        }
-      : null;
 
     if (isProduction || isUAT) {
       return [permissionsRewrite];
@@ -100,14 +43,10 @@ const nextConfig = {
 
     const rewrites = [permissionsRewrite];
 
-    if (eventsRewrite) {
-      rewrites.push(eventsRewrite);
-    }
-
-    if (normalizedDestination && EVENTS_API_BASE_PATH) {
+    if (normalizedThunderDestination) {
       rewrites.push({
         source: "/thunder/events/:path*",
-        destination: `${normalizedDestination}/thunder/events/:path*`,
+        destination: `${normalizedThunderDestination}/thunder/events/:path*`,
       });
     }
 
