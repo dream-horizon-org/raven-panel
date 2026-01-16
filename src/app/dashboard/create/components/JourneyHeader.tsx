@@ -13,12 +13,13 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SchoolIcon from "@mui/icons-material/School";
 import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Controller, FieldValues, useFormContext } from "react-hook-form";
+import { Controller, FieldValues, useFormContext, useWatch } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 import { journeyHeaderStyles } from "./content/styles/journeyHeaderStyles";
 import { JOURNEY_ICONS } from "@/lib/mockData";
 import { CreateJourneyFormData } from "../types/journey.interface";
 import { JOURNEY_TEXT, DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
+import { hasValidTemplateContent } from "../utils/templateValidation.utils";
 import JourneyTutorialDialog from "./content/JourneyTutorialDialog";
 import TestFeatureDialog from "./TestFeatureDialog";
 import { submitTestJourney } from "../utils/testJourneySubmission.utils";
@@ -44,36 +45,16 @@ export default function JourneyHeader({
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   const searchParams = useSearchParams();
   const { hasEditAccess } = usePermissions();
-  const { getValues, setError, clearErrors, setValue, watch } = useFormContext<CreateJourneyFormData>();
+  const { getValues, setError, clearErrors, setValue } = useFormContext<CreateJourneyFormData>();
   const testJourneyMutation = useTestJourney();
-  const testFeature = watch("testFeature");
+  const testFeature = useWatch({ control, name: "testFeature" });
   
   // Watch actions to check template content
-  const watchedActions = watch("nudgeSelection.actions");
+  const watchedActions = useWatch({ control, name: "nudgeSelection.actions" });
   
   // Check if templates have actual content (not just selected but configured)
   const hasValidTemplate = useMemo(() => {
-    if (!watchedActions || watchedActions.length === 0) return false;
-    
-    return watchedActions.some((action) => {
-      if (!action?.template) return false;
-      
-      const template = action.template as {
-        children?: unknown[];
-        props?: Record<string, unknown>;
-        styles?: Record<string, unknown>;
-        type?: unknown;
-      };
-      
-      // Check if template has type AND actual content
-      const hasType = !!template.type;
-      const hasContent =
-        (template.children && Array.isArray(template.children) && template.children.length > 0) ||
-        (template.props && Object.keys(template.props).length > 1) || // More than just testID
-        (template.styles && Object.keys(template.styles).length > 0);
-      
-      return hasType && hasContent;
-    });
+    return hasValidTemplateContent(watchedActions);
   }, [watchedActions]);
 
   const handleBack = () => {
@@ -113,6 +94,10 @@ export default function JourneyHeader({
       },
     });
   }, [getValues, setError, clearErrors, setValue, testJourneyMutation]);
+
+  const handleCloseTestDialog = useCallback(() => {
+    setIsTestDialogOpen(false);
+  }, []);
 
   return (
     <>
@@ -157,7 +142,7 @@ export default function JourneyHeader({
               disabled={!hasValidTemplate || !hasEditAccess}
               sx={journeyHeaderStyles.actionButton}
             >
-              Test Journey
+              {JOURNEY_TEXT.ACTIONS.TEST_JOURNEY}
             </Button>
           )}
           <Button
@@ -166,7 +151,7 @@ export default function JourneyHeader({
             onClick={() => setTutorialDialogOpen(true)}
             sx={journeyHeaderStyles.actionButton}
           >
-            Learn How Journeys Work
+            {JOURNEY_TEXT.ACTIONS.LEARN_HOW_JOURNEYS_WORK}
           </Button>
         </Box>
       </Box>
@@ -178,7 +163,7 @@ export default function JourneyHeader({
 
       <TestFeatureDialog
         open={isTestDialogOpen}
-        onClose={() => setIsTestDialogOpen(false)}
+        onClose={handleCloseTestDialog}
         onSubmit={handleTestJourney}
         isLoading={testJourneyMutation.isPending}
         existingUserIds={testFeature?.userIds || ""}

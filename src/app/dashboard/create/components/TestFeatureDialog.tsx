@@ -9,8 +9,9 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import { DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
+import { useState, useEffect, useCallback } from "react";
+import { DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS, JOURNEY_TEXT } from "../constants/journeyConstants";
+import { validateTestJourneyForm } from "../utils/testJourneyValidation.utils";
 
 interface TestFeatureDialogProps {
   open: boolean;
@@ -46,33 +47,22 @@ export default function TestFeatureDialog({
   }, [open, existingUserIds, existingExpireInMins]);
 
   const handleSubmit = () => {
-    const newErrors: typeof errors = {};
-
-    if (!userIds.trim()) {
-      newErrors.userIds = "User IDs are required";
-    } else {
-      // Validate that all IDs are numbers (comma-separated)
-      const idArray = userIds.split(',').map(id => id.trim()).filter(Boolean);
-      if (idArray.length === 0) {
-        newErrors.userIds = "At least one user ID is required";
-      } else {
-        const invalidIds = idArray.filter(id => !/^\d+$/.test(id));
-        if (invalidIds.length > 0) {
-          newErrors.userIds = `Invalid user IDs: ${invalidIds.join(', ')}`;
-        }
+    const newErrors = validateTestJourneyForm(
+      userIds,
+      expireInMins,
+      {
+        userIdsRequired: JOURNEY_TEXT.TEST_JOURNEY_DIALOG.VALIDATION.USER_IDS_REQUIRED,
+        atLeastOneUserIdRequired: JOURNEY_TEXT.TEST_JOURNEY_DIALOG.VALIDATION.AT_LEAST_ONE_USER_ID_REQUIRED,
+        expireInMinsRequired: JOURNEY_TEXT.TEST_JOURNEY_DIALOG.VALIDATION.EXPIRATION_TIME_REQUIRED,
       }
-    }
-
-    const expireInMinsNum = parseInt(expireInMins, 10);
-    if (!expireInMins || isNaN(expireInMinsNum) || expireInMinsNum <= 0) {
-      newErrors.expireInMins = "Expiration time must be a positive number";
-    }
+    );
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
+    const expireInMinsNum = parseInt(expireInMins, 10);
     onSubmit(userIds.trim(), expireInMinsNum);
   };
 
@@ -83,6 +73,26 @@ export default function TestFeatureDialog({
     onClose();
   };
 
+  const handleUserIdsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserIds(e.target.value);
+    setErrors((prevErrors) => {
+      if (prevErrors.userIds) {
+        return { ...prevErrors, userIds: undefined };
+      }
+      return prevErrors;
+    });
+  }, []);
+
+  const handleExpireInMinsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setExpireInMins(e.target.value);
+    setErrors((prevErrors) => {
+      if (prevErrors.expireInMins) {
+        return { ...prevErrors, expireInMins: undefined };
+      }
+      return prevErrors;
+    });
+  }, []);
+
   return (
     <Dialog
       open={open}
@@ -90,23 +100,19 @@ export default function TestFeatureDialog({
       aria-labelledby="test-journey-dialog-title"
       aria-describedby="test-journey-dialog-description"
     >
-      <DialogTitle id="test-journey-dialog-title">Test Journey</DialogTitle>
+      <DialogTitle id="test-journey-dialog-title">
+        {JOURNEY_TEXT.TEST_JOURNEY_DIALOG.TITLE}
+      </DialogTitle>
       <DialogContent>
         <DialogContentText id="test-journey-dialog-description" sx={{ mb: 2 }}>
-          Enter the user IDs and expiration time to create a test journey. The journey
-          will only be visible to the specified users and will expire automatically.
+          {JOURNEY_TEXT.TEST_JOURNEY_DIALOG.DESCRIPTION}
         </DialogContentText>
         <TextField
-          label="User IDs"
+          label={JOURNEY_TEXT.TEST_JOURNEY_DIALOG.USER_IDS_LABEL}
           value={userIds}
-          onChange={(e) => {
-            setUserIds(e.target.value);
-            if (errors.userIds) {
-              setErrors({ ...errors, userIds: undefined });
-            }
-          }}
+          onChange={handleUserIdsChange}
           error={!!errors.userIds}
-          helperText={errors.userIds || "Enter comma-separated user IDs (e.g., 123, 456, 789)"}
+          helperText={errors.userIds || JOURNEY_TEXT.TEST_JOURNEY_DIALOG.USER_IDS_HELPER_TEXT}
           required
           fullWidth
           sx={{ mb: 2 }}
@@ -114,19 +120,14 @@ export default function TestFeatureDialog({
           rows={2}
         />
         <TextField
-          label="Expiration Time (minutes)"
+          label={JOURNEY_TEXT.TEST_JOURNEY_DIALOG.EXPIRATION_TIME_LABEL}
           type="number"
           value={expireInMins}
-          onChange={(e) => {
-            setExpireInMins(e.target.value);
-            if (errors.expireInMins) {
-              setErrors({ ...errors, expireInMins: undefined });
-            }
-          }}
+          onChange={handleExpireInMinsChange}
           error={!!errors.expireInMins}
           helperText={
             errors.expireInMins ||
-            "Journey will be active for this duration (default: 30 minutes)"
+            JOURNEY_TEXT.TEST_JOURNEY_DIALOG.EXPIRATION_TIME_HELPER_TEXT
           }
           required
           fullWidth
@@ -135,7 +136,7 @@ export default function TestFeatureDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={isLoading}>
-          Cancel
+          {JOURNEY_TEXT.ACTIONS.CANCEL}
         </Button>
         <Button
           onClick={handleSubmit}
@@ -144,7 +145,11 @@ export default function TestFeatureDialog({
           disabled={isLoading}
           autoFocus
         >
-          {isLoading ? "Creating..." : existingUserIds ? "Update Test Journey" : "Create Test Journey"}
+          {isLoading
+            ? JOURNEY_TEXT.ACTIONS.CREATING
+            : existingUserIds
+            ? JOURNEY_TEXT.ACTIONS.UPDATE_TEST_JOURNEY
+            : JOURNEY_TEXT.ACTIONS.CREATE_TEST_JOURNEY}
         </Button>
       </DialogActions>
     </Dialog>

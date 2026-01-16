@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { 
   createTestJourney, 
-  updateTestJourney,
-  TestJourneyResponse 
+  updateTestJourney
 } from "@/api/services/testJourney.service";
+import { TestJourneyResponse } from "@/api/services/types/testJourney.interface";
 import { CreateJourneyFormData } from "../types/journey.interface";
 
 export interface UseTestJourneyParams {

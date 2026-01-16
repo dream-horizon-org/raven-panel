@@ -114,6 +114,11 @@ export const JOURNEY_TEXT = {
     CANCEL: "Cancel",
     NEXT: "Next",
     CREATE_JOURNEY: "Create Journey",
+    TEST_JOURNEY: "Test Journey",
+    LEARN_HOW_JOURNEYS_WORK: "Learn How Journeys Work",
+    CREATE_TEST_JOURNEY: "Create Test Journey",
+    UPDATE_TEST_JOURNEY: "Update Test Journey",
+    CREATING: "Creating...",
   },
   ENGAGEMENT: {
     BOTTOMSHEET: "Configure Engagement: Bottomsheet",
@@ -129,6 +134,19 @@ export const JOURNEY_TEXT = {
   SAVE: "Save",
   LOCATION: "Location",
   CONTENT: "Content",
+  TEST_JOURNEY_DIALOG: {
+    TITLE: "Test Journey",
+    DESCRIPTION: "Enter the user IDs and expiration time to create a test journey. The journey will only be visible to the specified users and will expire automatically.",
+    USER_IDS_LABEL: "User IDs",
+    USER_IDS_HELPER_TEXT: "Enter comma-separated user IDs (e.g., 123, 456, 789)",
+    EXPIRATION_TIME_LABEL: "Expiration Time (minutes)",
+    EXPIRATION_TIME_HELPER_TEXT: "Journey will be active for this duration (default: 30 minutes)",
+    VALIDATION: {
+      USER_IDS_REQUIRED: "User IDs are required",
+      AT_LEAST_ONE_USER_ID_REQUIRED: "At least one user ID is required",
+      EXPIRATION_TIME_REQUIRED: "Expiration time must be a positive number",
+    },
+  },
 } as const;
 
 // Default expiration time for test journeys (in minutes)

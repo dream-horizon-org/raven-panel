@@ -8,7 +8,7 @@ import {
   NudgeSelectionTooltipMenu,
   ReactNativeJson,
 } from "../types/journey.interface";
-import { TestJourneyRequest } from "@/api/services/testJourney.service";
+import { TestJourneyRequest } from "@/api/services/types/testJourney.interface";
 import { DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
 
 export const transformFormDataToTestApiFormat = (

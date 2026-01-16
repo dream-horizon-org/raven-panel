@@ -2,7 +2,7 @@ import { CreateJourneyFormData } from "../types/journey.interface";
 import { Path } from "react-hook-form";
 import { transformFormDataToTestApiFormat } from "./testJourney.utils";
 import { UseMutationResult } from "@tanstack/react-query";
-import { TestJourneyResponse } from "@/api/services/testJourney.service";
+import { TestJourneyResponse } from "@/api/services/types/testJourney.interface";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
