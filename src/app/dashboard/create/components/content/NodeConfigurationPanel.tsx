@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFormContext } from "react-hook-form";
 import { useEventDetails } from "../../hooks/useEventsList";
 import { Node } from "@xyflow/react";
 import {
@@ -49,6 +49,13 @@ import {
 } from "../../utils/propertyType.utils";
 import { FormControl, InputLabel, Select } from "@mui/material";
 import JourneyTutorialDialog from "./JourneyTutorialDialog";
+import {
+  CreateJourneyFormData,
+  NudgeEvent,
+  DynamicTextValueType,
+  NudgeType,
+} from "../../types/journey.interface";
+import { syncEngagementToAction } from "../../utils/engagementToActionMapping.utils";
 
 interface NodeConfigurationPanelProps {
   node: Node<JourneyNodeData>;
@@ -92,6 +99,9 @@ export default function NodeConfigurationPanel({
   onEngagementTemplateSelect,
 }: NodeConfigurationPanelProps) {
   const theme = useTheme();
+  const { getValues: getFormValues, setValue: setFormValue } = useFormContext<
+    CreateJourneyFormData
+  >();
   // Initialize form data
   const getInitialData = useCallback((): JourneyNodeData => {
     const hasBranches =
@@ -759,6 +769,309 @@ export default function NodeConfigurationPanel({
     });
   }, [getValues, setValue]);
 
+  const handleAddNativeEventEmitter = useCallback(() => {
+    const newEngagement: Engagement = {
+      id: `engagement-${Date.now()}`,
+      type: "nativeEventEmitter",
+      config: {},
+    };
+    const currentEngagements = getValues("engagements") || [];
+    setValue("engagements", [...currentEngagements, newEngagement], {
+      shouldDirty: true,
+    });
+
+    // Sync engagement to action in nudgeSelection.actions
+    const currentActions = getFormValues("nudgeSelection.actions") || [];
+    const stateNumber = String(node.data.stateNumber || "0");
+    const syncedActions = syncEngagementToAction(
+      node,
+      newEngagement,
+      stateNumber,
+      currentActions
+    );
+    setFormValue("nudgeSelection.actions", syncedActions, {
+      shouldDirty: true,
+    });
+  }, [getValues, setValue, getFormValues, setFormValue, node]);
+
+  // Native Event Emitter Inline Fields Component
+  const NativeEventEmitterInlineFields = ({
+    engagement,
+    engagementIndex,
+    node: nodeProp,
+  }: {
+    engagement: Engagement;
+    engagementIndex: number;
+    node: Node<JourneyNodeData>;
+  }) => {
+    const { getValues: getFormValues, setValue: setFormValue } = useFormContext<
+      CreateJourneyFormData
+    >();
+
+    // Find the action for this engagement
+    const actionIndex = useMemo(() => {
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      return actions.findIndex((action) => {
+        const actionIdPrefix = action.actionId.includes("_")
+          ? action.actionId.split("_")[0]
+          : action.actionId;
+        return actionIdPrefix === engagement.id;
+      });
+    }, [engagement.id, getFormValues]);
+
+    const action = useMemo(() => {
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      return actionIndex >= 0 ? actions[actionIndex] : null;
+    }, [actionIndex, getFormValues]);
+
+    const template = (action?.template as NudgeEvent | undefined) || {
+      eventName: "",
+      eventParams: [],
+    };
+
+    const handleEventNameChange = (value: string) => {
+      if (actionIndex < 0) return;
+      const updatedTemplate: NudgeEvent = {
+        eventName: value,
+        eventParams: template.eventParams || [],
+      };
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      const updatedActions = [...actions];
+      updatedActions[actionIndex] = {
+        ...updatedActions[actionIndex],
+        template: updatedTemplate,
+      };
+      setFormValue("nudgeSelection.actions", updatedActions, {
+        shouldDirty: true,
+      });
+    };
+
+    const handleAddProperty = () => {
+      if (actionIndex < 0) return;
+      const newParam: NudgeEvent["eventParams"][0] = {
+        name: "",
+        type: "string",
+        value: [
+          {
+            value: "",
+            isTemplateString: false as const,
+          },
+        ],
+      };
+      const updatedTemplate: NudgeEvent = {
+        eventName: template.eventName || "",
+        eventParams: [...(template.eventParams || []), newParam],
+      };
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      const updatedActions = [...actions];
+      updatedActions[actionIndex] = {
+        ...updatedActions[actionIndex],
+        template: updatedTemplate,
+      };
+      setFormValue("nudgeSelection.actions", updatedActions, {
+        shouldDirty: true,
+      });
+    };
+
+    const handleDeleteProperty = (paramIndex: number) => {
+      if (actionIndex < 0) return;
+      const updatedParams = (template.eventParams || []).filter(
+        (_, i) => i !== paramIndex
+      );
+      const updatedTemplate: NudgeEvent = {
+        eventName: template.eventName || "",
+        eventParams: updatedParams,
+      };
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      const updatedActions = [...actions];
+      updatedActions[actionIndex] = {
+        ...updatedActions[actionIndex],
+        template: updatedTemplate,
+      };
+      setFormValue("nudgeSelection.actions", updatedActions, {
+        shouldDirty: true,
+      });
+    };
+
+    const handlePropertyChange = (
+      paramIndex: number,
+      field: "name" | "type",
+      value: string | "string" | "boolean" | "number"
+    ) => {
+      if (actionIndex < 0) return;
+      const updatedParams = [...(template.eventParams || [])];
+      updatedParams[paramIndex] = {
+        ...updatedParams[paramIndex],
+        [field]: value,
+      };
+      const updatedTemplate: NudgeEvent = {
+        eventName: template.eventName || "",
+        eventParams: updatedParams,
+      };
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      const updatedActions = [...actions];
+      updatedActions[actionIndex] = {
+        ...updatedActions[actionIndex],
+        template: updatedTemplate,
+      };
+      setFormValue("nudgeSelection.actions", updatedActions, {
+        shouldDirty: true,
+      });
+    };
+
+    const handleValueChange = (paramIndex: number, value: string) => {
+      if (actionIndex < 0) return;
+      const updatedParams = [...(template.eventParams || [])];
+      const updatedValue: DynamicTextValueType = [
+        { value, isTemplateString: false as const },
+      ];
+      updatedParams[paramIndex] = {
+        ...updatedParams[paramIndex],
+        value: updatedValue,
+      };
+      const updatedTemplate: NudgeEvent = {
+        eventName: template.eventName || "",
+        eventParams: updatedParams,
+      };
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      const updatedActions = [...actions];
+      updatedActions[actionIndex] = {
+        ...updatedActions[actionIndex],
+        template: updatedTemplate,
+      };
+      setFormValue("nudgeSelection.actions", updatedActions, {
+        shouldDirty: true,
+      });
+    };
+
+    const handleToggleTemplateString = (paramIndex: number) => {
+      if (actionIndex < 0) return;
+      const updatedParams = [...(template.eventParams || [])];
+      const currentValue = updatedParams[paramIndex].value?.[0];
+      if (!currentValue) return;
+
+      const isCurrentlyTemplate = currentValue.isTemplateString === true;
+      // For now, we only support static values for native event emitter
+      // If switching to template, convert to static with empty value
+      const updatedValue: DynamicTextValueType = [
+        {
+          value:
+            (currentValue as any).value ||
+            (currentValue as any).variableName ||
+            "",
+          isTemplateString: false as const,
+        },
+      ];
+
+      updatedParams[paramIndex] = {
+        ...updatedParams[paramIndex],
+        value: updatedValue,
+      };
+      const updatedTemplate: NudgeEvent = {
+        eventName: template.eventName || "",
+        eventParams: updatedParams,
+      };
+      const actions = getFormValues("nudgeSelection.actions") || [];
+      const updatedActions = [...actions];
+      updatedActions[actionIndex] = {
+        ...updatedActions[actionIndex],
+        template: updatedTemplate,
+      };
+      setFormValue("nudgeSelection.actions", updatedActions, {
+        shouldDirty: true,
+      });
+    };
+
+    return (
+      <Box sx={{ mt: 2 }}>
+        {/* Event Name with Add Property button */}
+        <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", mb: 2 }}>
+          <TextField
+            label="Event Name"
+            value={template.eventName || ""}
+            onChange={(e) => handleEventNameChange(e.target.value)}
+            size="small"
+            sx={{ flex: 1 }}
+          />
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAddProperty}
+            variant="outlined"
+            size="small"
+          >
+            Add Property
+          </Button>
+        </Box>
+
+        {/* Event Property Rows */}
+        {(template.eventParams || []).map((param, paramIndex) => {
+          const valueItem = param.value?.[0];
+          const valueStr =
+            valueItem && "value" in valueItem ? String(valueItem.value) : "";
+          const isTemplate = valueItem?.isTemplateString === true;
+
+          return (
+            <Box
+              key={paramIndex}
+              sx={{
+                display: "flex",
+                gap: 2,
+                alignItems: "flex-start",
+                mb: 2,
+              }}
+            >
+              <TextField
+                label="Event Property"
+                value={param.name || ""}
+                onChange={(e) =>
+                  handlePropertyChange(paramIndex, "name", e.target.value)
+                }
+                size="small"
+                sx={{ flex: 1 }}
+              />
+
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  value={param.type || "string"}
+                  label="Type"
+                  onChange={(e) =>
+                    handlePropertyChange(
+                      paramIndex,
+                      "type",
+                      e.target.value as "string" | "boolean" | "number"
+                    )
+                  }
+                >
+                  <MenuItem value="string">string</MenuItem>
+                  <MenuItem value="boolean">boolean</MenuItem>
+                  <MenuItem value="number">number</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                label="Value"
+                value={valueStr}
+                onChange={(e) => handleValueChange(paramIndex, e.target.value)}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteProperty(paramIndex)}
+                color="error"
+                sx={{ minWidth: 40, height: 40 }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  };
+
   const handleUpdateEngagement = useCallback(
     (engagementId: string, updates: Partial<Engagement>) => {
       const currentEngagements = getValues("engagements") || [];
@@ -1150,20 +1463,22 @@ export default function NodeConfigurationPanel({
                 Show an engagement to users when they reach this step.
               </Typography>
             </Box>
-            <Button
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={handleAddEngagement}
-              variant="outlined"
-              disabled={node.data.isEntry && !eventName}
-              title={
-                node.data.isEntry && !eventName
-                  ? "Please select an event first"
-                  : "Add an engagement"
-              }
-            >
-              Add Engagement
-            </Button>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleAddEngagement}
+                variant="outlined"
+                disabled={node.data.isEntry && !eventName}
+                title={
+                  node.data.isEntry && !eventName
+                    ? "Please select an event first"
+                    : "Add an engagement"
+                }
+              >
+                Add Engagement
+              </Button>
+            </Box>
           </Box>
 
           {engagements.length > 0 ? (
@@ -1200,8 +1515,15 @@ export default function NodeConfigurationPanel({
                             sx={{ color: theme.palette.warning.main }}
                           />
                         )}
+                        {engagement.type === "nativeEventEmitter" && (
+                          <ArrowForwardIcon
+                            sx={{ color: theme.palette.info.main }}
+                          />
+                        )}
                         <Typography variant="subtitle2" fontWeight={600}>
-                          Engagement {index + 1}
+                          {engagement.type === "nativeEventEmitter"
+                            ? "Emit System events"
+                            : `Engagement ${index + 1}`}
                         </Typography>
                       </Box>
                       <IconButton
@@ -1213,48 +1535,60 @@ export default function NodeConfigurationPanel({
                       </IconButton>
                     </Box>
 
-                    <Controller
-                      name={`engagements.${index}.type`}
-                      control={control}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          fullWidth
-                          select
-                          label="Engagement Type"
-                          value={field.value || ""}
-                          onChange={(e) => {
-                            field.onChange(e.target.value);
-                            handleUpdateEngagement(engagement.id, {
-                              type: e.target.value as
-                                | "tooltip"
-                                | "popup"
-                                | "bottomsheet",
-                            });
-                          }}
-                          size="small"
-                        >
-                          <MenuItem value="tooltip">
-                            <Box sx={styles.engagementMenuItemStyles}>
-                              <InfoIcon sx={{ fontSize: 18 }} />
-                              <Typography>Tooltip</Typography>
-                            </Box>
-                          </MenuItem>
-                          <MenuItem value="popup">
-                            <Box sx={styles.engagementMenuItemStyles}>
-                              <OpenInNewIcon sx={{ fontSize: 18 }} />
-                              <Typography>Popup</Typography>
-                            </Box>
-                          </MenuItem>
-                          <MenuItem value="bottomsheet">
-                            <Box sx={styles.engagementMenuItemStyles}>
-                              <ViewAgendaIcon sx={{ fontSize: 18 }} />
-                              <Typography>Bottom Sheet</Typography>
-                            </Box>
-                          </MenuItem>
-                        </TextField>
-                      )}
-                    />
+                    {/* Engagement Type dropdown - hidden for Native Event Emitter */}
+                    {engagement.type !== "nativeEventEmitter" && (
+                      <Controller
+                        name={`engagements.${index}.type`}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            fullWidth
+                            select
+                            label="Engagement Type"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              field.onChange(e.target.value);
+                              handleUpdateEngagement(engagement.id, {
+                                type: e.target.value as
+                                  | "tooltip"
+                                  | "popup"
+                                  | "bottomsheet"
+                                  | "nativeEventEmitter",
+                              });
+                            }}
+                            size="small"
+                          >
+                            <MenuItem value="tooltip">
+                              <Box sx={styles.engagementMenuItemStyles}>
+                                <InfoIcon sx={{ fontSize: 18 }} />
+                                <Typography>Tooltip</Typography>
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="popup">
+                              <Box sx={styles.engagementMenuItemStyles}>
+                                <OpenInNewIcon sx={{ fontSize: 18 }} />
+                                <Typography>Popup</Typography>
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="bottomsheet">
+                              <Box sx={styles.engagementMenuItemStyles}>
+                                <ViewAgendaIcon sx={{ fontSize: 18 }} />
+                                <Typography>Bottom Sheet</Typography>
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="nativeEventEmitter">
+                              <Box sx={styles.engagementMenuItemStyles}>
+                                <ArrowForwardIcon sx={{ fontSize: 18 }} />
+                                <Typography>Emit System events</Typography>
+                              </Box>
+                            </MenuItem>
+                          </TextField>
+                        )}
+                      />
+                    )}
+
+                    {/* Inline fields for Native Event Emitter - removed, shown in side panel instead */}
                   </Paper>
                 );
               })}

@@ -46,14 +46,37 @@ export const parseJourneyDataToFormData = (
 
   const frequency = rule.frequency || {};
   const journeyFrequency = {
-    enableTimesInSession: !!frequency.session?.limit,
-    timesInSession: frequency.session?.limit || 999,
-    enableMaxTimesInPeriod: !!frequency.window?.limit,
-    maxTimesInPeriod: frequency.window?.limit || 999,
-    periodValue: frequency.window?.value || 999,
+    enableTimesInSession:
+      !!frequency.session?.limit && frequency.session.limit !== 999,
+    timesInSession:
+      frequency.session?.limit !== undefined &&
+      frequency.session?.limit !== null &&
+      frequency.session?.limit !== 999
+        ? frequency.session.limit
+        : null,
+    enableMaxTimesInPeriod:
+      !!frequency.window?.limit && frequency.window.limit !== 999,
+    maxTimesInPeriod:
+      frequency.window?.limit !== undefined &&
+      frequency.window?.limit !== null &&
+      frequency.window?.limit !== 999
+        ? frequency.window.limit
+        : null,
+    periodValue:
+      frequency.window?.value !== undefined &&
+      frequency.window?.value !== null &&
+      frequency.window?.value !== 999
+        ? frequency.window.value
+        : null,
     periodUnit: frequency.window?.unit || "days",
-    enableMaxTimesInLifetime: !!frequency.lifespan?.limit,
-    maxTimesInLifetime: frequency.lifespan?.limit || 999,
+    enableMaxTimesInLifetime:
+      !!frequency.lifespan?.limit && frequency.lifespan.limit !== 999,
+    maxTimesInLifetime:
+      frequency.lifespan?.limit !== undefined &&
+      frequency.lifespan?.limit !== null &&
+      frequency.lifespan?.limit !== 999
+        ? frequency.lifespan.limit
+        : null,
   };
 
   const stateTransition = rule.stateTransition || {};
@@ -114,6 +137,8 @@ export const parseJourneyDataToFormData = (
       nudgeType = NudgeType.POPUP;
     } else if (action.type === "TOOLTIP") {
       nudgeType = NudgeType.TOOLTIP;
+    } else if (action.type === "NUDGE_ACTION") {
+      nudgeType = NudgeType.NUDGE_ACTION;
     }
 
     const transformDeeplinkParamsForForm = (
@@ -179,59 +204,142 @@ export const parseJourneyDataToFormData = (
       return node;
     };
 
-    let template: ReactNativeJson | null = null;
+    let template: ReactNativeJson | NudgeEvent | null = null;
     if (action.template) {
       try {
-        const parsedTemplate = action.template as ReactNativeJson;
-        template = (transformDeeplinkParamsForForm(
-          parsedTemplate as TemplateNode
-        ) as unknown) as ReactNativeJson;
+        // Handle template that might be a JSON string
+        let parsedTemplate: unknown = action.template;
+        if (typeof action.template === "string") {
+          try {
+            parsedTemplate = JSON.parse(action.template);
+          } catch (parseError) {
+            console.error(
+              `[parseJourneyData] Failed to parse template string for action ${action.actionId}:`,
+              parseError
+            );
+            parsedTemplate = action.template;
+          }
+        }
+
+        // Check if this is a NUDGE_ACTION (Native Event Emitter)
+        // Template should have eventName property for NUDGE_ACTION
+        if (
+          nudgeType === NudgeType.NUDGE_ACTION &&
+          typeof parsedTemplate === "object" &&
+          parsedTemplate !== null &&
+          "eventName" in parsedTemplate
+        ) {
+          // Parse as NudgeEvent and ensure value arrays are initialized
+          const nudgeEvent = parsedTemplate as NudgeEvent;
+          console.log(
+            `[parseJourneyData] Parsing NUDGE_ACTION template for action ${action.actionId}:`,
+            nudgeEvent
+          );
+          template = {
+            ...nudgeEvent,
+            eventParams: (nudgeEvent.eventParams || []).map((param) => ({
+              ...param,
+              value:
+                param.value &&
+                Array.isArray(param.value) &&
+                param.value.length > 0
+                  ? param.value
+                  : [{ value: "", isTemplateString: false }],
+            })),
+          };
+          console.log(
+            `[parseJourneyData] Parsed NUDGE_ACTION template result:`,
+            template
+          );
+        } else if (nudgeType === NudgeType.NUDGE_ACTION) {
+          // NUDGE_ACTION but template doesn't have eventName - log warning
+          console.warn(
+            `[parseJourneyData] NUDGE_ACTION ${action.actionId} has template but missing eventName:`,
+            parsedTemplate
+          );
+        } else {
+          // Parse as ReactNativeJson for UI engagements
+          const uiTemplate = parsedTemplate as ReactNativeJson;
+          template = (transformDeeplinkParamsForForm(
+            uiTemplate as TemplateNode
+          ) as unknown) as ReactNativeJson;
+        }
       } catch (e) {
-        console.error("Failed to parse template:", e);
+        console.error(
+          `[parseJourneyData] Failed to parse template for action ${action.actionId}:`,
+          e,
+          "Raw template:",
+          action.template
+        );
       }
+    } else {
+      console.log(
+        `[parseJourneyData] Action ${action.actionId} (type: ${nudgeType}) has no template`
+      );
     }
 
     let variant: string | undefined = action.variant;
-    if (!variant && template?.props?.templateVariantId) {
-      variant = String(template.props.templateVariantId);
-    }
 
-    if (!variant || variant === "Default") {
-      if (nudgeType === NudgeType.NUDGE_UI && template?.children) {
-        const hasMultipleButtons = (template.children as ReactNativeJson[]).some(
-          (child: ReactNativeJson) => {
-            const buttons = (child.children?.filter(
-              (c: ReactNativeJson) => c.type === "Button"
-            ) || []) as ReactNativeJson[];
-            return buttons.length > 1;
-          }
-        );
-        variant = hasMultipleButtons ? "bottomsheet-cta" : "basic-bottomsheet";
-      } else if (nudgeType === NudgeType.POPUP && template?.children) {
-        const hasSingleButton = (template.children as ReactNativeJson[]).some(
-          (child: ReactNativeJson) => {
-            const buttons = (child.children?.filter(
-              (c: ReactNativeJson) => c.type === "Button"
-            ) || []) as ReactNativeJson[];
-            return buttons.length === 1;
-          }
-        );
-        variant = hasSingleButton ? "popup-single-button" : "basic-popup";
-      } else if (nudgeType === NudgeType.TOOLTIP) {
-        variant = "basic-tooltip";
-      } else {
-        variant = "Default";
+    // Only handle variant for UI engagements, not NUDGE_ACTION
+    if (nudgeType !== NudgeType.NUDGE_ACTION) {
+      if (
+        !variant &&
+        template &&
+        "props" in template &&
+        template.props?.templateVariantId
+      ) {
+        variant = String(template.props.templateVariantId);
       }
-    }
 
-    if (template && variant) {
-      template = {
-        ...template,
-        props: {
-          ...template.props,
-          templateVariantId: variant,
-        },
-      };
+      if (!variant || variant === "Default") {
+        if (
+          nudgeType === NudgeType.NUDGE_UI &&
+          template &&
+          "children" in template &&
+          template.children
+        ) {
+          const hasMultipleButtons = (template.children as ReactNativeJson[]).some(
+            (child: ReactNativeJson) => {
+              const buttons = (child.children?.filter(
+                (c: ReactNativeJson) => c.type === "Button"
+              ) || []) as ReactNativeJson[];
+              return buttons.length > 1;
+            }
+          );
+          variant = hasMultipleButtons
+            ? "bottomsheet-cta"
+            : "basic-bottomsheet";
+        } else if (
+          nudgeType === NudgeType.POPUP &&
+          template &&
+          "children" in template &&
+          template.children
+        ) {
+          const hasSingleButton = (template.children as ReactNativeJson[]).some(
+            (child: ReactNativeJson) => {
+              const buttons = (child.children?.filter(
+                (c: ReactNativeJson) => c.type === "Button"
+              ) || []) as ReactNativeJson[];
+              return buttons.length === 1;
+            }
+          );
+          variant = hasSingleButton ? "popup-single-button" : "basic-popup";
+        } else if (nudgeType === NudgeType.TOOLTIP) {
+          variant = "basic-tooltip";
+        } else {
+          variant = "Default";
+        }
+      }
+
+      if (template && variant && "props" in template) {
+        template = {
+          ...template,
+          props: {
+            ...template.props,
+            templateVariantId: variant,
+          },
+        } as ReactNativeJson;
+      }
     }
 
     const onState = Object.entries(stateToAction).find(
@@ -323,6 +431,22 @@ export const parseJourneyDataToFormData = (
       }
     }
 
+    let defaultTemplate: ReactNativeJson | NudgeEvent;
+    if (nudgeType === NudgeType.NUDGE_ACTION) {
+      defaultTemplate = {
+        eventName: "",
+        eventParams: [],
+      };
+    } else {
+      defaultTemplate = {
+        type: nudgeType,
+        props: { testID: `testID-${Date.now()}` },
+        actions: [],
+        styles: {},
+        children: [],
+      };
+    }
+
     return {
       config: {
         triggerDelay: Number(action.config?.triggerDelay) || 0,
@@ -332,13 +456,7 @@ export const parseJourneyDataToFormData = (
       actionId: String(action.actionId || ""),
       type: nudgeType,
       variant: variant as CreateJourneyFormData["nudgeSelection"]["actions"][0]["variant"],
-      template: template || {
-        type: nudgeType,
-        props: { testID: `testID-${Date.now()}` },
-        actions: [],
-        styles: {},
-        children: [],
-      },
+      template: template || defaultTemplate,
       isNudgeValid: !!template,
     };
   });

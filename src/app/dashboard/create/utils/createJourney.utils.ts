@@ -13,6 +13,7 @@ import {
   NudgeSelectionPopupMenu,
   NudgeSelectionTooltipMenu,
   ReactNativeJson,
+  NudgeEvent,
 } from "../types/journey.interface";
 
 export const transformFormDataToApiFormat = (
@@ -148,14 +149,34 @@ export const transformFormDataToApiFormat = (
 
   const frequency: CtaFrequency = {
     lifespan: {
-      limit: formData.journeyFrequency?.maxTimesInLifetime || 1000,
+      limit:
+        formData.journeyFrequency?.enableMaxTimesInLifetime &&
+        formData.journeyFrequency?.maxTimesInLifetime !== null &&
+        formData.journeyFrequency?.maxTimesInLifetime !== undefined
+          ? formData.journeyFrequency.maxTimesInLifetime
+          : 999,
     },
     session: {
-      limit: formData.journeyFrequency?.timesInSession || 1000,
+      limit:
+        formData.journeyFrequency?.enableTimesInSession &&
+        formData.journeyFrequency?.timesInSession !== null &&
+        formData.journeyFrequency?.timesInSession !== undefined
+          ? formData.journeyFrequency.timesInSession
+          : 999,
     },
     window: {
-      limit: formData.journeyFrequency?.maxTimesInPeriod || 1000,
-      value: formData.journeyFrequency?.periodValue || 1000,
+      limit:
+        formData.journeyFrequency?.enableMaxTimesInPeriod &&
+        formData.journeyFrequency?.maxTimesInPeriod !== null &&
+        formData.journeyFrequency?.maxTimesInPeriod !== undefined
+          ? formData.journeyFrequency.maxTimesInPeriod
+          : 999,
+      value:
+        formData.journeyFrequency?.enableMaxTimesInPeriod &&
+        formData.journeyFrequency?.periodValue !== null &&
+        formData.journeyFrequency?.periodValue !== undefined
+          ? formData.journeyFrequency.periodValue
+          : 999,
       unit: formData.journeyFrequency?.periodUnit || "days",
     },
   };
@@ -217,7 +238,22 @@ export const transformFormDataToApiFormat = (
   const actions =
     formData.nudgeSelection.actions?.map((action, index) => {
       const actionId = actionIds[index];
-      let templateToStringify: ReactNativeJson = action.template;
+      const apiActionType: NudgeType = action.type;
+
+      // Handle NUDGE_ACTION (Native Event Emitter) - use template as-is
+      if (action.type === NudgeType.NUDGE_ACTION) {
+        return {
+          config: {
+            triggerDelay: action.config?.triggerDelay || 1000,
+          },
+          actionId,
+          type: apiActionType,
+          template: action.template, // NudgeEvent - use as-is
+        };
+      }
+
+      // Handle UI engagements (POPUP, TOOLTIP, NUDGE_UI) - transform template
+      let templateToStringify: ReactNativeJson = action.template as ReactNativeJson;
 
       // Remove templateVariantId from props
       if (templateToStringify?.props?.templateVariantId) {
@@ -249,8 +285,6 @@ export const transformFormDataToApiFormat = (
       }
 
       templateToStringify = transformDeeplinkParams(templateToStringify);
-
-      const apiActionType: NudgeType = action.type;
 
       let variant:
         | NudgeSelectionPopupMenu
