@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { useEventDetails } from "../../hooks/useEventsList";
 import { Node } from "@xyflow/react";
 import {
   Box,
@@ -58,7 +59,7 @@ interface NodeConfigurationPanelProps {
   onDeleteEdge: (edgeId: string) => void;
   mockEventNames: string[];
   events?: Array<{
-    metadata: { eventName: string };
+    eventName: string;
     properties: Array<{ propertyName: string; type: string }>;
   }>;
   isLoadingEvents?: boolean;
@@ -141,6 +142,11 @@ export default function NodeConfigurationPanel({
   const branches = watch("branches") || [];
   const engagements = watch("engagements") || [];
   const eventName = watch("eventName") || "";
+
+  const {
+    data: eventDetailsData,
+    isLoading: isLoadingEventDetails,
+  } = useEventDetails(eventName || null);
 
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [tutorialDialogOpen, setTutorialDialogOpen] = useState(false);
@@ -807,40 +813,37 @@ export default function NodeConfigurationPanel({
     const eventProperties: string[] = [];
     const typeMap = new Map<string, string>();
 
-    // Get properties from the selected event
-    if (eventName && events.length > 0) {
-      const selectedEvent = events.find(
-        (e: {
-          metadata: { eventName: string };
-          properties: Array<{ propertyName: string; type: string }>;
-        }) => e.metadata.eventName === eventName
-      );
-      if (selectedEvent?.properties) {
-        selectedEvent.properties.forEach(
-          (prop: { propertyName: string; type: string }) => {
-            eventProperties.push(prop.propertyName);
-            typeMap.set(prop.propertyName, prop.type || "string");
-          }
+    if (eventName) {
+      if (eventDetailsData?.data?.properties) {
+        eventDetailsData.data.properties.forEach((prop) => {
+          eventProperties.push(prop.propertyName);
+          typeMap.set(prop.propertyName, prop.type || "string");
+        });
+      } else if (events.length > 0) {
+        const selectedEvent = events.find(
+          (e: {
+            eventName: string;
+            properties: Array<{ propertyName: string; type: string }>;
+          }) => e.eventName === eventName
         );
+        if (selectedEvent?.properties) {
+          selectedEvent.properties.forEach(
+            (prop: { propertyName: string; type: string }) => {
+              eventProperties.push(prop.propertyName);
+              typeMap.set(prop.propertyName, prop.type || "string");
+            }
+          );
+        }
       }
     }
 
-    // Add system properties
-    systemPropertyNames.forEach((propName: string) => {
-      if (!typeMap.has(propName)) {
-        const systemType = systemPropertyTypes.get(propName);
-        typeMap.set(propName, systemType || "string");
-      }
-    });
-
-    const allProperties = [...eventProperties, ...systemPropertyNames];
-    const uniqueProperties = Array.from(new Set(allProperties)).sort();
+    const uniqueProperties = Array.from(new Set(eventProperties)).sort();
 
     return {
       availableProperties: uniqueProperties,
       propertyTypeMap: typeMap,
     };
-  }, [eventName, events, systemPropertyNames, systemPropertyTypes]);
+  }, [eventName, eventDetailsData, events]);
 
   // Memoize filter editor to avoid recreating on every render
   const renderFilterEditor = useCallback(

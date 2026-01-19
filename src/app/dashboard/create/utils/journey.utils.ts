@@ -9,7 +9,7 @@ export const findMatchingEvent = (
   eventName: string,
   eventList: EventListItem[]
 ): EventListItem | undefined => {
-  return eventList.find((event) => event.metadata.eventName === eventName);
+  return eventList.find((event) => event.eventName === eventName);
 };
 
 export const createEventSelection = (

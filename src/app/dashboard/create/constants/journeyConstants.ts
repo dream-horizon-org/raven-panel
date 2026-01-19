@@ -114,6 +114,12 @@ export const JOURNEY_TEXT = {
     CANCEL: "Cancel",
     NEXT: "Next",
     CREATE_JOURNEY: "Create Journey",
+    PUBLISH_NOW: "Publish Now",
+    SCHEDULED_FOR_PUBLISH: "Schedule for Publish",
+    SAVE_AS_DRAFT: "Save as Draft",
+    UPDATE_PUBLISH_NOW: "Update & Publish Now",
+    UPDATE_SCHEDULED_FOR_PUBLISH: "Update & Schedule for Publish",
+    UPDATE_DRAFT: "Update Draft",
   },
   ENGAGEMENT: {
     BOTTOMSHEET: "Configure Engagement: Bottomsheet",

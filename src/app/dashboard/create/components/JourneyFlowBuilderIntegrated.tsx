@@ -110,7 +110,7 @@ interface JourneyFlowBuilderIntegratedProps {
   control: Control<CreateJourneyFormData>;
   errors: FieldErrors<CreateJourneyFormData>;
   events: Array<{
-    metadata: { eventName: string };
+    eventName: string;
     properties: Array<{ propertyName: string; type: string }>;
   }>;
   isLoadingEvents?: boolean;
@@ -2769,7 +2769,7 @@ export default function JourneyFlowBuilderIntegrated({
     }
   }, [checkUnconnectedNodes, checkUnconnectedNodesRef]); // Get event names from events prop
 
-  const eventNames = events.map((e) => e.metadata.eventName);
+  const eventNames = events.map((e) => e.eventName);
 
   return (
     <Box
@@ -2796,7 +2796,9 @@ export default function JourneyFlowBuilderIntegrated({
         },
       }}
     >
-      <Box sx={{ flex: 1, position: "relative" }}>
+      <Box
+        sx={{ flex: 1, position: "relative", overflow: "hidden", minHeight: 0 }}
+      >
         <ReactFlowProvider>
           <ReactFlow
             nodes={nodes}
@@ -2810,6 +2812,7 @@ export default function JourneyFlowBuilderIntegrated({
             defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
             edgesFocusable={true}
             defaultEdgeOptions={{ type: "bezier" }}
+            style={{ width: "100%", height: "100%" }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             <Controls

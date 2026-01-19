@@ -1,15 +1,26 @@
 import axios from "axios";
 import { API_AXIOS_CONFIG } from "@/config/api";
+import { getOrganizations } from "@/app/components/utils/tenanat.utils";
 
 const axiosInstance = axios.create({
   timeout: API_AXIOS_CONFIG.timeout,
   headers: API_AXIOS_CONFIG.headers,
 });
 
-const TENANT_CONFIG: Record<string, { source: string }> = {
-  dream11: { source: "dream11" },
-  criq: { source: "criq" },
+const buildTenantConfig = (): Record<string, { source: string }> => {
+  const organizations = getOrganizations();
+  const config: Record<string, { source: string }> = {};
+
+  organizations.forEach((org) => {
+    if (org) {
+      config[org] = { source: org };
+    }
+  });
+
+  return config;
 };
+
+const TENANT_CONFIG = buildTenantConfig();
 
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -19,7 +30,15 @@ axiosInstance.interceptors.request.use(
         const tenantData = storedTenant ? JSON.parse(storedTenant) : {};
         const tenantId = (tenantData?.name || tenantData?.id) as string;
 
-        const tenantConfig = TENANT_CONFIG[tenantId] || TENANT_CONFIG.dream11;
+        const tenantConfig = TENANT_CONFIG[tenantId];
+
+        if (!tenantConfig) {
+          console.warn(
+            `Tenant "${tenantId}" not found in TENANT_CONFIG. Available tenants:`,
+            Object.keys(TENANT_CONFIG)
+          );
+          return config;
+        }
 
         if (config.headers) {
           config.headers["x-tenant-id"] = tenantConfig.source;
