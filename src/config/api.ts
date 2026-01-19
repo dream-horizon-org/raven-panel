@@ -65,6 +65,7 @@ export const API_ENDPOINTS = {
   EVENTS_NAMES: getEventsNamesUrl(),
   EVENT_DETAILS: (eventName: string) => getEventDetailsUrl(eventName),
   COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
+  TEST_JOURNEY_CREATE: `${API_BASE_URLS.THUNDER}/thunder/ctas/test/create`,
 };
 
 export const API_AXIOS_CONFIG = {
