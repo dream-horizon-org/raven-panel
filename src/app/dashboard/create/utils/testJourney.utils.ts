@@ -56,7 +56,7 @@ export const transformFormDataToTestApiFormat = (
   const priority = formData.schedule.priority || 1;
   const stateMachineTTL = 10800000; // Same as regular journey
 
-  const resetCTAonFirstLaunch = formData.testFeature?.resetCTAonFirstLaunch ?? true;
+  const resetCTAonFirstLaunch = true;
 
   // Build stateTransition (same as regular journey)
   const stateTransition: Record<
