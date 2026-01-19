@@ -608,7 +608,7 @@
     {
       "id": "4",
       "category": "dropdown",
-      "display": "Emit Native Event",
+      "display": "Emit System Event",
       "type": "emitNativeEvent",
       "name": "emitNativeEvent",
       "executionOrder": 3,
