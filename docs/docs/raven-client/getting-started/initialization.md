@@ -7,37 +7,41 @@ This guide covers how to initialize Raven Client with proper configuration.
 Initialize the SDK in your root component's `useEffect`:
 
 ```tsx
-import { useEffect } from 'react';
-import { nudgeClient, fetchCTA, type NudgeClientOptions } from '@dreamhorizonorg/raven-client';
-import { Platform } from 'react-native';
+import { useEffect } from "react";
+import {
+  ravenClient,
+  fetchCTA,
+  type RavenClientOptions,
+} from "@dreamhorizonorg/raven-client";
+import { Platform } from "react-native";
 
 function App() {
   useEffect(() => {
-    nudgeClient.init({
+    ravenClient.init({
       listeners: {
         appEvent: (eventName, props) => {
           // Handle analytics events
-          console.log('Analytics event:', eventName, props);
+          console.log("Analytics event:", eventName, props);
         },
         fetchCtaApi: async (url, method, variables) => {
           // This callback is typically not used
-          throw new Error('Use makeCtaApiCall directly');
+          throw new Error("Use makeCtaApiCall directly");
         },
         getAccessToken: () => ({
-          token: 'your-access-token',
-          tokenType: 'Bearer',
+          token: "your-access-token",
+          tokenType: "Bearer",
         }),
       },
       config: {
-        baseUrl: 'https://your-api-base-url.com',
-        userId: 'user-123',
-        appVersion: '1.0.0',
+        baseUrl: "https://your-api-base-url.com",
+        userId: "user-123",
+        appVersion: "1.0.0",
         platform: Platform.OS,
-        nudgeRouteName: 'Nudge',
-        packageName: 'com.yourcompany.yourapp',
-        tenantId: 'your-tenant-id', // Optional: Multi-tenant identifier
+        nudgeRouteName: "Nudge",
+        packageName: "com.yourcompany.yourapp",
+        tenantId: "your-tenant-id", // Optional: Multi-tenant identifier
       },
-    } as NudgeClientOptions);
+    } as RavenClientOptions);
 
     // Fetch CTAs after initialization
     fetchCTA().catch(console.error);
@@ -49,30 +53,30 @@ function App() {
 
 ## Configuration Options
 
-### NudgeClientConfig
+### RavenClientConfig
 
 ```typescript
-interface NudgeClientConfig {
-  baseUrl: string;              // API base URL
-  userId: string | number;       // Current user ID
-  appVersion: string;            // App version
-  codepushVersion?: string;      // CodePush version (optional)
-  platform: string;             // 'ios' or 'android'
-  nudgeRouteName: string;        // Route name for Nudge screen
-  packageName: string;           // App package/bundle ID
-  tenantId?: string;            // Tenant ID for multi-tenant apps (optional)
+interface RavenClientConfig {
+  baseUrl: string; // API base URL
+  userId: string | number; // Current user ID
+  appVersion: string; // App version
+  codepushVersion?: string; // CodePush version (optional)
+  platform: string; // 'ios' or 'android'
+  nudgeRouteName: string; // Route name for Nudge screen
+  packageName: string; // App package/bundle ID
+  tenantId?: string; // Tenant ID for multi-tenant apps (optional)
 }
 ```
 
-### NudgeClientListeners
+### RavenClientListeners
 
 ```typescript
-interface NudgeClientListeners {
+interface RavenClientListeners {
   appEvent: (eventName: string, props?: unknown) => void;
   fetchCtaApi: <TVariables, TData>(
     url: string,
     method: string,
-    variables?: TVariables,
+    variables?: TVariables
   ) => Promise<TData>;
   getAccessToken: () => AccessToken;
 }
@@ -89,10 +93,10 @@ listeners: {
   appEvent: (eventName, props) => {
     // Send to your analytics service
     yourAnalyticsService.track(eventName, props);
-    
+
     // Or use Firebase Analytics
     analytics().logEvent(eventName, props);
-    
+
     // Or use Mixpanel
     mixpanel.track(eventName, props);
   },
@@ -134,15 +138,17 @@ After initialization, fetch CTAs from your backend:
 
 ```tsx
 useEffect(() => {
-  nudgeClient.init({ /* ... */ });
-  
+  ravenClient.init({
+    /* ... */
+  });
+
   // Fetch CTAs
   fetchCTA()
     .then(() => {
-      console.log('CTAs fetched successfully');
+      console.log("CTAs fetched successfully");
     })
     .catch((error) => {
-      console.error('Failed to fetch CTAs:', error);
+      console.error("Failed to fetch CTAs:", error);
     });
 }, []);
 ```
@@ -152,14 +158,16 @@ useEffect(() => {
 If you want to load CTAs from local storage on app start:
 
 ```tsx
-import { getCtaFromStorageToMemory } from '@dreamhorizonorg/raven-client';
+import { getCtaFromStorageToMemory } from "@dreamhorizonorg/raven-client";
 
 useEffect(() => {
   // Load CTAs from storage first
   getCtaFromStorageToMemory();
-  
+
   // Then initialize and fetch fresh CTAs
-  nudgeClient.init({ /* ... */ });
+  ravenClient.init({
+    /* ... */
+  });
   fetchCTA();
 }, []);
 ```
@@ -170,7 +178,7 @@ You can update configuration at runtime:
 
 ```tsx
 // Update user ID when user logs in
-nudgeClient.config.userId = newUserId;
+ravenClient.config.userId = newUserId;
 
 // Fetch CTAs again with new user context
 fetchCTA();
@@ -183,17 +191,17 @@ Handle initialization errors gracefully:
 ```tsx
 useEffect(() => {
   try {
-    nudgeClient.init({
+    ravenClient.init({
       // ... configuration
     });
-    
+
     fetchCTA().catch((error) => {
-      console.error('Failed to fetch CTAs:', error);
+      console.error("Failed to fetch CTAs:", error);
       // Fallback: Load from storage
       getCtaFromStorageToMemory();
     });
   } catch (error) {
-    console.error('Failed to initialize SDK:', error);
+    console.error("Failed to initialize SDK:", error);
   }
 }, []);
 ```
@@ -210,4 +218,3 @@ useEffect(() => {
 
 - [Event Processing](/docs/raven-client/getting-started/event-processing) - Set up event handling
 - [State Machine DSL](/docs/raven-client/state-machine-dsl/overview) - Learn about state machines
-

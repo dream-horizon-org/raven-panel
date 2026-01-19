@@ -2,19 +2,19 @@
 
 Functions for processing events and managing CTAs.
 
-## `processEventForCTAs(event: CTAEvent)`
+## `trackAppEvent(event: CTAEvent)`
 
 Process an app event to trigger CTAs.
 
 ```tsx
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
-processEventForCTAs({
-  eventName: 'USER_LOGIN',
-  routeName: 'Home',
+trackAppEvent({
+  eventName: "USER_LOGIN",
+  routeName: "Home",
   is_from_rn: true,
   actionDone: false,
-  userId: '123',
+  userId: "123",
 });
 ```
 
@@ -26,11 +26,11 @@ processEventForCTAs({
 
 ```typescript
 interface CTAEvent {
-  eventName: string;              // Required: Event name
-  routeName: string;              // Required: Current route
-  is_from_rn: boolean;           // Required: Always true
-  actionDone: boolean;            // Required: Action completed?
-  ActiveScreenName?: string;      // Optional: Active screen
+  eventName: string; // Required: Event name
+  routeName: string; // Required: Current route
+  is_from_rn: boolean; // Required: Always true
+  actionDone: boolean; // Required: Action completed?
+  ActiveScreenName?: string; // Optional: Active screen
   [key: string]: boolean | string | number; // Additional properties
 }
 ```
@@ -40,10 +40,10 @@ interface CTAEvent {
 Send an analytics event (doesn't trigger CTAs).
 
 ```tsx
-import { sendNudgeAppEvent } from '@dreamhorizonorg/raven-client';
+import { sendNudgeAppEvent } from "@dreamhorizonorg/raven-client";
 
-sendNudgeAppEvent('BUTTON_CLICKED', {
-  buttonId: 'signup',
+sendNudgeAppEvent("BUTTON_CLICKED", {
+  buttonId: "signup",
   timestamp: Date.now(),
 });
 ```
@@ -58,7 +58,7 @@ sendNudgeAppEvent('BUTTON_CLICKED', {
 Fetch CTAs from the backend.
 
 ```tsx
-import { fetchCTA } from '@dreamhorizonorg/raven-client';
+import { fetchCTA } from "@dreamhorizonorg/raven-client";
 
 await fetchCTA();
 ```
@@ -71,14 +71,16 @@ await fetchCTA();
 
 ```tsx
 useEffect(() => {
-  nudgeClient.init({ /* ... */ });
-  
+  ravenClient.init({
+    /* ... */
+  });
+
   fetchCTA()
     .then(() => {
-      console.log('CTAs fetched');
+      console.log("CTAs fetched");
     })
     .catch((error) => {
-      console.error('Failed to fetch CTAs:', error);
+      console.error("Failed to fetch CTAs:", error);
     });
 }, []);
 ```
@@ -88,7 +90,7 @@ useEffect(() => {
 Load CTAs from local storage into memory.
 
 ```tsx
-import { getCtaFromStorageToMemory } from '@dreamhorizonorg/raven-client';
+import { getCtaFromStorageToMemory } from "@dreamhorizonorg/raven-client";
 
 getCtaFromStorageToMemory();
 ```
@@ -99,9 +101,11 @@ getCtaFromStorageToMemory();
 useEffect(() => {
   // Load from storage first
   getCtaFromStorageToMemory();
-  
+
   // Then fetch fresh CTAs
-  nudgeClient.init({ /* ... */ });
+  ravenClient.init({
+    /* ... */
+  });
   fetchCTA();
 }, []);
 ```
@@ -109,21 +113,21 @@ useEffect(() => {
 ## Example: Event Processing
 
 ```tsx
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 function LoginScreen() {
   const handleLogin = async () => {
     try {
       await loginUser();
-      
+
       // Process login event
-      processEventForCTAs({
-        eventName: 'USER_LOGIN',
-        routeName: 'Home',
+      trackAppEvent({
+        eventName: "USER_LOGIN",
+        routeName: "Home",
         is_from_rn: true,
         actionDone: true,
         userId: user.id,
-        loginMethod: 'email',
+        loginMethod: "email",
       });
     } catch (error) {
       // Handle error
@@ -137,19 +141,19 @@ function LoginScreen() {
 ## Example: Screen Tracking
 
 ```tsx
-import { useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 function useScreenTracking() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('state', () => {
-      const routeName = navigation.getCurrentRoute()?.name || '';
-      
-      processEventForCTAs({
-        eventName: 'SCREEN_VIEW',
+    const unsubscribe = navigation.addListener("state", () => {
+      const routeName = navigation.getCurrentRoute()?.name || "";
+
+      trackAppEvent({
+        eventName: "SCREEN_VIEW",
         routeName: routeName,
         is_from_rn: true,
         actionDone: false,
@@ -166,4 +170,3 @@ function useScreenTracking() {
 
 - [Quick Start](/docs/raven-client/getting-started/quick-start) - Learn about event processing
 - [State Machine DSL](/docs/raven-client/state-machine-dsl/overview) - Understand state machines
-

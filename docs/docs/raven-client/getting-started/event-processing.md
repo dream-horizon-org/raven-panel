@@ -8,18 +8,18 @@ Raven Client is event-driven. Engagement is triggered based on app events that y
 
 ## Processing Events
 
-Use `processEventForCTAs` to process events:
+Use `trackAppEvent` to process events:
 
 ```tsx
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 // Process an event
-processEventForCTAs({
-  eventName: 'USER_LOGIN',
-  routeName: 'Home',
+trackAppEvent({
+  eventName: "USER_LOGIN",
+  routeName: "Home",
   is_from_rn: true,
   actionDone: false,
-  userId: '123',
+  userId: "123",
   timestamp: Date.now(),
 });
 ```
@@ -30,11 +30,11 @@ processEventForCTAs({
 
 ```typescript
 interface CTAEvent {
-  eventName: string;              // Required: Event name
-  routeName: string;              // Required: Current route name
-  is_from_rn: boolean;           // Required: Always true for React Native
-  actionDone: boolean;            // Required: Whether action was completed
-  ActiveScreenName?: string;      // Optional: Active screen name
+  eventName: string; // Required: Event name
+  routeName: string; // Required: Current route name
+  is_from_rn: boolean; // Required: Always true for React Native
+  actionDone: boolean; // Required: Whether action was completed
+  ActiveScreenName?: string; // Optional: Active screen name
   [key: string]: boolean | string | number; // Additional event properties
 }
 ```
@@ -51,14 +51,14 @@ interface CTAEvent {
 You can add any additional properties that might be used in filters:
 
 ```tsx
-processEventForCTAs({
-  eventName: 'BUTTON_CLICKED',
-  routeName: 'Home',
+trackAppEvent({
+  eventName: "BUTTON_CLICKED",
+  routeName: "Home",
   is_from_rn: true,
   actionDone: false,
-  buttonId: 'signup-button',
-  userId: '123',
-  userType: 'premium',
+  buttonId: "signup-button",
+  userId: "123",
+  userType: "premium",
   timestamp: Date.now(),
 });
 ```
@@ -69,30 +69,30 @@ processEventForCTAs({
 
 ```tsx
 // User login
-processEventForCTAs({
-  eventName: 'USER_LOGIN',
-  routeName: 'Home',
+trackAppEvent({
+  eventName: "USER_LOGIN",
+  routeName: "Home",
   is_from_rn: true,
   actionDone: false,
   userId: currentUser.id,
 });
 
 // Button click
-processEventForCTAs({
-  eventName: 'BUTTON_CLICKED',
-  routeName: 'Home',
+trackAppEvent({
+  eventName: "BUTTON_CLICKED",
+  routeName: "Home",
   is_from_rn: true,
   actionDone: false,
-  buttonId: 'signup-button',
+  buttonId: "signup-button",
 });
 
 // Screen view
-processEventForCTAs({
-  eventName: 'SCREEN_VIEW',
-  routeName: 'Profile',
+trackAppEvent({
+  eventName: "SCREEN_VIEW",
+  routeName: "Profile",
   is_from_rn: true,
   actionDone: false,
-  screenName: 'Profile',
+  screenName: "Profile",
 });
 ```
 
@@ -100,22 +100,22 @@ processEventForCTAs({
 
 ```tsx
 // App state change
-processEventForCTAs({
-  eventName: 'APP_STATE_CHANGE',
-  routeName: 'Home',
+trackAppEvent({
+  eventName: "APP_STATE_CHANGE",
+  routeName: "Home",
   is_from_rn: true,
   actionDone: false,
-  state: 'active',
+  state: "active",
 });
 
 // User property change
-processEventForCTAs({
-  eventName: 'USER_PROPERTY_CHANGED',
-  routeName: 'Settings',
+trackAppEvent({
+  eventName: "USER_PROPERTY_CHANGED",
+  routeName: "Settings",
   is_from_rn: true,
   actionDone: false,
-  property: 'subscription',
-  value: 'premium',
+  property: "subscription",
+  value: "premium",
 });
 ```
 
@@ -124,10 +124,10 @@ processEventForCTAs({
 Use `sendNudgeAppEvent` to send analytics events (these don't trigger Engagement):
 
 ```tsx
-import { sendNudgeAppEvent } from '@dreamhorizonorg/raven-client';
+import { sendNudgeAppEvent } from "@dreamhorizonorg/raven-client";
 
-sendNudgeAppEvent('BUTTON_CLICKED', {
-  buttonId: 'signup-button',
+sendNudgeAppEvent("BUTTON_CLICKED", {
+  buttonId: "signup-button",
   timestamp: Date.now(),
 });
 ```
@@ -137,17 +137,17 @@ sendNudgeAppEvent('BUTTON_CLICKED', {
 ### React Component
 
 ```tsx
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 function LoginScreen() {
   const handleLogin = async () => {
     try {
       await loginUser();
-      
+
       // Process login event
-      processEventForCTAs({
-        eventName: 'USER_LOGIN',
-        routeName: 'Home',
+      trackAppEvent({
+        eventName: "USER_LOGIN",
+        routeName: "Home",
         is_from_rn: true,
         actionDone: true,
         userId: user.id,
@@ -164,19 +164,19 @@ function LoginScreen() {
 ### Navigation Listener
 
 ```tsx
-import { useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 function useScreenTracking() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('state', (e) => {
-      const routeName = navigation.getCurrentRoute()?.name || '';
-      
-      processEventForCTAs({
-        eventName: 'SCREEN_VIEW',
+    const unsubscribe = navigation.addListener("state", (e) => {
+      const routeName = navigation.getCurrentRoute()?.name || "";
+
+      trackAppEvent({
+        eventName: "SCREEN_VIEW",
         routeName: routeName,
         is_from_rn: true,
         actionDone: false,
@@ -192,22 +192,22 @@ function useScreenTracking() {
 ### Redux Middleware
 
 ```tsx
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 const ravenMiddleware = (store) => (next) => (action) => {
   const result = next(action);
-  
+
   // Process specific actions
-  if (action.type === 'USER_LOGIN') {
-    processEventForCTAs({
-      eventName: 'USER_LOGIN',
+  if (action.type === "USER_LOGIN") {
+    trackAppEvent({
+      eventName: "USER_LOGIN",
       routeName: store.getState().navigation.currentRoute,
       is_from_rn: true,
       actionDone: true,
       userId: action.payload.userId,
     });
   }
-  
+
   return result;
 };
 ```
@@ -229,4 +229,3 @@ const ravenMiddleware = (store) => (next) => (action) => {
 - [State Machine DSL](/docs/raven-client/state-machine-dsl/overview) - Learn how events trigger state transitions
 - [Filters](/docs/raven-client/state-machine-dsl/filters) - Learn about event filters
 - [Engagement System](/docs/raven-client/core-concepts/cta-system) - Understand the Engagement system
-
