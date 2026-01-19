@@ -34,7 +34,11 @@ import {
   useWatch,
   useFieldArray,
 } from "react-hook-form";
-import { CreateJourneyFormData, EventInfo } from "../types/journey.interface";
+import {
+  CreateJourneyFormData,
+  EventInfo,
+  NudgeEvent,
+} from "../types/journey.interface";
 import { StateNode, EngagementNode } from "./content/FlowNodes";
 import NodeConfigurationPanel from "./content/NodeConfigurationPanel";
 import {
@@ -1023,6 +1027,14 @@ export default function JourneyFlowBuilderIntegrated({
     setValue("nudgeSelection.resetStates", resetStates); // Sync all engagements from all nodes to nudgeSelection.actions
 
     const currentActions = getValues("nudgeSelection.actions") || [];
+    console.log(
+      `[syncFlowToForm] Current actions from form:`,
+      currentActions.map((a) => ({
+        actionId: a.actionId,
+        type: a.type,
+        template: a.template,
+      }))
+    );
     let updatedActions = [...currentActions];
     const engagementStateMap = new Map<
       string,
@@ -1365,6 +1377,14 @@ export default function JourneyFlowBuilderIntegrated({
 
     // CRITICAL: Use replaceActions from useFieldArray instead of setValue
     // This ensures React Hook Form properly tracks the array changes
+    console.log(
+      `[syncFlowToForm] About to replaceActions with:`,
+      updatedActions.map((a) => ({
+        actionId: a.actionId,
+        type: a.type,
+        template: a.template,
+      }))
+    );
 
     replaceActions(updatedActions);
   }, [nodes, edges, setValue, getValues]);
@@ -1457,6 +1477,78 @@ export default function JourneyFlowBuilderIntegrated({
 
       if (engagements.length > 0) {
         for (const engagement of engagements) {
+          if (engagement.type === "nativeEventEmitter") {
+            // Validate NudgeEvent for nativeEventEmitter
+            const hasTemplate =
+              engagement.config &&
+              typeof engagement.config === "object" &&
+              engagement.config.template &&
+              typeof engagement.config.template === "object";
+
+            if (!hasTemplate) {
+              return false; // Engagement exists but no template
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const template = engagement.config.template as any;
+
+            // Check if it's a NudgeEvent structure
+            if ("eventName" in template) {
+              const nudgeEvent = template as NudgeEvent;
+
+              // Validate eventName
+              if (!nudgeEvent.eventName || nudgeEvent.eventName.trim() === "") {
+                return false;
+              }
+
+              // Require at least one property if eventName is filled
+              if (nudgeEvent.eventName && nudgeEvent.eventName.trim() !== "") {
+                if (
+                  !nudgeEvent.eventParams ||
+                  nudgeEvent.eventParams.length === 0
+                ) {
+                  return false;
+                }
+              }
+
+              // Validate eventParams if they exist
+              if (nudgeEvent.eventParams && nudgeEvent.eventParams.length > 0) {
+                for (const param of nudgeEvent.eventParams) {
+                  // Validate param name
+                  if (!param.name || param.name.trim() === "") {
+                    return false;
+                  }
+
+                  // Validate param value
+                  if (!param.value || param.value.length === 0) {
+                    return false;
+                  }
+
+                  const firstValue = param.value[0];
+                  if (!firstValue) {
+                    return false;
+                  }
+
+                  // Check if it's a static type and has a value
+                  if (!firstValue.isTemplateString) {
+                    const staticValue = firstValue.value;
+                    if (
+                      staticValue === undefined ||
+                      staticValue === null ||
+                      String(staticValue).trim() === ""
+                    ) {
+                      return false;
+                    }
+                  }
+                }
+              }
+            } else {
+              return false; // Invalid template structure
+            }
+
+            continue;
+          }
+
           // Check if engagement has a template in its config
           const hasTemplate =
             engagement.config &&
@@ -1702,7 +1794,8 @@ export default function JourneyFlowBuilderIntegrated({
                   engagementType: engagement.type as
                     | "tooltip"
                     | "popup"
-                    | "bottomsheet",
+                    | "bottomsheet"
+                    | "nativeEventEmitter",
                 },
               };
               workingArray.push(

@@ -166,13 +166,13 @@ export const getJourneyFormDefaults = () => ({
   },
   journeyFrequency: {
     enableTimesInSession: false,
-    timesInSession: 999,
+    timesInSession: null,
     enableMaxTimesInPeriod: false,
-    maxTimesInPeriod: 999,
-    periodValue: 999,
+    maxTimesInPeriod: null,
+    periodValue: null,
     periodUnit: "days" as const,
     enableMaxTimesInLifetime: false,
-    maxTimesInLifetime: 999,
+    maxTimesInLifetime: null,
   },
   ruleEngine: {
     currentDropdownSelectedEvent: null,

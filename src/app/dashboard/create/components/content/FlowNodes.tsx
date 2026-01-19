@@ -11,6 +11,7 @@ import {
 import InfoIcon from "@mui/icons-material/Info";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 // @ts-expect-error - NodeProps constraint requires Node type, but we only have data types
 type JourneyNodeProps = NodeProps<Record<string, unknown>>;
@@ -103,14 +104,30 @@ export const StateNode = memo((props: JourneyNodeProps) => {
       )}
       {data.engagements && data.engagements.length > 0 && (
         <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
-          {data.engagements.map((eng: Engagement) => (
-            <Chip
-              key={eng.id}
-              label={eng.type}
-              size="small"
-              sx={{ fontSize: "10px", height: "20px" }}
-            />
-          ))}
+          {data.engagements.map((eng: Engagement) => {
+            const getEngagementLabel = (type: string): string => {
+              switch (type) {
+                case "tooltip":
+                  return "Tooltip";
+                case "popup":
+                  return "Popup";
+                case "bottomsheet":
+                  return "Bottom Sheet";
+                case "nativeEventEmitter":
+                  return "Emit System events";
+                default:
+                  return type;
+              }
+            };
+            return (
+              <Chip
+                key={eng.id}
+                label={getEngagementLabel(eng.type)}
+                size="small"
+                sx={{ fontSize: "10px", height: "20px" }}
+              />
+            );
+          })}
         </Box>
       )}
       <Handle type="source" position={Position.Bottom} id="branch-source" />
@@ -173,6 +190,8 @@ export const EngagementNode = memo((props: EngagementNodeProps) => {
         return <OpenInNewIcon sx={{ fontSize: 20 }} />;
       case "bottomsheet":
         return <ViewAgendaIcon sx={{ fontSize: 20 }} />;
+      case "nativeEventEmitter":
+        return <ArrowForwardIcon sx={{ fontSize: 20 }} />;
       default:
         return null;
     }
@@ -186,6 +205,8 @@ export const EngagementNode = memo((props: EngagementNodeProps) => {
         return "Popup";
       case "bottomsheet":
         return "Bottom Sheet";
+      case "nativeEventEmitter":
+        return "Emit System events";
       default:
         return data.engagementType;
     }
@@ -216,22 +237,31 @@ export const EngagementNode = memo((props: EngagementNodeProps) => {
       >
         <Box
           sx={{
-            color: theme.palette.warning.main,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            gap: 0.5,
           }}
         >
-          {getIcon()}
+          <Box
+            sx={{
+              color: theme.palette.warning.main,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {getIcon()}
+          </Box>
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            color="text.secondary"
+            sx={{ fontSize: "0.65rem" }}
+          >
+            {getTypeLabel()}
+          </Typography>
         </Box>
-        <Typography
-          variant="caption"
-          fontWeight={600}
-          color="text.secondary"
-          sx={{ fontSize: "0.65rem" }}
-        >
-          {getTypeLabel()}
-        </Typography>
         <Chip
           label="Engagement"
           size="small"
