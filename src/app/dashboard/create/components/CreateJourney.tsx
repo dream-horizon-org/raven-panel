@@ -144,26 +144,7 @@ export default function CreateJourneyPage({
           }
         }
 
-        console.log(
-          `[CreateJourney] About to reset form with parsed data. Actions:`,
-          formData.nudgeSelection.actions.map((a) => ({
-            actionId: a.actionId,
-            type: a.type,
-            template: a.template,
-          }))
-        );
         reset(formData);
-        // Log after a brief delay to see if syncFlowToForm overwrites it
-        setTimeout(() => {
-          console.log(
-            `[CreateJourney] Form reset complete (after delay). Current form values:`,
-            getValues("nudgeSelection.actions")?.map((a) => ({
-              actionId: a.actionId,
-              type: a.type,
-              template: a.template,
-            }))
-          );
-        }, 100);
       } catch (error) {
         console.error("Error fetching journey data:", error);
         toast.error("Failed to load journey data. Please try again.");

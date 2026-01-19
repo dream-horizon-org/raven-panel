@@ -49,16 +49,6 @@ export default function NativeEventEmitterEditor({
     );
     const allActions = getValues("nudgeSelection.actions") || [];
     const actionData = allActions[actionIndex];
-
-    console.log("NativeEventEmitterEditor - Debug Info:", {
-      actionIndex,
-      templateFromUseWatch: template,
-      templateFromGetValues: formValue,
-      actionType: actionData?.type,
-      actionId: actionData?.actionId,
-      fullAction: actionData,
-      allActionsLength: allActions.length,
-    });
   }, [template, actionIndex, getValues]);
 
   // Check if template is a valid NudgeEvent
@@ -69,7 +59,6 @@ export default function NativeEventEmitterEditor({
       "eventName" in t &&
       typeof (t as NudgeEvent).eventName === "string";
     if (!isValid && t) {
-      console.log("NativeEventEmitterEditor - Invalid NudgeEvent:", t);
     }
     return isValid;
   };

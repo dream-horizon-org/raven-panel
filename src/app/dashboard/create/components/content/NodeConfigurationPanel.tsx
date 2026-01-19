@@ -1207,14 +1207,6 @@ export default function NodeConfigurationPanel({
               value={selectedProperty || null}
               onChange={(_: unknown, newValue: string | null) => {
                 const newProperty = newValue || "";
-                console.log(
-                  "Property onChange:",
-                  newProperty,
-                  "branchIndex:",
-                  branchIndex,
-                  "filterIndex:",
-                  filterIndex
-                );
                 onUpdate({ property: newProperty });
 
                 // Convert value if property type changes

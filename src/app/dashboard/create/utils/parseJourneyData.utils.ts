@@ -278,10 +278,6 @@ export const parseJourneyDataToFormData = (
         ) {
           // Parse as NudgeEvent and ensure value arrays are initialized
           const nudgeEvent = parsedTemplate as NudgeEvent;
-          console.log(
-            `[parseJourneyData] Parsing NUDGE_ACTION template for action ${action.actionId}:`,
-            nudgeEvent
-          );
           template = {
             ...nudgeEvent,
             eventParams: (nudgeEvent.eventParams || []).map((param) => ({
@@ -294,10 +290,6 @@ export const parseJourneyDataToFormData = (
                   : [{ value: "", isTemplateString: false }],
             })),
           };
-          console.log(
-            `[parseJourneyData] Parsed NUDGE_ACTION template result:`,
-            template
-          );
         } else if (nudgeType === NudgeType.NUDGE_ACTION) {
           // NUDGE_ACTION but template doesn't have eventName - log warning
           console.warn(
@@ -319,10 +311,6 @@ export const parseJourneyDataToFormData = (
           action.template
         );
       }
-    } else {
-      console.log(
-        `[parseJourneyData] Action ${action.actionId} (type: ${nudgeType}) has no template`
-      );
     }
 
     let variant: string | undefined = action.variant;

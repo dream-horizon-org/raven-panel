@@ -171,9 +171,6 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
       // This is safe because we're matching by engagement ID which is unique
       if (!actionOriginalNodeId) {
         // Match by engagement ID prefix only - this preserves templates after form reset
-        console.log(
-          `[syncEngagementToAction] Action ${action.actionId} matched by engagement ID prefix (no originalNodeId yet)`
-        );
         return true;
       }
 
@@ -187,9 +184,6 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
     // Use existing action's actionId, but ALWAYS use current node's state number
     // This ensures that if states were reassigned after node deletion, we use the correct new state
     actionId = currentActions[actionIndex].actionId;
-    console.log(
-      `[syncEngagementToAction] Found existing action ${actionId} at index ${actionIndex} for engagement ${engagement.id}`
-    );
     // CRITICAL: Always use current node's state number, not the stored onState
     // This prevents matching to wrong nodes when states are reassigned after deletion
     onState = stateNumber;
@@ -197,9 +191,6 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
     // Create new action - always use current node's state number
     const baseTimestamp = Date.now();
     actionId = originalActionId || `${engagement.id}_${baseTimestamp}`;
-    console.log(
-      `[syncEngagementToAction] Creating new action ${actionId} for engagement ${engagement.id}`
-    );
     onState = stateNumber; // Always use current node's state
   }
 
@@ -235,16 +226,6 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
     const existingAction = currentActions[actionIndex];
     const existingTemplate = existingAction?.template;
 
-    console.log(
-      `[syncEngagementToAction] Checking existing action ${actionId} (index ${actionIndex}):`,
-      {
-        hasTemplate: !!existingTemplate,
-        template: existingTemplate,
-        actionType: existingAction?.type,
-        nudgeType,
-      }
-    );
-
     if (existingTemplate) {
       if (nudgeType === NudgeType.NUDGE_ACTION) {
         // For NUDGE_ACTION, check if it's a valid NudgeEvent
@@ -256,10 +237,6 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
           // Preserve the existing template even if eventName is empty
           // This ensures templates loaded from API are not lost
           template = existingTemplate as NudgeEvent;
-          console.log(
-            `[syncEngagementToAction] Preserving existing NudgeEvent template:`,
-            template
-          );
         } else {
           console.warn(
             `[syncEngagementToAction] Existing template for NUDGE_ACTION is not a valid NudgeEvent:`,
@@ -277,16 +254,8 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
         }
       }
     } else {
-      console.log(
-        `[syncEngagementToAction] Existing action ${actionId} has no template, using defaultTemplate`
-      );
     }
-  } else {
-    console.log(
-      `[syncEngagementToAction] No existing action found for engagement ${engagement.id}, using defaultTemplate`
-    );
   }
-
   // Then, try to extract template from engagement config if it exists and is more complete
   if (engagement.config && typeof engagement.config === "object") {
     const configTemplate = (engagement.config as Record<string, unknown>)

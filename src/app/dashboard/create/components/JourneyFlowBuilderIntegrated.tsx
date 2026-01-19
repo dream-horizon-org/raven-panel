@@ -1027,14 +1027,6 @@ export default function JourneyFlowBuilderIntegrated({
     setValue("nudgeSelection.resetStates", resetStates); // Sync all engagements from all nodes to nudgeSelection.actions
 
     const currentActions = getValues("nudgeSelection.actions") || [];
-    console.log(
-      `[syncFlowToForm] Current actions from form:`,
-      currentActions.map((a) => ({
-        actionId: a.actionId,
-        type: a.type,
-        template: a.template,
-      }))
-    );
     let updatedActions = [...currentActions];
     const engagementStateMap = new Map<
       string,
@@ -1374,17 +1366,6 @@ export default function JourneyFlowBuilderIntegrated({
 
       return action;
     });
-
-    // CRITICAL: Use replaceActions from useFieldArray instead of setValue
-    // This ensures React Hook Form properly tracks the array changes
-    console.log(
-      `[syncFlowToForm] About to replaceActions with:`,
-      updatedActions.map((a) => ({
-        actionId: a.actionId,
-        type: a.type,
-        template: a.template,
-      }))
-    );
 
     replaceActions(updatedActions);
   }, [nodes, edges, setValue, getValues]);
