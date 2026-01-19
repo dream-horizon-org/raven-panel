@@ -33,8 +33,6 @@ import {
   getClickActionDefinition,
 } from "../../utils/componentDefinitions.utils";
 import { useEventsList } from "../../hooks/useEventsList";
-import { useSystemProperties } from "../../hooks/useSystemProperties";
-import { extractSystemProperties } from "../../utils/propertyType.utils";
 import { getAvailableProperties } from "../../utils/engagement.utils";
 
 interface ElementActionsEditorProps {
@@ -65,25 +63,20 @@ export default function ElementActionsEditor({
   const { data: eventsData } = useEventsList();
   const eventNames =
     eventsData?.data?.eventList
-      ?.map((event) => event.metadata?.eventName)
+      ?.map((event) => event.eventName)
       .filter((name): name is string => Boolean(name)) || [];
-
-  const { data: systemPropertiesData } = useSystemProperties();
-  const { systemPropertyNames, systemPropertyTypes } = extractSystemProperties(
-    systemPropertiesData
-  );
 
   // Helper function to get property type from property name
   const getPropertyType = (
     propertyName: string,
     actionParams: { eventName?: string }
-  ): "string" | "boolean" | "number" => {
+  ): "string" | "boolean" | "number" | undefined => {
     if (!propertyName) return "string";
 
     // First check event properties if eventName is set
     if (actionParams.eventName && eventsData?.data?.eventList) {
       const selectedEvent = eventsData.data.eventList.find(
-        (event) => event.metadata?.eventName === actionParams.eventName
+        (event) => event.eventName === actionParams.eventName
       );
       if (selectedEvent?.properties) {
         const eventProp = selectedEvent.properties.find(
@@ -104,23 +97,6 @@ export default function ElementActionsEditor({
         }
       }
     }
-
-    // Check system properties
-    const systemType = systemPropertyTypes.get(propertyName);
-    if (systemType) {
-      const normalizedType = systemType.toLowerCase();
-      if (normalizedType === "boolean") return "boolean";
-      if (
-        ["integer", "long", "double", "decimal", "float"].includes(
-          normalizedType
-        )
-      ) {
-        return "number";
-      }
-      return "string";
-    }
-
-    return "string";
   };
 
   const getFieldError = (actionIndex: number, paramName: string) => {
@@ -477,11 +453,11 @@ export default function ElementActionsEditor({
                 availableProperties = getAvailableProperties({
                   eventName: params.eventName as string,
                   eventsData: eventsData ?? { data: { eventList: [] } },
-                  systemPropertyNames,
+                  systemPropertyNames: [],
                 });
               } else {
                 // For emitNativeEvent, only use system properties
-                availableProperties = [...systemPropertyNames].sort();
+                availableProperties = [];
               }
             } else {
               const paramValue = params[param.name];
@@ -573,7 +549,7 @@ export default function ElementActionsEditor({
                                 newParams[index] = {
                                   ...eventParam,
                                   name: propertyName,
-                                  type: inferredType,
+                                  type: inferredType || "string",
                                 };
                                 handleEventParamsChange(
                                   actionDef.name,
@@ -591,7 +567,7 @@ export default function ElementActionsEditor({
                                 newParams[index] = {
                                   ...eventParam,
                                   name: propertyName,
-                                  type: inferredType,
+                                  type: inferredType || "string",
                                 };
                                 handleEventParamsChange(
                                   actionDef.name,
@@ -736,7 +712,6 @@ export default function ElementActionsEditor({
                               );
                             }}
                             onFocus={(e) => {
-
                               if (
                                 eventParam.type === "boolean" &&
                                 typeof eventParam.value === "boolean"
@@ -744,7 +719,7 @@ export default function ElementActionsEditor({
                                 const newParams = [...eventParams];
                                 newParams[index] = {
                                   ...eventParam,
-                                  value: String(eventParam.value), 
+                                  value: String(eventParam.value),
                                 };
                                 handleEventParamsChange(
                                   actionDef.name,
