@@ -339,6 +339,7 @@ export type CampaignFormType = {
     prevCtaId: string;
     expireInMins: number;
     userIds: string;
+    resetCTAonFirstLaunch: boolean;
   };
 };
 

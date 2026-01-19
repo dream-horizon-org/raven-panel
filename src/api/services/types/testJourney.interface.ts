@@ -25,9 +25,10 @@ export interface TestJourneyRequest {
         }>
       >
     >;
-    groupBy: string[];
+    groupByConfig: CtaGroupByInput;
     priority: number;
     stateMachineTTL: number;
+    resetCTAonFirstLaunch: boolean;
     ctaValidTill: number;
     actions: Array<{
       config: {
@@ -38,18 +39,30 @@ export interface TestJourneyRequest {
       variant?: string;
       template: ReactNativeJson; 
     }>;
-    frequency: {
-      session: {
-        limit: number;
-      };
-      window: {
-        limit: number;
-        unit: string;
-        value: number;
-      };
-    };
+    frequency: CtaFrequency;
     resetStates: string[];
   };
+}
+
+export interface CtaGroupByInput {
+  groupByKeys: string[];
+  maxActiveStateMachineCount: number | undefined | null;
+}
+
+export interface ExposureRuleWindowInput {
+  limit: number;
+  value: number;
+  unit: string;
+}
+
+export interface CtaFrequency {
+  lifespan: CtaFrequencyMaxCountInput;
+  session: CtaFrequencyMaxCountInput;
+  window: ExposureRuleWindowInput;
+}
+
+export interface CtaFrequencyMaxCountInput {
+  limit: number;
 }
 
 export interface TestJourneyResponse {

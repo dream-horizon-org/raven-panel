@@ -216,6 +216,7 @@ export const getJourneyFormDefaults = () => ({
     prevCtaId: "",
     expireInMins: DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS,
     userIds: "",
+    resetCTAonFirstLaunch: true,
   },
 });
 

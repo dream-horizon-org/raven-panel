@@ -56,6 +56,8 @@ export const transformFormDataToTestApiFormat = (
   const priority = formData.schedule.priority || 1;
   const stateMachineTTL = 10800000; // Same as regular journey
 
+  const resetCTAonFirstLaunch = formData.testFeature?.resetCTAonFirstLaunch ?? true;
+
   // Build stateTransition (same as regular journey)
   const stateTransition: Record<
     string,
@@ -290,6 +292,11 @@ export const transformFormDataToTestApiFormat = (
   // Frequency - only session and window (no lifespan)
   // Use 999 as default when frequency options are disabled or values are not set
   const frequency = {
+    lifespan: {
+      limit: formData.journeyFrequency?.enableMaxTimesInLifetime
+        ? (formData.journeyFrequency?.maxTimesInLifetime ?? 999)
+        : 999,
+    },
     session: {
       limit: formData.journeyFrequency?.enableTimesInSession 
         ? (formData.journeyFrequency?.timesInSession ?? 999)
@@ -331,9 +338,13 @@ export const transformFormDataToTestApiFormat = (
       stateToAction,
       contextParams,
       stateTransition,
-      groupBy,
+      groupByConfig: {
+        groupByKeys: [],
+        maxActiveStateMachineCount: 20,
+      },
       priority,
       stateMachineTTL,
+      resetCTAonFirstLaunch,
       ctaValidTill,
       actions,
       frequency,
