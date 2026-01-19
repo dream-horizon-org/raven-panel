@@ -18,7 +18,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           {children}
         </Box>
       </Box>
-      <Footer />
     </Box>
   );
 }

@@ -251,7 +251,7 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
       styles: {
         backgroundColor: "#FFFFFF",
         borderRadius: 12,
-        height: 240,
+        height: 300,
         width: "80%",
         paddingBottom: 16,
         flexDirection: "column",
@@ -392,12 +392,12 @@ export const getPopupWithSingleButtonTemplate = (): ReactNativeJson => ({
                   },
                   actions: [{ name: "dismiss", type: "dismiss", params: {} }],
                   styles: {
-                    width: 100,
+                    width: 150,
                     marginLeft: 10,
                     marginRight: 10,
                     marginTop: 10,
                     marginBottom: 10,
-                    paddingLeft: 16,
+                    paddingLeft: 8,
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",

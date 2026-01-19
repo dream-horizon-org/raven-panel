@@ -135,15 +135,15 @@ export default function ElementStylesEditor({
   );
   const flexStyles = availableStyles.filter((s) => FLEX_STYLES.includes(s));
 
-  // Separate dimension styles (borderRadius, height, width) from other styles
+  // Separate dimension styles (borderRadius, height, width, aspectRatio) from other styles
   const dimensionStyles = availableStyles.filter((s) =>
-    ["borderRadius", "height", "width"].includes(s)
+    ["borderRadius", "height", "width", "aspectRatio"].includes(s)
   );
   const otherStyles = availableStyles.filter(
     (s) =>
       !SPACING_STYLES.includes(s) &&
       !FLEX_STYLES.includes(s) &&
-      !["borderRadius", "height", "width"].includes(s)
+      !["borderRadius", "height", "width", "aspectRatio"].includes(s)
   );
 
   // Get current background color
@@ -509,6 +509,37 @@ export default function ElementStylesEditor({
           sx={{ flex: 1 }}
           error={hasError}
           helperText={errorMessage as string}
+          FormHelperTextProps={{
+            sx: { color: hasError ? "error.main" : "inherit" },
+          }}
+        />
+      );
+    }
+
+    if (styleName === "aspectRatio") {
+      const aspectRatioValue = (value as number) || "";
+      return (
+        <TextField
+          key={styleName}
+          size="small"
+          type="number"
+          label="Aspect Ratio"
+          value={aspectRatioValue}
+          onChange={(e) => {
+            const inputValue = e.target.value.trim();
+            if (inputValue === "") {
+              onStyleChange(styleName, undefined);
+            } else {
+              const numValue = Number(inputValue);
+              if (!isNaN(numValue) && numValue > 0) {
+                onStyleChange(styleName, numValue);
+              }
+            }
+          }}
+          inputProps={{ min: 0, step: 0.1 }}
+          placeholder="e.g., 1.5"
+          sx={{ flex: 1 }}
+          error={hasError}
           FormHelperTextProps={{
             sx: { color: hasError ? "error.main" : "inherit" },
           }}
