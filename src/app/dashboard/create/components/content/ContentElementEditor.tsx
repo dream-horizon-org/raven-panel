@@ -217,7 +217,7 @@ export default function ContentElementEditor({
   // };
 
   const handleAddChildElement = (
-    type: "View" | "Text" | "Image" | "Button"
+    type: "View" | "Text" | "Image" | "Button" | "Lottie"
   ) => {
     if (element?.type !== "View") {
       setChildMenuAnchor(null);
@@ -665,6 +665,9 @@ export default function ContentElementEditor({
                 </MenuItem>
                 <MenuItem onClick={() => handleAddChildElement("Button")}>
                   Button
+                </MenuItem>
+                <MenuItem onClick={() => handleAddChildElement("Lottie")}>
+                  Lottie
                 </MenuItem>
               </Menu>
               {children.length === 0 ? (

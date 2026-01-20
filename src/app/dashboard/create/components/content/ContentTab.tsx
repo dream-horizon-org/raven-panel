@@ -35,6 +35,7 @@ const ELEMENT_TYPES = [
   { value: "Horizontal Stack", label: "Horizontal Stack" },
   { value: "Text", label: "Text" },
   { value: "Image", label: "Image" },
+  { value: "Lottie", label: "Lottie" },
 ];
 
 export default function ContentTab({
@@ -108,7 +109,13 @@ export default function ContentTab({
   };
 
   const handleAddElement = (
-    type: "Vertical Stack" | "Horizontal Stack" | "Text" | "Image" | "Button"
+    type:
+      | "Vertical Stack"
+      | "Horizontal Stack"
+      | "Text"
+      | "Image"
+      | "Button"
+      | "Lottie"
   ) => {
     const currentChildren = [...children];
     const timestamp = Date.now();
@@ -305,6 +312,7 @@ export default function ContentTab({
                         | "Text"
                         | "Image"
                         | "Button"
+                        | "Lottie"
                     )
                   }
                 >

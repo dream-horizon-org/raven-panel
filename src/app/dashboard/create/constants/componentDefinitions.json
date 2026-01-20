@@ -10,6 +10,7 @@
       "styles": [
         "backgroundColor",
         "borderRadius",
+        "aspectRatio",
         "height",
         "width",
         "marginLeft",
@@ -21,7 +22,10 @@
         "paddingTop",
         "paddingBottom",
         "alignItems",
-        "aspectRatio"
+        "maxHeight",
+        "maxWidth",
+        "minHeight",
+        "minWidth"
       ]
     },
     {
@@ -34,6 +38,7 @@
       "styles": [
         "backgroundColor",
         "borderRadius",
+        "aspectRatio",
         "height",
         "width",
         "marginLeft",
@@ -45,7 +50,10 @@
         "paddingTop",
         "paddingBottom",
         "alignItems",
-        "aspectRatio"
+        "maxHeight",
+        "maxWidth",
+        "minHeight",
+        "minWidth"
       ]
     },
     {
@@ -80,6 +88,7 @@
       "styles": [
         "backgroundColor",
         "borderRadius",
+        "aspectRatio",
         "height",
         "width",
         "marginLeft",
@@ -93,7 +102,10 @@
         "alignItems",
         "color",
         "fontSize",
-        "aspectRatio"
+        "maxHeight",
+        "maxWidth",
+        "minHeight",
+        "minWidth"
       ],
       "actions": [
         {
@@ -181,7 +193,11 @@
         "alignItems",
         "color",
         "textAlign",
-        "fontSize"
+        "fontSize",
+        "maxHeight",
+        "maxWidth",
+        "minHeight",
+        "minWidth"
       ]
     },
     {
@@ -228,6 +244,7 @@
       "styles": [
         "backgroundColor",
         "borderRadius",
+        "aspectRatio",
         "height",
         "width",
         "marginLeft",
@@ -239,7 +256,10 @@
         "paddingTop",
         "paddingBottom",
         "alignItems",
-        "aspectRatio"
+        "maxHeight",
+        "maxWidth",
+        "minHeight",
+        "minWidth"
       ]
     },
     {
@@ -262,14 +282,7 @@
         "paddingRight",
         "paddingTop",
         "paddingBottom",
-        "flex",
-        "flexGrow",
-        "flexShrink",
-        "flexBasis",
-        "flexDirection",
         "alignItems",
-        "borderWidth",
-        "justifyContent",
         "maxHeight",
         "maxWidth",
         "minHeight",
