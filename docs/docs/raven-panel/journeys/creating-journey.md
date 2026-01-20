@@ -100,3 +100,18 @@ Once configured, you can:
 - **Publish** - Make the journey live immediately
 - **Schedule** - Set a future publish date
 
+---
+
+### Step 7: Test Your Journey (Optional)
+
+Before publishing, you can test your journey with specific users to ensure it works correctly.
+
+1. Click the **"Test Journey"** button in the journey header (only available when your journey has valid engagement templates)
+2. Enter the user IDs who should test the journey (comma-separated, e.g., `123, 456, 789`)
+3. Set the expiration time in minutes (default: 30 minutes)
+4. Click **"Create Test Journey"** to create a test version
+
+The test journey will only be visible to the specified users and will automatically expire after the set time.
+
+See **[Testing Journeys](./testing-journeys)** for detailed instructions, best practices, and troubleshooting.
+

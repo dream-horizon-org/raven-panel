@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
                 'raven-panel/journeys/journey-configuration',
                 'raven-panel/journeys/transitions-rules',
                 'raven-panel/journeys/engagements',
+                'raven-panel/journeys/testing-journeys',
               ],
             },
             {

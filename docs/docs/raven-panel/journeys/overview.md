@@ -104,6 +104,8 @@ flowchart TD
 ## Next Steps
 
 - **[Creating a Journey](./creating-journey)** - Step-by-step guide to build your first journey
+- **[Journey Configuration](./journey-configuration)** - Configure cohorts, frequency, and scheduling
 - **[Transitions & Conditions](./transitions-rules)** - Connect nodes with transitions and conditions
 - **[Engagements](./engagements)** - Learn about engagement types and how to add them
+- **[Testing Journeys](./testing-journeys)** - Test your journey with specific users before publishing
 
