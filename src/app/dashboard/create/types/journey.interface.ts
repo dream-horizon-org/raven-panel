@@ -335,6 +335,12 @@ export type CampaignFormType = {
   stateMachine: StateMachineType;
   filterFunctionSeleted: { filterSelected: string };
   nudgeSelection: NudgeSelectionHookForm;
+  testFeature: {
+    isTestFeatureEnabled: boolean;
+    prevCtaId: string;
+    expireInMins: number;
+    userIds: string;
+  };
 };
 
 // Alias for backward compatibility
