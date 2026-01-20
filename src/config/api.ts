@@ -11,6 +11,26 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_BASE_URL_PROD;
 };
 
+const getEventsNamesUrl = (): string | undefined => {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  const base = baseUrl.replace(/\/+$/, "");
+  return `${base}/thunder/events/list/names`;
+};
+
+const getEventDetailsUrl = (eventName: string): string | undefined => {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  const base = baseUrl.replace(/\/+$/, "");
+  return `${base}/thunder/events/${eventName}`;
+};
+
 const getBaseUrlForCohorts = () => {
   const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
   const baseUrl = getBaseUrl();
@@ -35,42 +55,17 @@ const getBaseUrlForCohorts = () => {
   return `${baseUrl}${cohortPath}`;
 };
 
-const getBaseUrlForEvents = () => {
-  const env = process.env.NEXT_PUBLIC_ENV || process.env.NODE_ENV;
-  const baseUrl = getBaseUrl();
-
-  let eventPath: string | undefined;
-  if (env === "production") {
-    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
-  } else if (env === "uat") {
-    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_UAT;
-  } else {
-    eventPath = process.env.NEXT_PUBLIC_EVENT_URL_PROD;
-  }
-
-  if (!eventPath) {
-    return;
-  }
-
-  if (!baseUrl) {
-    return;
-  }
-
-  return `${baseUrl}${eventPath}`;
-};
-
 export const API_BASE_URLS = {
   THUNDER: getBaseUrl(),
   USER_COHORTS: getBaseUrlForCohorts(),
-  EVENTS: getBaseUrlForEvents(),
-  CONCORD: getBaseUrl(),
 };
 
 export const API_ENDPOINTS = {
   JOURNEYS_LIST: `${API_BASE_URLS.THUNDER}/thunder/ctas`,
-  EVENTS_SCHEMA: API_BASE_URLS.EVENTS,
-  SYSTEM_PROPERTIES: `${API_BASE_URLS.THUNDER}/${process.env.NEXT_PUBLIC_SYSTEM_PROPERTIES_URL}`,
+  EVENTS_NAMES: getEventsNamesUrl(),
+  EVENT_DETAILS: (eventName: string) => getEventDetailsUrl(eventName),
   COHORTS_REALTIME: API_BASE_URLS.USER_COHORTS,
+  TEST_JOURNEY_CREATE: `${API_BASE_URLS.THUNDER}/thunder/ctas/test/create`,
 };
 
 export const API_AXIOS_CONFIG = {

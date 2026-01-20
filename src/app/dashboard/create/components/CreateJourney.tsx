@@ -3,7 +3,6 @@
 import { Box, CircularProgress } from "@mui/material";
 import { useForm, FormProvider } from "react-hook-form";
 import { useEventsList } from "@/app/dashboard/create/hooks/useEventsList";
-import { useSystemProperties } from "@/app/dashboard/create/hooks/useSystemProperties";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createJourneyPageStyles } from "./content/styles/createJourneyPageStyles";
@@ -26,7 +25,6 @@ import { getJourneyById } from "@/api/services/getJourney.service";
 import { toast } from "sonner";
 import { parseJourneyDataToFormData } from "../utils/parseJourneyData.utils";
 import { useWatch, Path } from "react-hook-form";
-import { extractSystemProperties } from "../utils/propertyType.utils";
 import { submitJourney } from "../utils/journeySubmission.utils";
 import {
   hasTemplateErrors as checkTemplateErrors,
@@ -85,15 +83,8 @@ export default function CreateJourneyPage({
     isFetching: isFetchingEvents,
   } = useEventsList();
 
-  const {
-    data: systemPropertiesData,
-    isFetching: isFetchingSystemProperties,
-  } = useSystemProperties();
-
-  const { systemPropertyNames, systemPropertyTypes } = useMemo(
-    () => extractSystemProperties(systemPropertiesData),
-    [systemPropertiesData]
-  );
+  const systemPropertyNames: string[] = [];
+  const systemPropertyTypes = new Map<string, string>();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingJourney, setIsLoadingJourney] = useState(false);
@@ -346,18 +337,30 @@ export default function CreateJourneyPage({
           control={control}
           errors={errors}
           isEditMode={!!journeyId && !isCloneMode}
+          hasTemplate={hasTemplate}
         />
 
         <Box sx={createJourneyPageStyles.mainLayout}>
           <Box sx={createJourneyPageStyles.contentArea}>
             <JourneyTabs activeTab={activeTab} onTabChange={handleTabChange} />
-            <form onSubmit={handleSubmit(onFormSubmit)}>
+            <form
+              onSubmit={handleSubmit(onFormSubmit)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                overflow: "hidden",
+                minHeight: 0,
+              }}
+            >
               <Box
                 sx={{
                   ...createJourneyPageStyles.formContent,
-                  height: "calc(100vh - 200px)",
-                  minHeight: "600px",
-                  display: activeTab === "ui" ? "block" : "none",
+                  flex: 1,
+                  display: activeTab === "ui" ? "flex" : "none",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                  minHeight: 0,
                 }}
               >
                 <JourneyFlowBuilderIntegrated
@@ -379,7 +382,14 @@ export default function CreateJourneyPage({
                 />
               </Box>
               {activeTab === "setup" && (
-                <Box sx={createJourneyPageStyles.formContent}>
+                <Box
+                  sx={{
+                    ...createJourneyPageStyles.formContent,
+                    flex: 1,
+                    overflow: "auto",
+                    minHeight: 0,
+                  }}
+                >
                   <CohortSection control={control} errors={errors} />
                   <ScheduleSection control={control} errors={errors} />
                   <JourneyFrequencySection control={control} errors={errors} />
@@ -402,6 +412,7 @@ export default function CreateJourneyPage({
                 onNext={handleNext}
                 isSubmitting={isSubmitting}
                 isEditMode={!!journeyId && !isCloneMode}
+                isCloneMode={isCloneMode}
                 isTemplateValid={isTemplateValid}
                 hasTemplate={hasTemplate}
               />

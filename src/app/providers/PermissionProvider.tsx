@@ -94,10 +94,7 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
       };
     }
 
-    const isDream11Email = userEmail.endsWith("@dream11.com");
-    const isFancodeEmail = userEmail.endsWith("@fancode.com");
-
-    let hasViewAccess = isDream11Email || isFancodeEmail;
+    let hasViewAccess = true;
     let hasEditAccess = false;
     let hasPublishAccess = false;
 
@@ -106,7 +103,6 @@ export const PermissionProvider: React.FC<PermissionProviderProps> = ({
     );
 
     if (userPermission) {
-      hasViewAccess = userPermission.view;
       hasEditAccess = userPermission.edit;
       hasPublishAccess = userPermission.publish;
     }
