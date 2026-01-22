@@ -49,7 +49,7 @@ export const getAvailableProperties = (actionParams: {
 
   if (actionParams.eventName && actionParams.eventsData?.data?.eventList) {
     const selectedEvent = actionParams.eventsData.data.eventList.find(
-      (event) => event.metadata?.eventName === actionParams.eventName
+      (event) => event?.eventName === actionParams.eventName
     );
     if (selectedEvent?.properties) {
       selectedEvent.properties.forEach((prop) => {
