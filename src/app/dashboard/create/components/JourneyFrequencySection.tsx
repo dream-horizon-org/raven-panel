@@ -101,7 +101,7 @@ export default function JourneyFrequencySection({
                         if (
                           value === null ||
                           value === undefined ||
-                          value === ""
+                          (typeof value === "number" && isNaN(value))
                         ) {
                           return "This field is required when enabled";
                         }
@@ -185,7 +185,7 @@ export default function JourneyFrequencySection({
                         if (
                           value === null ||
                           value === undefined ||
-                          value === ""
+                          (typeof value === "number" && isNaN(value))
                         ) {
                           return "This field is required when enabled";
                         }
@@ -275,7 +275,7 @@ export default function JourneyFrequencySection({
                         if (
                           value === null ||
                           value === undefined ||
-                          value === ""
+                          (typeof value === "number" && isNaN(value))
                         ) {
                           return "This field is required when enabled";
                         }
@@ -320,7 +320,7 @@ export default function JourneyFrequencySection({
                         if (
                           value === null ||
                           value === undefined ||
-                          value === ""
+                          (typeof value === "number" && isNaN(value))
                         ) {
                           return "This field is required when enabled";
                         }
