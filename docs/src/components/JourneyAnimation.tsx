@@ -16,7 +16,7 @@ const JourneyAnimation = () => {
   const STEP_DURATION = 3000; // 3 seconds per step
 
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout | undefined;
     if (!isPaused) {
       interval = setInterval(() => {
         setActiveStep((prev) => (prev + 1) % TOTAL_STEPS);
@@ -122,7 +122,7 @@ const JourneyAnimation = () => {
   };
 
   // Helper to render explanation box with fade animation
-  const ExplanationBox = ({ isVisible, children, style = {} }) => (
+  const ExplanationBox = ({ isVisible, children, style = {} }: { isVisible: boolean; children: React.ReactNode; style?: React.CSSProperties }) => (
     <div style={{
       flex: 1,
       paddingLeft: '32px',
@@ -249,7 +249,7 @@ const JourneyAnimation = () => {
 
            <ExplanationBox isVisible={activeStep === 1}>
              <div><strong>Step 2:</strong> Transition to <strong>"User Adds to Cart"</strong> happens when <strong>"User Clicks Product"</strong> event occurs.</div>
-             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "Price > $50" is checked. Only high-value items trigger next step.</div>
+             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "Price &gt; $50" is checked. Only high-value items trigger next step.</div>
            </ExplanationBox>
         </div>
 
@@ -290,7 +290,7 @@ const JourneyAnimation = () => {
 
            <ExplanationBox isVisible={activeStep === 2}>
              <div><strong>Step 3:</strong> Transition to <strong>"User Returns to Home"</strong> happens when <strong>"User Adds to Cart"</strong> event occurs.</div>
-             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "Cart value > $100" checked. User must have enough value in cart.</div>
+             <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>Condition "Cart value &gt; $100" checked. User must have enough value in cart.</div>
            </ExplanationBox>
         </div>
 
