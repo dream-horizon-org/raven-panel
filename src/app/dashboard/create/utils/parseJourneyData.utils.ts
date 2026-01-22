@@ -555,5 +555,11 @@ export const parseJourneyDataToFormData = (
       actions: nudgeSelectionActions,
       resetStates,
     },
+    testFeature: {
+      isTestFeatureEnabled: false,
+      prevCtaId: "",
+      expireInMins: 0,
+      userIds: "",
+    },
   };
 };
