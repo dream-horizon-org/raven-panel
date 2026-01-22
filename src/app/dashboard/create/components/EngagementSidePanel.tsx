@@ -15,6 +15,7 @@ import {
   CreateJourneyFormData,
   NudgeType,
   ReactNativeJson,
+  NudgeEvent,
 } from "../types/journey.interface";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { engagementSidePanelStyles } from "./content/styles/engagementSidePanelStyles";
@@ -23,6 +24,7 @@ import { JOURNEY_TEXT } from "../constants/journeyConstants";
 import { UnSavePopup } from "./UnSavePopup";
 import { EngagementLocators } from "./EngagementLocators";
 import { getInitialTemplate } from "../utils/engagement.utils";
+import { toast } from "sonner";
 
 interface EngagementSidePanelProps {
   open: boolean;
@@ -160,6 +162,144 @@ export default function EngagementSidePanel({
     );
   };
 
+  const validateNudgeEvent = (nudgeEvent: NudgeEvent): boolean => {
+    const missingFields: string[] = [];
+
+    // Validate eventName
+    if (!nudgeEvent.eventName || nudgeEvent.eventName.trim() === "") {
+      setError(
+        `nudgeSelection.actions.${actionIndex}.template.eventName` as Path<
+          CreateJourneyFormData
+        >,
+        {
+          type: "required",
+          message: "Event Name is required",
+        }
+      );
+      missingFields.push("Event Name");
+    }
+
+    // Require at least one property if eventName is filled
+    if (nudgeEvent.eventName && nudgeEvent.eventName.trim() !== "") {
+      if (!nudgeEvent.eventParams || nudgeEvent.eventParams.length === 0) {
+        setError(
+          `nudgeSelection.actions.${actionIndex}.template.eventParams` as Path<
+            CreateJourneyFormData
+          >,
+          {
+            type: "required",
+            message: "At least one Event Property is required",
+          }
+        );
+        missingFields.push("Event Property");
+      }
+    }
+
+    // Validate eventParams if they exist
+    if (nudgeEvent.eventParams && nudgeEvent.eventParams.length > 0) {
+      const missingPropertyNames: number[] = [];
+      const missingPropertyValues: number[] = [];
+
+      for (let i = 0; i < nudgeEvent.eventParams.length; i++) {
+        const param = nudgeEvent.eventParams[i];
+        let paramHasError = false;
+        let valueError = false;
+
+        // Validate param name
+        if (!param.name || param.name.trim() === "") {
+          setError(
+            `nudgeSelection.actions.${actionIndex}.template.eventParams.${i}.name` as Path<
+              CreateJourneyFormData
+            >,
+            {
+              type: "required",
+              message: "Event Property name is required",
+            }
+          );
+          paramHasError = true;
+          missingPropertyNames.push(i + 1);
+        }
+
+        // Validate param value
+        if (!param.value || param.value.length === 0) {
+          setError(
+            `nudgeSelection.actions.${actionIndex}.template.eventParams.${i}.value` as Path<
+              CreateJourneyFormData
+            >,
+            {
+              type: "required",
+              message: "Value is required",
+            }
+          );
+          valueError = true;
+          missingPropertyValues.push(i + 1);
+        } else {
+          const firstValue = param.value[0];
+          if (!firstValue) {
+            setError(
+              `nudgeSelection.actions.${actionIndex}.template.eventParams.${i}.value` as Path<
+                CreateJourneyFormData
+              >,
+              {
+                type: "required",
+                message: "Value is required",
+              }
+            );
+            valueError = true;
+            missingPropertyValues.push(i + 1);
+          } else {
+            // Check if it's a static type and has a value
+            if (!firstValue.isTemplateString) {
+              const staticValue = firstValue.value;
+              if (
+                staticValue === undefined ||
+                staticValue === null ||
+                String(staticValue).trim() === ""
+              ) {
+                setError(
+                  `nudgeSelection.actions.${actionIndex}.template.eventParams.${i}.value` as Path<
+                    CreateJourneyFormData
+                  >,
+                  {
+                    type: "required",
+                    message: "Value is required",
+                  }
+                );
+                valueError = true;
+                missingPropertyValues.push(i + 1);
+              }
+            }
+          }
+        }
+      }
+
+      if (missingPropertyNames.length > 0) {
+        missingFields.push(
+          `Event Property name${
+            missingPropertyNames.length > 1 ? "s" : ""
+          } (Property ${missingPropertyNames.join(", ")})`
+        );
+      }
+      if (missingPropertyValues.length > 0) {
+        missingFields.push(
+          `Event Property value${
+            missingPropertyValues.length > 1 ? "s" : ""
+          } (Property ${missingPropertyValues.join(", ")})`
+        );
+      }
+    }
+
+    if (missingFields.length > 0) {
+      const message = `Please fill in the following required fields: ${missingFields.join(
+        ", "
+      )}`;
+      toast.error(message);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = () => {
     const data = getValues();
     if (!data.nudgeSelection?.actions?.[actionIndex]?.template) {
@@ -172,7 +312,28 @@ export default function EngagementSidePanel({
       CreateJourneyFormData
     >;
 
-    const isValid = validateTemplate(template, basePath, setError, clearErrors);
+    clearErrors(basePath);
+
+    let isValid = false;
+
+    if (engagementType === NudgeType.NUDGE_ACTION) {
+      if (template && typeof template === "object" && "eventName" in template) {
+        isValid = validateNudgeEvent(template as NudgeEvent);
+      } else {
+        setError(basePath, {
+          type: "required",
+          message: "Event Name is required",
+        });
+        isValid = false;
+      }
+    } else {
+      isValid = validateTemplate(
+        template as ReactNativeJson,
+        basePath,
+        setError,
+        clearErrors
+      );
+    }
 
     if (isValid) {
       if (onTemplateSaved) {
@@ -181,16 +342,18 @@ export default function EngagementSidePanel({
       initialTemplateRef.current = JSON.parse(JSON.stringify(template));
       onClose();
     } else {
-      setTimeout(() => {
-        const locationHasErrors = hasLocationErrors();
-        const contentHasErrors = hasContentErrors();
+      if (engagementType !== NudgeType.NUDGE_ACTION) {
+        setTimeout(() => {
+          const locationHasErrors = hasLocationErrors();
+          const contentHasErrors = hasContentErrors();
 
-        if (locationHasErrors) {
-          setActiveSubTab("location");
-        } else if (contentHasErrors) {
-          setActiveSubTab("content");
-        }
-      }, 100);
+          if (locationHasErrors) {
+            setActiveSubTab("location");
+          } else if (contentHasErrors) {
+            setActiveSubTab("content");
+          }
+        }, 100);
+      }
     }
   };
 
@@ -265,6 +428,8 @@ export default function EngagementSidePanel({
             <Typography sx={engagementSidePanelStyles.title}>
               {engagementType === NudgeType.NUDGE_UI
                 ? JOURNEY_TEXT.ENGAGEMENT.BOTTOMSHEET
+                : engagementType === NudgeType.NUDGE_ACTION
+                ? "Emit System events"
                 : `${JOURNEY_TEXT.ENGAGEMENT.CONFIGURE_ENGAGEMENT} ${
                     engagementType ? String(engagementType) : "Select Type"
                   }`}
@@ -278,14 +443,14 @@ export default function EngagementSidePanel({
           </Box>
 
           <EngagementLocators
-                      control={control}
-                      engagementId={engagementId}
+            control={control}
+            engagementId={engagementId}
             activeSubTab={activeSubTab}
             setActiveSubTab={setActiveSubTab}
             hasContentErrors={hasContentErrors}
             hasLocationErrors={hasLocationErrors}
             isTooltip={isTooltip}
-                      errors={errors}
+            errors={errors}
             handleCloseRequest={handleCloseRequest}
             handleSave={handleSave}
             onClose={onClose}

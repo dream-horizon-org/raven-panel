@@ -43,6 +43,24 @@ axiosInstance.interceptors.request.use(
         if (config.headers) {
           config.headers["x-tenant-id"] = tenantConfig.source;
         }
+
+        const userData = localStorage.getItem("google_user");
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            if (user?.email && config.headers) {
+              config.headers["user"] = user.email;
+            }
+          } catch (parseError) {
+            console.warn(
+              "Failed to parse user data from localStorage",
+              parseError
+            );
+          }
+        }
+        if (!userData && config.headers && !config.headers["user"]) {
+          config.headers["user"] = "admin@example.com";
+        }
       }
     } catch (err) {
       console.warn("Failed to attach tenant/env headers", err);

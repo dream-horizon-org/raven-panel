@@ -14,7 +14,7 @@ import {
 import RepeatIcon from "@mui/icons-material/Repeat";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTheme } from "@mui/material/styles";
-import { Controller, FieldValues } from "react-hook-form";
+import { Controller, FieldValues, useFormContext } from "react-hook-form";
 import { Control, FieldErrors } from "react-hook-form";
 
 import { CreateJourneyFormData } from "../types/journey.interface";
@@ -32,6 +32,7 @@ export default function JourneyFrequencySection({
 }: JourneyFrequencySectionProps) {
   const theme = useTheme();
   const hasError = !!errors.journeyFrequency;
+  const { trigger, setValue, clearErrors } = useFormContext();
 
   return (
     <Box sx={journeyFrequencySectionStyles.formCard(theme, hasError)}>
@@ -94,6 +95,23 @@ export default function JourneyFrequencySection({
                 <Controller
                   name="journeyFrequency.maxTimesInLifetime"
                   control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (enableField.value) {
+                        if (
+                          value === null ||
+                          value === undefined ||
+                          value === ""
+                        ) {
+                          return "This field is required when enabled";
+                        }
+                        if (typeof value === "number" && value < 1) {
+                          return "Value must be at least 1";
+                        }
+                      }
+                      return true;
+                    },
+                  }}
                   render={({ field: inputField }: { field: FieldValues }) => (
                     <TextField
                       {...inputField}
@@ -102,6 +120,14 @@ export default function JourneyFrequencySection({
                       disabled={!enableField.value}
                       sx={journeyFrequencySectionStyles.numberInput}
                       inputProps={{ min: 0 }}
+                      error={
+                        !!errors.journeyFrequency?.maxTimesInLifetime &&
+                        enableField.value
+                      }
+                      helperText={
+                        enableField.value &&
+                        errors.journeyFrequency?.maxTimesInLifetime?.message
+                      }
                     />
                   )}
                 />
@@ -130,6 +156,18 @@ export default function JourneyFrequencySection({
                       {...enableField}
                       checked={enableField.value || false}
                       size="small"
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        enableField.onChange(checked);
+                        if (checked) {
+                          setTimeout(() => {
+                            trigger("journeyFrequency.timesInSession");
+                          }, 0);
+                        } else {
+                          setValue("journeyFrequency.timesInSession", null);
+                          clearErrors("journeyFrequency.timesInSession");
+                        }
+                      }}
                     />
                   }
                   label={
@@ -141,6 +179,23 @@ export default function JourneyFrequencySection({
                 <Controller
                   name="journeyFrequency.timesInSession"
                   control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (enableField.value) {
+                        if (
+                          value === null ||
+                          value === undefined ||
+                          value === ""
+                        ) {
+                          return "This field is required when enabled";
+                        }
+                        if (typeof value === "number" && value < 1) {
+                          return "Value must be at least 1";
+                        }
+                      }
+                      return true;
+                    },
+                  }}
                   render={({ field: inputField }: { field: FieldValues }) => (
                     <TextField
                       {...inputField}
@@ -149,6 +204,14 @@ export default function JourneyFrequencySection({
                       disabled={!enableField.value}
                       sx={journeyFrequencySectionStyles.numberInput}
                       inputProps={{ min: 0 }}
+                      error={
+                        !!errors.journeyFrequency?.timesInSession &&
+                        enableField.value
+                      }
+                      helperText={
+                        enableField.value &&
+                        errors.journeyFrequency?.timesInSession?.message
+                      }
                     />
                   )}
                 />
@@ -177,6 +240,21 @@ export default function JourneyFrequencySection({
                       {...enableField}
                       checked={enableField.value || false}
                       size="small"
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        enableField.onChange(checked);
+                        if (checked) {
+                          setTimeout(() => {
+                            trigger("journeyFrequency.maxTimesInPeriod");
+                            trigger("journeyFrequency.periodValue");
+                          }, 0);
+                        } else {
+                          setValue("journeyFrequency.maxTimesInPeriod", null);
+                          setValue("journeyFrequency.periodValue", null);
+                          clearErrors("journeyFrequency.maxTimesInPeriod");
+                          clearErrors("journeyFrequency.periodValue");
+                        }
+                      }}
                     />
                   }
                   label={
@@ -191,6 +269,23 @@ export default function JourneyFrequencySection({
                 <Controller
                   name="journeyFrequency.maxTimesInPeriod"
                   control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (enableField.value) {
+                        if (
+                          value === null ||
+                          value === undefined ||
+                          value === ""
+                        ) {
+                          return "This field is required when enabled";
+                        }
+                        if (typeof value === "number" && value < 1) {
+                          return "Value must be at least 1";
+                        }
+                      }
+                      return true;
+                    },
+                  }}
                   render={({ field: inputField }: { field: FieldValues }) => (
                     <TextField
                       {...inputField}
@@ -199,6 +294,14 @@ export default function JourneyFrequencySection({
                       disabled={!enableField.value}
                       sx={journeyFrequencySectionStyles.numberInput}
                       inputProps={{ min: 0 }}
+                      error={
+                        !!errors.journeyFrequency?.maxTimesInPeriod &&
+                        enableField.value
+                      }
+                      helperText={
+                        enableField.value &&
+                        errors.journeyFrequency?.maxTimesInPeriod?.message
+                      }
                     />
                   )}
                 />
@@ -211,6 +314,23 @@ export default function JourneyFrequencySection({
                 <Controller
                   name="journeyFrequency.periodValue"
                   control={control}
+                  rules={{
+                    validate: (value) => {
+                      if (enableField.value) {
+                        if (
+                          value === null ||
+                          value === undefined ||
+                          value === ""
+                        ) {
+                          return "This field is required when enabled";
+                        }
+                        if (typeof value === "number" && value < 1) {
+                          return "Value must be at least 1";
+                        }
+                      }
+                      return true;
+                    },
+                  }}
                   render={({ field: periodField }: { field: FieldValues }) => (
                     <TextField
                       {...periodField}
@@ -219,6 +339,14 @@ export default function JourneyFrequencySection({
                       disabled={!enableField.value}
                       sx={journeyFrequencySectionStyles.numberInput}
                       inputProps={{ min: 0 }}
+                      error={
+                        !!errors.journeyFrequency?.periodValue &&
+                        enableField.value
+                      }
+                      helperText={
+                        enableField.value &&
+                        errors.journeyFrequency?.periodValue?.message
+                      }
                     />
                   )}
                 />
