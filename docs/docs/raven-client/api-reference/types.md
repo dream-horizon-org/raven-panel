@@ -22,8 +22,8 @@ interface RavenClientConfig {
   appVersion: string;
   codepushVersion?: string;
   platform: string;
-  nudgeRouteName: string;
   packageName: string;
+  tenantId?: string;
 }
 ```
 
@@ -32,11 +32,6 @@ interface RavenClientConfig {
 ```typescript
 interface RavenClientListeners {
   appEvent: (eventName: string, props?: unknown) => void;
-  fetchCtaApi: <TVariables, TData>(
-    url: string,
-    method: string,
-    variables?: TVariables
-  ) => Promise<TData>;
   getAccessToken: () => AccessToken;
 }
 ```
@@ -55,14 +50,9 @@ interface AccessToken {
 ### `CTAEvent`
 
 ```typescript
-interface CTAEvent {
+type CTAEvent = {
   eventName: string;
-  actionDone: boolean;
-  ActiveScreenName?: string;
-  routeName: string;
-  is_from_rn: boolean;
-  [key: string]: boolean | string | number;
-}
+} & { [key: string]: boolean | string | number };
 ```
 
 ## CTA Types

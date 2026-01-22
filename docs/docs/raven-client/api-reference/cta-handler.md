@@ -25,14 +25,9 @@ trackAppEvent({
 ### CTAEvent
 
 ```typescript
-interface CTAEvent {
-  eventName: string; // Required: Event name
-  routeName: string; // Required: Current route
-  is_from_rn: boolean; // Required: Always true
-  actionDone: boolean; // Required: Action completed?
-  ActiveScreenName?: string; // Optional: Active screen
-  [key: string]: boolean | string | number; // Additional properties
-}
+type CTAEvent = {
+  eventName: string;
+} & { [key: string]: boolean | string | number };
 ```
 
 ## `sendNudgeAppEvent(eventName: string, props?: Record<string, unknown>)`

@@ -26,10 +26,6 @@ function App() {
           // Handle analytics events
           console.log("Analytics event:", eventName, props);
         },
-        fetchCtaApi: async (url, method, variables) => {
-          // This callback is typically not used
-          throw new Error("Use makeCtaApiCall directly");
-        },
         getAccessToken: () => ({
           token: "your-access-token",
           tokenType: "Bearer",
@@ -40,7 +36,6 @@ function App() {
         userId: "user-123",
         appVersion: "1.0.0",
         platform: Platform.OS, // 'ios' or 'android'
-        nudgeRouteName: "Nudge",
         packageName: "com.yourcompany.yourapp",
       },
     } as RavenClientOptions);
@@ -58,16 +53,16 @@ The `ravenClient.init` method have some configuration blocks:
 - **listeners**
 
   - **appEvent**: callback that the SDK calls to send analytics events to your analytics service.
-  - **fetchCtaApi**: callback that the SDK calls for CTA API requests.
   - **getAccessToken**: returns the current auth token and type, usually read from your app's auth state or secure storage.
 
-- **config** (Optional)
+- **config**
   - **baseUrl**: base URL of your Raven backend.
   - **userId**: identifier of the currently signed‑in user in your system.
   - **appVersion**: your app version.
+  - **codepushVersion**: CodePush version (optional).
   - **platform**: platform identifier, typically `Platform.OS` in React Native.
-  - **nudgeRouteName**: route name of the `Nudge` screen in your navigation stack.
   - **packageName**: your app's bundle/package identifier.
+  - **tenantId**: tenant ID for multi-tenant apps (optional).
 
 ## Step 2: Navigation Set Up
 
@@ -80,6 +75,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   Nudge,
+  RAVEN_ROUTE_NAME,
   setNavigationRef,
   useNavigationTracker,
   type RavenClientOptions,
@@ -107,7 +103,7 @@ function App() {
 
             {/* Required: Add Nudge screen for bottom sheets */}
             <Stack.Screen
-              name="Nudge"
+              name={RAVEN_ROUTE_NAME}
               component={Nudge}
               options={{
                 headerShown: false,
@@ -169,6 +165,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Platform } from "react-native";
 import {
   Nudge,
+  RAVEN_ROUTE_NAME,
   setNavigationRef,
   ravenClient,
   useNavigationTracker,
@@ -207,9 +204,6 @@ export default function App() {
         appEvent: (eventName, props) => {
           console.log("Analytics:", eventName, props);
         },
-        fetchCtaApi: async () => {
-          throw new Error("Not used");
-        },
         getAccessToken: () => ({
           token: "your-token",
           tokenType: "Bearer",
@@ -220,7 +214,6 @@ export default function App() {
         userId: "user-123",
         appVersion: "1.0.0",
         platform: Platform.OS,
-        nudgeRouteName: "Nudge",
         packageName: "com.example.app",
       },
     } as RavenClientOptions);
@@ -240,7 +233,7 @@ export default function App() {
           <Stack.Navigator>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen
-              name="Nudge"
+              name={RAVEN_ROUTE_NAME}
               component={Nudge}
               options={{
                 headerShown: false,
