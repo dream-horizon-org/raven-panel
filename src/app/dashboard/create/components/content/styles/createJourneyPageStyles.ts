@@ -3,7 +3,9 @@ import { THEME_COLORS } from "@/config/colors";
 
 export const createJourneyPageStyles = {
   pageContainer: {
-    minHeight: "100vh",
+    height: "100%",
+    maxHeight: "100%",
+    overflow: "hidden",
     bgcolor: "background.default",
     display: "flex",
     flexDirection: "column",
@@ -12,13 +14,17 @@ export const createJourneyPageStyles = {
     display: "flex",
     flex: 1,
     overflow: "hidden",
+    minHeight: 0,
   },
   contentArea: {
     flex: 1,
-    overflow: "auto",
+    overflow: "hidden",
     p: 4,
     width: "100%",
     bgcolor: "background.paper",
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
   },
   formContent: {
     display: "flex",

@@ -38,20 +38,23 @@ describe("journey.utils", () => {
   describe("findMatchingEvent", () => {
     const mockEventList: EventListItem[] = [
       {
-        metadata: { eventName: "event1" },
+        eventName: "event1",
+        properties: [],
       } as EventListItem,
       {
-        metadata: { eventName: "event2" },
+        eventName: "event2",
+        properties: [],
       } as EventListItem,
       {
-        metadata: { eventName: "event3" },
+        eventName: "event3",
+        properties: [],
       } as EventListItem,
     ];
 
     it("should find matching event by name", () => {
       const result = findMatchingEvent("event2", mockEventList);
       expect(result).toBeDefined();
-      expect(result?.metadata.eventName).toBe("event2");
+      expect(result?.eventName).toBe("event2");
     });
 
     it("should return undefined when event not found", () => {
@@ -73,13 +76,16 @@ describe("journey.utils", () => {
   describe("createEventSelection", () => {
     const mockEventList: EventListItem[] = [
       {
-        metadata: { eventName: "event1" },
+        eventName: "event1",
+        properties: [],
       } as EventListItem,
       {
-        metadata: { eventName: "event2" },
+        eventName: "event2",
+        properties: [],
       } as EventListItem,
       {
-        metadata: { eventName: "event3" },
+        eventName: "event3",
+        properties: [],
       } as EventListItem,
     ];
 

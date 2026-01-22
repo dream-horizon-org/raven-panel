@@ -61,4 +61,15 @@ export const journeyHeaderStyles = {
       bgcolor: "action.hover",
     },
   },
+  actionButton: {
+    bgcolor: "rgba(99, 102, 241, 0.25)",
+    borderColor: "rgba(99, 102, 241, 0.4)",
+    color: "primary.main",
+    textTransform: "none",
+    fontWeight: 500,
+    "&:hover": {
+      bgcolor: "rgba(99, 102, 241, 0.3)",
+      borderColor: "primary.main",
+    },
+  },
 };

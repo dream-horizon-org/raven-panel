@@ -167,6 +167,32 @@ const hasTemplateContent = (template: {
   );
 };
 
+export const hasValidTemplateContent = (
+  actions?: Array<{ template?: unknown }>
+): boolean => {
+  if (!actions || actions.length === 0) return false;
+  
+  return actions.some((action) => {
+    if (!action?.template) return false;
+    
+    const template = action.template as {
+      children?: unknown[];
+      props?: Record<string, unknown>;
+      styles?: Record<string, unknown>;
+      type?: unknown;
+    };
+    
+    // Check if template has type AND actual content
+    const hasType = !!template.type;
+    const hasContent =
+      (template.children && Array.isArray(template.children) && template.children.length > 0) ||
+      (template.props && Object.keys(template.props).length > 1) || // More than just testID
+      (template.styles && Object.keys(template.styles).length > 0);
+    
+    return hasType && hasContent;
+  });
+};
+
 export const getEngagementsWithoutTemplates = (
   actions?: Array<{ template?: unknown }>
 ): Array<{ template?: unknown }> => {
