@@ -4,6 +4,7 @@ import {
   CreateJourneyFormData,
   NudgeType,
   ReactNativeJson,
+  NudgeEvent,
   SyncEngagementToActionType,
 } from "../types/journey.interface";
 
@@ -20,6 +21,8 @@ export function mapEngagementTypeToNudgeType(
       return NudgeType.POPUP;
     case "bottomsheet":
       return NudgeType.NUDGE_UI;
+    case "nativeeventemitter":
+      return NudgeType.NUDGE_ACTION;
     default:
       return NudgeType.TOOLTIP;
   }
@@ -36,6 +39,8 @@ export function mapNudgeTypeToEngagementType(nudgeType: NudgeType): string {
       return "popup";
     case NudgeType.NUDGE_UI:
       return "bottomsheet";
+    case NudgeType.NUDGE_ACTION:
+      return "nativeEventEmitter";
     default:
       return "tooltip";
   }
@@ -161,10 +166,12 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
         | string
         | undefined;
 
-      // Action must have originalNodeId and it must match the target node ID
+      // If action doesn't have originalNodeId (e.g., after form reset with parsed data),
+      // still match it by engagement ID prefix to preserve the template
+      // This is safe because we're matching by engagement ID which is unique
       if (!actionOriginalNodeId) {
-        // Action doesn't have originalNodeId - don't match (might belong to wrong node)
-        return false;
+        // Match by engagement ID prefix only - this preserves templates after form reset
+        return true;
       }
 
       // Action has originalNodeId - it must match the target node ID
@@ -188,32 +195,67 @@ export const syncEngagementToAction: SyncEngagementToActionType = (
   }
 
   // Create default template based on type
-  const defaultTemplate: ReactNativeJson = {
-    type: nudgeType === NudgeType.NUDGE_UI ? "NUDGE_UI" : nudgeType,
-    props: {
-      testID: `testID-${Date.now()}`,
-    },
-    actions: [],
-    styles: {},
-    children: [],
-  };
+  let defaultTemplate: ReactNativeJson | NudgeEvent;
 
-  // If engagement has config with template, use it
-  // Also check if existing action has a template (preserve it if more complete)
-  let template = defaultTemplate;
-
-  // First, try to get template from existing action if it exists and has a type
-  if (actionIndex >= 0 && currentActions[actionIndex].template) {
-    const existingTemplate = currentActions[actionIndex].template;
-    if (
-      existingTemplate &&
-      typeof existingTemplate === "object" &&
-      "type" in existingTemplate
-    ) {
-      template = existingTemplate;
-    }
+  if (nudgeType === NudgeType.NUDGE_ACTION) {
+    // For native event emitter, create NudgeEvent template
+    defaultTemplate = {
+      eventName: "",
+      eventParams: [],
+    };
+  } else {
+    // For UI engagements, create ReactNativeJson template
+    defaultTemplate = {
+      type: nudgeType === NudgeType.NUDGE_UI ? "NUDGE_UI" : nudgeType,
+      props: {
+        testID: `testID-${Date.now()}`,
+      },
+      actions: [],
+      styles: {},
+      children: [],
+    };
   }
 
+  // CRITICAL: Always preserve template from existing action if it exists
+  // Templates are stored in form actions, not in node engagements
+  // So we MUST preserve them when syncing flow to form
+  let template: ReactNativeJson | NudgeEvent = defaultTemplate;
+
+  // First, try to get template from existing action if it exists
+  if (actionIndex >= 0) {
+    const existingAction = currentActions[actionIndex];
+    const existingTemplate = existingAction?.template;
+
+    if (existingTemplate) {
+      if (nudgeType === NudgeType.NUDGE_ACTION) {
+        // For NUDGE_ACTION, check if it's a valid NudgeEvent
+        if (
+          typeof existingTemplate === "object" &&
+          existingTemplate !== null &&
+          "eventName" in existingTemplate
+        ) {
+          // Preserve the existing template even if eventName is empty
+          // This ensures templates loaded from API are not lost
+          template = existingTemplate as NudgeEvent;
+        } else {
+          console.warn(
+            `[syncEngagementToAction] Existing template for NUDGE_ACTION is not a valid NudgeEvent:`,
+            existingTemplate
+          );
+        }
+      } else {
+        // For UI engagements, check if it's a ReactNativeJson
+        if (
+          typeof existingTemplate === "object" &&
+          existingTemplate !== null &&
+          "type" in existingTemplate
+        ) {
+          template = existingTemplate as ReactNativeJson;
+        }
+      }
+    } else {
+    }
+  }
   // Then, try to extract template from engagement config if it exists and is more complete
   if (engagement.config && typeof engagement.config === "object") {
     const configTemplate = (engagement.config as Record<string, unknown>)

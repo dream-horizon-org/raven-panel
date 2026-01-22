@@ -1,5 +1,8 @@
-import { NudgeType, ReactNativeJson } from "./journey.interface";
-import { CtaFrequency, CtaGroupByInput } from "@/api/services/types/createJourney.interface";
+import { NudgeEvent, NudgeType, ReactNativeJson } from "./journey.interface";
+import {
+  CtaFrequency,
+  CtaGroupByInput,
+} from "@/api/services/types/createJourney.interface";
 
 export interface JourneyRule {
   contextParams: string[];
@@ -34,8 +37,7 @@ export interface JourneyRule {
     actionId: string;
     type: NudgeType;
     variant?: string;
-    template: ReactNativeJson;
+    template: ReactNativeJson | NudgeEvent;
   }>;
   resetStates: string[];
 }
-

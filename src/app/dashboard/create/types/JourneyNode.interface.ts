@@ -10,7 +10,13 @@ export interface Condition {
 
 export interface Engagement {
   id: string;
-  type: "tooltip" | "popup" | "bottomsheet" | "coachmark" | "pip";
+  type:
+    | "tooltip"
+    | "popup"
+    | "bottomsheet"
+    | "coachmark"
+    | "pip"
+    | "nativeEventEmitter";
   config: Record<string, unknown>;
 }
 
@@ -81,7 +87,7 @@ export interface EngagementNodeData extends Record<string, unknown> {
   label: string;
   nodeType: "engagement";
   engagementId: string;
-  engagementType: "tooltip" | "popup" | "bottomsheet";
+  engagementType: "tooltip" | "popup" | "bottomsheet" | "nativeEventEmitter";
 }
 
 export interface Branch {

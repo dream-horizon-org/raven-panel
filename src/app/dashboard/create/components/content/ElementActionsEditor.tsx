@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   ReactNativeJson,
   NudgeType,
@@ -31,6 +32,8 @@ import {
   getAvailableActions,
   getClickActionDefinition,
 } from "../../utils/componentDefinitions.utils";
+import { useEventsList } from "../../hooks/useEventsList";
+import { getAvailableProperties } from "../../utils/engagement.utils";
 
 interface ElementActionsEditorProps {
   element: ReactNativeJson;
@@ -56,6 +59,45 @@ export default function ElementActionsEditor({
   const {
     formState: { errors },
   } = useFormContext<CreateJourneyFormData>();
+
+  const { data: eventsData } = useEventsList();
+  const eventNames =
+    eventsData?.data?.eventList
+      ?.map((event) => event.eventName)
+      .filter((name): name is string => Boolean(name)) || [];
+
+  // Helper function to get property type from property name
+  const getPropertyType = (
+    propertyName: string,
+    actionParams: { eventName?: string }
+  ): "string" | "boolean" | "number" | undefined => {
+    if (!propertyName) return "string";
+
+    // First check event properties if eventName is set
+    if (actionParams.eventName && eventsData?.data?.eventList) {
+      const selectedEvent = eventsData.data.eventList.find(
+        (event) => event.eventName === actionParams.eventName
+      );
+      if (selectedEvent?.properties) {
+        const eventProp = selectedEvent.properties.find(
+          (prop) => prop.propertyName === propertyName
+        );
+        if (eventProp?.type) {
+          // Normalize the type
+          const normalizedType = eventProp.type.toLowerCase();
+          if (normalizedType === "boolean") return "boolean";
+          if (
+            ["integer", "long", "double", "decimal", "float"].includes(
+              normalizedType
+            )
+          ) {
+            return "number";
+          }
+          return "string";
+        }
+      }
+    }
+  };
 
   const getFieldError = (actionIndex: number, paramName: string) => {
     if (!basePath) return undefined;
@@ -216,19 +258,71 @@ export default function ElementActionsEditor({
         "name" in action &&
         action.name === actionName
       ) {
-        if (actionName === "analyticsEvent") {
-          // For analyticsEvent, params should be NudgeEvent structure
+        if (
+          actionName === "analyticsEvent" ||
+          actionName === "emitNativeEvent"
+        ) {
           const currentParams = action.params as {
             eventName?: string;
             eventParams?: EventParam[];
           };
+          const transformedEventParams = eventParams.map((param) => {
+            // Convert primitive value to array format if it exists
+            if (
+              param.value !== undefined &&
+              param.value !== null &&
+              param.value !== ""
+            ) {
+              let convertedValue: string | number | boolean = param.value;
+
+              if (
+                actionName === "emitNativeEvent" &&
+                param.type === "boolean"
+              ) {
+                convertedValue =
+                  typeof param.value === "string"
+                    ? param.value
+                    : String(param.value);
+              } else if (param.type === "boolean") {
+                if (typeof param.value === "string") {
+                  const lowerValue = param.value.toLowerCase().trim();
+                  convertedValue = lowerValue === "true";
+                } else {
+                  convertedValue = Boolean(param.value);
+                }
+              } else if (param.type === "number") {
+                if (typeof param.value === "string") {
+                  convertedValue = Number(param.value) || 0;
+                } else {
+                  convertedValue = Number(param.value);
+                }
+              } else {
+                convertedValue = String(param.value);
+              }
+
+              return {
+                name: param.name,
+                type: param.type,
+                value: [
+                  {
+                    value: convertedValue,
+                    isTemplateString: false,
+                  },
+                ],
+              };
+            }
+            return {
+              name: param.name,
+              type: param.type,
+            };
+          });
           return {
             ...action,
-            type: "analyticsEvent",
-            name: "analyticsEvent",
+            type: actionName,
+            name: actionName,
             params: {
               eventName: currentParams?.eventName || "",
-              eventParams,
+              eventParams: transformedEventParams,
             },
           };
         } else {
@@ -312,13 +406,59 @@ export default function ElementActionsEditor({
       >
         {actionDef.params.map((param) => {
           if (param.type === "dynamicArray") {
-            // Handle eventParams for analytics
-            // For analyticsEvent, eventParams is directly in params.eventParams
+            // Handle eventParams for analytics and emitNativeEvent
+            // For analyticsEvent and emitNativeEvent, eventParams is directly in params.eventParams
             let eventParams: EventParam[] = [];
-            if (actionDef.name === "analyticsEvent") {
-              eventParams = Array.isArray(params.eventParams)
+            let availableProperties: string[] = [];
+            if (
+              actionDef.name === "analyticsEvent" ||
+              actionDef.name === "emitNativeEvent"
+            ) {
+              const rawEventParams = Array.isArray(params.eventParams)
                 ? params.eventParams
                 : [];
+              // Convert from API format (array value) to display format (primitive value)
+              eventParams = rawEventParams.map((param: any) => {
+                let displayValue: string | number | boolean | undefined;
+                // If value is an array (API format), extract the actual value
+                if (Array.isArray(param.value) && param.value.length > 0) {
+                  const firstItem = param.value[0];
+                  if (
+                    typeof firstItem === "object" &&
+                    firstItem !== null &&
+                    "value" in firstItem &&
+                    !firstItem.isTemplateString
+                  ) {
+                    displayValue = firstItem.value;
+                  }
+                } else if (
+                  param.value !== undefined &&
+                  param.value !== null &&
+                  (typeof param.value === "string" ||
+                    typeof param.value === "number" ||
+                    typeof param.value === "boolean")
+                ) {
+                  // Already in primitive format (from transform function)
+                  displayValue = param.value;
+                }
+                return {
+                  name: param.name || "",
+                  type: param.type || "string",
+                  value: displayValue,
+                };
+              });
+              // Get available properties (event + system properties) for the selected event
+              // Only for analyticsEvent, emitNativeEvent doesn't need event-based properties
+              if (actionDef.name === "analyticsEvent") {
+                availableProperties = getAvailableProperties({
+                  eventName: params.eventName as string,
+                  eventsData: eventsData ?? { data: { eventList: [] } },
+                  systemPropertyNames: [],
+                });
+              } else {
+                // For emitNativeEvent, only use system properties
+                availableProperties = [];
+              }
             } else {
               const paramValue = params[param.name];
               eventParams = Array.isArray(paramValue) ? paramValue : [];
@@ -374,69 +514,281 @@ export default function ElementActionsEditor({
                             borderRadius: 1,
                           }}
                         >
-                          <Autocomplete
-                            freeSolo
-                            options={[]}
-                            value={eventParam.name || ""}
-                            onChange={(_, newValue) => {
-                              const newParams = [...eventParams];
-                              newParams[index] = {
-                                ...eventParam,
-                                name: newValue || "",
-                              };
-                              handleEventParamsChange(
-                                actionDef.name,
-                                newParams
-                              );
-                            }}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                size="small"
-                                label="Property"
-                              />
-                            )}
-                            sx={{ flex: 1 }}
-                          />
-                          <FormControl size="small" sx={{ minWidth: 100 }}>
-                            <InputLabel>Type</InputLabel>
-                            <Select
-                              value={eventParam.type || "string"}
-                              label="Type"
+                          {actionDef.name === "emitNativeEvent" ? (
+                            <TextField
+                              size="small"
+                              label="Property"
+                              value={eventParam.name || ""}
                               onChange={(e) => {
                                 const newParams = [...eventParams];
                                 newParams[index] = {
                                   ...eventParam,
-                                  type: e.target.value as
-                                    | "string"
-                                    | "boolean"
-                                    | "number",
+                                  name: e.target.value,
+                                  type: eventParam.type || "string",
                                 };
                                 handleEventParamsChange(
                                   actionDef.name,
                                   newParams
                                 );
                               }}
-                            >
-                              <MenuItem value="string">string</MenuItem>
-                              <MenuItem value="boolean">boolean</MenuItem>
-                              <MenuItem value="number">number</MenuItem>
-                            </Select>
-                          </FormControl>
+                              sx={{ flex: 1 }}
+                            />
+                          ) : (
+                            <Autocomplete
+                              freeSolo
+                              options={availableProperties}
+                              value={eventParam.name || ""}
+                              onChange={(_, newValue) => {
+                                const newParams = [...eventParams];
+                                const propertyName = newValue || "";
+                                // Infer type from property name for analyticsEvent
+                                const inferredType = getPropertyType(
+                                  propertyName,
+                                  params as { eventName?: string }
+                                );
+                                newParams[index] = {
+                                  ...eventParam,
+                                  name: propertyName,
+                                  type: inferredType || "string",
+                                };
+                                handleEventParamsChange(
+                                  actionDef.name,
+                                  newParams
+                                );
+                              }}
+                              onInputChange={(_, newInputValue) => {
+                                const newParams = [...eventParams];
+                                const propertyName = newInputValue;
+
+                                const inferredType = getPropertyType(
+                                  propertyName,
+                                  params as { eventName?: string }
+                                );
+                                newParams[index] = {
+                                  ...eventParam,
+                                  name: propertyName,
+                                  type: inferredType || "string",
+                                };
+                                handleEventParamsChange(
+                                  actionDef.name,
+                                  newParams
+                                );
+                              }}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  size="small"
+                                  label="Property"
+                                />
+                              )}
+                              sx={{ flex: 1 }}
+                            />
+                          )}
+                          {actionDef.name === "emitNativeEvent" ? (
+                            <FormControl size="small" sx={{ minWidth: 100 }}>
+                              <InputLabel>Type</InputLabel>
+                              <Select
+                                value={eventParam.type || "string"}
+                                label="Type"
+                                onChange={(e) => {
+                                  const newParams = [...eventParams];
+                                  const newType = e.target.value as
+                                    | "string"
+                                    | "boolean"
+                                    | "number";
+
+                                  let convertedValue:
+                                    | string
+                                    | number
+                                    | boolean
+                                    | undefined = eventParam.value;
+                                  if (
+                                    convertedValue !== undefined &&
+                                    convertedValue !== null &&
+                                    convertedValue !== ""
+                                  ) {
+                                    if (newType === "boolean") {
+                                      if (
+                                        actionDef.name === "emitNativeEvent"
+                                      ) {
+                                        convertedValue =
+                                          typeof convertedValue === "boolean"
+                                            ? String(convertedValue)
+                                            : String(convertedValue).trim();
+                                      } else {
+                                        if (
+                                          typeof convertedValue === "string"
+                                        ) {
+                                          const lowerValue = convertedValue
+                                            .toLowerCase()
+                                            .trim();
+                                          convertedValue =
+                                            lowerValue === "true";
+                                        } else {
+                                          convertedValue = Boolean(
+                                            convertedValue
+                                          );
+                                        }
+                                      }
+                                    } else if (newType === "number") {
+                                      if (typeof convertedValue === "string") {
+                                        convertedValue =
+                                          Number(convertedValue) || 0;
+                                      } else {
+                                        convertedValue = Number(convertedValue);
+                                      }
+                                    } else {
+                                      convertedValue = String(convertedValue);
+                                    }
+                                  } else {
+                                    if (newType === "boolean") {
+                                      convertedValue = "";
+                                    } else {
+                                      convertedValue = undefined;
+                                    }
+                                  }
+
+                                  newParams[index] = {
+                                    ...eventParam,
+                                    type: newType,
+                                    value: convertedValue,
+                                  };
+                                  handleEventParamsChange(
+                                    actionDef.name,
+                                    newParams
+                                  );
+                                }}
+                              >
+                                <MenuItem value="string">string</MenuItem>
+                                <MenuItem value="boolean">boolean</MenuItem>
+                                <MenuItem value="number">number</MenuItem>
+                              </Select>
+                            </FormControl>
+                          ) : (
+                            <TextField
+                              size="small"
+                              label="Type"
+                              value={eventParam.type || "string"}
+                              InputProps={{
+                                readOnly: true,
+                              }}
+                              sx={{ minWidth: 100 }}
+                            />
+                          )}
                           <TextField
                             size="small"
                             label="Value"
-                            value={eventParam.value || ""}
+                            value={
+                              eventParam.value !== undefined &&
+                              eventParam.value !== null &&
+                              eventParam.value !== ""
+                                ? typeof eventParam.value === "boolean"
+                                  ? String(eventParam.value)
+                                  : String(eventParam.value)
+                                : ""
+                            }
                             onChange={(e) => {
                               const newParams = [...eventParams];
+                              const inputValue = e.target.value;
+                              // Convert value to appropriate type based on param.type
+                              let convertedValue:
+                                | string
+                                | number
+                                | boolean = inputValue;
+
+                              if (eventParam.type === "number") {
+                                convertedValue = Number(inputValue) || 0;
+                              } else if (eventParam.type === "boolean") {
+                                convertedValue = inputValue;
+                              }
+
                               newParams[index] = {
                                 ...eventParam,
-                                value: e.target.value,
+                                value: convertedValue,
                               };
                               handleEventParamsChange(
                                 actionDef.name,
                                 newParams
                               );
+                            }}
+                            onFocus={(e) => {
+                              if (
+                                eventParam.type === "boolean" &&
+                                typeof eventParam.value === "boolean"
+                              ) {
+                                const newParams = [...eventParams];
+                                newParams[index] = {
+                                  ...eventParam,
+                                  value: String(eventParam.value),
+                                };
+                                handleEventParamsChange(
+                                  actionDef.name,
+                                  newParams
+                                );
+                                setTimeout(() => {
+                                  e.target.select();
+                                }, 0);
+                              } else if (
+                                eventParam.type === "boolean" &&
+                                typeof eventParam.value === "string" &&
+                                actionDef.name === "emitNativeEvent"
+                              ) {
+                                setTimeout(() => {
+                                  e.target.select();
+                                }, 0);
+                              }
+                            }}
+                            onBlur={() => {
+                              if (eventParam.type === "boolean") {
+                                const newParams = [...eventParams];
+                                const currentValue = eventParam.value;
+
+                                if (
+                                  currentValue === undefined ||
+                                  currentValue === null ||
+                                  currentValue === ""
+                                ) {
+                                  return;
+                                }
+
+                                if (actionDef.name === "emitNativeEvent") {
+                                  const normalizedValue = String(
+                                    currentValue
+                                  ).trim();
+                                  if (
+                                    normalizedValue !== String(currentValue)
+                                  ) {
+                                    newParams[index] = {
+                                      ...eventParam,
+                                      value: normalizedValue,
+                                    };
+                                    handleEventParamsChange(
+                                      actionDef.name,
+                                      newParams
+                                    );
+                                  }
+                                  return;
+                                }
+
+                                let finalValue: boolean;
+                                if (typeof currentValue === "boolean") {
+                                  finalValue = currentValue;
+                                } else {
+                                  const stringValue = String(currentValue)
+                                    .toLowerCase()
+                                    .trim();
+                                  finalValue = stringValue === "true";
+                                }
+
+                                newParams[index] = {
+                                  ...eventParam,
+                                  value: finalValue,
+                                };
+                                handleEventParamsChange(
+                                  actionDef.name,
+                                  newParams
+                                );
+                              }
                             }}
                             sx={{ flex: 1 }}
                           />
@@ -476,8 +828,26 @@ export default function ElementActionsEditor({
               "";
           } else {
             const paramValue = params[param.name];
-            // Ensure we're not getting an array (arrays are handled in dynamicArray case)
-            if (Array.isArray(paramValue)) {
+            // Handle deeplink URLs - extract value from array format if needed
+            if (actionDef.name === "deeplink" && Array.isArray(paramValue)) {
+              if (paramValue.length > 0) {
+                const firstItem = paramValue[0];
+                if (
+                  typeof firstItem === "object" &&
+                  firstItem !== null &&
+                  "value" in firstItem
+                ) {
+                  currentValue = firstItem.value as string;
+                } else if (typeof firstItem === "string") {
+                  currentValue = firstItem;
+                } else {
+                  currentValue = param.default ?? "";
+                }
+              } else {
+                currentValue = param.default ?? "";
+              }
+            } else if (Array.isArray(paramValue)) {
+              // For other array params (not deeplink), use default
               currentValue = param.default ?? "";
             } else {
               currentValue = paramValue ?? param.default ?? "";
@@ -486,6 +856,52 @@ export default function ElementActionsEditor({
 
           switch (param.type) {
             case "string":
+              // For analyticsEvent eventName, use Autocomplete dropdown with event list
+              if (
+                actionDef.name === "analyticsEvent" &&
+                param.name === "eventName"
+              ) {
+                const eventNameValue =
+                  typeof currentValue === "string"
+                    ? currentValue
+                    : currentValue !== null && currentValue !== undefined
+                    ? String(currentValue)
+                    : "";
+                return (
+                  <Autocomplete
+                    key={param.name}
+                    freeSolo
+                    options={eventNames}
+                    value={eventNameValue}
+                    onChange={(_, newValue) => {
+                      handleActionParamChange(
+                        actionDef.name,
+                        param.name,
+                        newValue || ""
+                      );
+                    }}
+                    onInputChange={(_, newInputValue) => {
+                      handleActionParamChange(
+                        actionDef.name,
+                        param.name,
+                        newInputValue
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        size="small"
+                        label={param.name}
+                        required={param.isRequired}
+                        sx={{ mb: 2 }}
+                      />
+                    )}
+                    sx={{ mb: 2 }}
+                  />
+                );
+              }
+              // Fallback TextField for other string parameters (not eventName)
               return (
                 <TextField
                   key={param.name}
@@ -616,14 +1032,44 @@ export default function ElementActionsEditor({
     );
   };
 
+  // Get dropdown actions (excluding openPlayStore)
+  const dropdownActions = allClickActions.filter(
+    (action) =>
+      action.category === "dropdown" &&
+      action.name !== "openPlayStore" &&
+      action.name !== "none" &&
+      availableActionNames.includes(action.name)
+  );
+
+  // Get currently selected dropdown action
+  const selectedDropdownAction = enabledActions.find(
+    (action) =>
+      typeof action === "object" &&
+      "name" in action &&
+      dropdownActions.some((da) => da.name === action.name)
+  );
+
+  const selectedDropdownActionName = selectedDropdownAction
+    ? (selectedDropdownAction as { name: string }).name
+    : "none";
+
+  const selectedDropdownActionDef = dropdownActions.find(
+    (da) => da.name === selectedDropdownActionName
+  );
+
   return (
     <Box sx={contentElementEditorStyles.section}>
       <Typography sx={contentElementEditorStyles.sectionLabel}>
         CLICK ACTIONS
       </Typography>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Toggle actions */}
         {allClickActions
-          .filter((action) => availableActionNames.includes(action.name))
+          .filter(
+            (action) =>
+              action.category === "toggle" &&
+              availableActionNames.includes(action.name)
+          )
           .map((actionDef) => {
             const enabled = isActionEnabled(actionDef.name);
 
@@ -655,49 +1101,101 @@ export default function ElementActionsEditor({
 
             const displayLabel = getDisplayLabel();
 
-            if (actionDef.category === "toggle") {
-              return (
-                <Box key={actionDef.id}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={enabled}
-                        onChange={(e) =>
-                          handleToggleAction(actionDef.name, e.target.checked)
-                        }
-                      />
-                    }
-                    label={displayLabel}
-                  />
-                  {enabled && renderActionParams(actionDef)}
-                </Box>
-              );
-            } else {
-              return (
-                <Box key={actionDef.id}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{displayLabel}</InputLabel>
-                    <Select
-                      value={enabled ? actionDef.name : "none"}
-                      label={displayLabel}
-                      onChange={(e) => {
-                        const selectedAction = e.target.value;
-                        if (selectedAction === "none") {
-                          handleToggleAction(actionDef.name, false);
-                        } else {
-                          handleToggleAction(actionDef.name, true);
-                        }
-                      }}
-                    >
-                      <MenuItem value="none">None</MenuItem>
-                      <MenuItem value={actionDef.name}>{displayLabel}</MenuItem>
-                    </Select>
-                  </FormControl>
-                  {enabled && renderActionParams(actionDef)}
-                </Box>
-              );
-            }
+            return (
+              <Box key={actionDef.id}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={enabled}
+                      onChange={(e) =>
+                        handleToggleAction(actionDef.name, e.target.checked)
+                      }
+                    />
+                  }
+                  label={displayLabel}
+                />
+                {enabled && renderActionParams(actionDef)}
+              </Box>
+            );
           })}
+
+        {/* Consolidated dropdown for dropdown actions */}
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Click Action Type</InputLabel>
+              <Select
+                value={selectedDropdownActionName}
+                label="Click Action Type"
+                onChange={(e) => {
+                  const selectedAction = e.target.value;
+                  let newActions = [...elementActions];
+
+                  // Remove all dropdown actions
+                  newActions = newActions.filter(
+                    (action) =>
+                      !(
+                        typeof action === "object" &&
+                        "name" in action &&
+                        dropdownActions.some((da) => da.name === action.name)
+                      )
+                  );
+
+                  // Add the selected action if not "none"
+                  if (selectedAction !== "none") {
+                    const actionDef = getClickActionDefinition(selectedAction);
+                    if (actionDef) {
+                      const defaultParams: Record<
+                        string,
+                        string | number | boolean | null | undefined
+                      > = {};
+                      actionDef.params?.forEach((param) => {
+                        if (
+                          param.default !== null &&
+                          param.default !== undefined
+                        ) {
+                          defaultParams[param.name] = param.default;
+                        }
+                      });
+                      newActions.push({
+                        name: selectedAction,
+                        type: actionDef.type,
+                        params: defaultParams,
+                      });
+                    }
+                  }
+
+                  onActionsChange(newActions);
+                }}
+              >
+                <MenuItem value="none">None</MenuItem>
+                {dropdownActions.map((actionDef) => (
+                  <MenuItem key={actionDef.id} value={actionDef.name}>
+                    {actionDef.display}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {selectedDropdownActionName !== "none" && (
+              <IconButton
+                size="small"
+                onClick={() => {
+                  dropdownActions.forEach((da) => {
+                    if (isActionEnabled(da.name)) {
+                      handleToggleAction(da.name, false);
+                    }
+                  });
+                }}
+                sx={{ color: "text.secondary" }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+          {selectedDropdownActionDef &&
+            isActionEnabled(selectedDropdownActionDef.name) &&
+            renderActionParams(selectedDropdownActionDef)}
+        </Box>
       </Box>
     </Box>
   );
