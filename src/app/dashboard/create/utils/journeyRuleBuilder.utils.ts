@@ -7,6 +7,7 @@ import {
   NudgeSelectionPopupMenu,
   NudgeSelectionTooltipMenu,
   ReactNativeJson,
+  NudgeEvent,
 } from "../types/journey.interface";
 import {
   CtaFrequency,
@@ -338,15 +339,47 @@ export function buildJourneyRule(formData: CreateJourneyFormData): JourneyRule {
       const actionId = actionIds[index];
       const apiActionType: NudgeType = action.type;
 
-      // Handle NUDGE_ACTION (Native Event Emitter) - use template as-is
+      // Handle NUDGE_ACTION (Native Event Emitter) - transform template to ensure boolean values
       if (action.type === NudgeType.NUDGE_ACTION) {
+        const nudgeEventTemplate = action.template as NudgeEvent;
+
+        // Transform eventParams to convert boolean strings to actual booleans
+        const transformedTemplate: NudgeEvent = {
+          eventName: nudgeEventTemplate.eventName || "",
+          eventParams: (nudgeEventTemplate.eventParams || []).map((param) => {
+            if (param.type === "boolean" && param.value && Array.isArray(param.value) && param.value.length > 0) {
+              const firstItem = param.value[0];
+              
+              if (
+                firstItem &&
+                !firstItem.isTemplateString &&
+                "value" in firstItem &&
+                typeof firstItem.value === "string"
+              ) {
+                const lowerValue = firstItem.value.toLowerCase().trim();
+                const convertedValue = lowerValue === "true";
+                return {
+                  ...param,
+                  value: [
+                    {
+                      ...firstItem,
+                      value: convertedValue,
+                    },
+                  ],
+                };
+              }
+            }
+            return param;
+          }),
+        };
+
         return {
           config: {
             triggerDelay: action.config?.triggerDelay || 1000,
           },
           actionId,
           type: apiActionType,
-          template: action.template, // NudgeEvent - use as-is
+          template: transformedTemplate,
         };
       }
 
