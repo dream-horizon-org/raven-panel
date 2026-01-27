@@ -1,3 +1,4 @@
+import { EventsSchemaResponse } from "@/api/services/types/events.interface";
 import { CreateJourneyFormData } from "../types/journey.interface";
 import { ReactNativeJson } from "../types/journey.interface";
 
@@ -37,4 +38,33 @@ export const getInitialTemplate = (
   const currentTemplate = targetAction?.template;
 
   return currentTemplate ? JSON.parse(JSON.stringify(currentTemplate)) : null;
+};
+
+export const getAvailableProperties = (actionParams: {
+  eventName?: string;
+  eventsData: EventsSchemaResponse;
+  systemPropertyNames: string[];
+}): string[] => {
+  const properties: string[] = [];
+
+  if (actionParams.eventName && actionParams.eventsData?.data?.eventList) {
+    const selectedEvent = actionParams.eventsData.data.eventList.find(
+      (event) => event?.eventName === actionParams.eventName
+    );
+    if (selectedEvent?.properties) {
+      selectedEvent.properties.forEach((prop) => {
+        if (prop.propertyName && !properties.includes(prop.propertyName)) {
+          properties.push(prop.propertyName);
+        }
+      });
+    }
+  }
+
+  actionParams.systemPropertyNames.forEach((propName) => {
+    if (!properties.includes(propName)) {
+      properties.push(propName);
+    }
+  });
+
+  return properties.sort();
 };

@@ -7,8 +7,12 @@ import {
   NudgeSelectionPopupMenu,
   NudgeSelectionTooltipMenu,
   ReactNativeJson,
+  NudgeEvent,
 } from "../types/journey.interface";
-import { CtaFrequency, CtaGroupByInput } from "@/api/services/types/createJourney.interface";
+import {
+  CtaFrequency,
+  CtaGroupByInput,
+} from "@/api/services/types/createJourney.interface";
 import { JourneyRule } from "../types/journeyRule.interface";
 
 const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
@@ -18,6 +22,7 @@ const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
 
   if (Array.isArray(node.actions)) {
     node.actions = node.actions.map((action) => {
+      // Handle deeplink params
       if (
         action.type === "deeplink" &&
         action.params &&
@@ -48,6 +53,111 @@ const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
           params,
         };
       }
+
+      // Handle analyticsEvent and emitNativeEvent params - ensure value is in array format
+      if (
+        (action.type === "analyticsEvent" &&
+          action.name === "analyticsEvent") ||
+        (action.type === "emitNativeEvent" && action.name === "emitNativeEvent")
+      ) {
+        if (
+          action.params &&
+          typeof action.params === "object" &&
+          "eventParams" in action.params
+        ) {
+          const eventParams = action.params as {
+            eventName?: string;
+            eventParams?: Array<{
+              name: string;
+              type: string;
+              value?:
+                | string
+                | number
+                | boolean
+                | Array<{
+                    value: string | number | boolean;
+                    isTemplateString: boolean;
+                  }>;
+            }>;
+          };
+
+          const transformedEventParams =
+            eventParams.eventParams?.map((param) => {
+              // If value is already an array, convert boolean strings to actual booleans if needed
+              if (Array.isArray(param.value)) {
+                // For emitNativeEvent, ensure boolean strings are converted to actual booleans
+                if (
+                  action.type === "emitNativeEvent" &&
+                  param.type === "boolean"
+                ) {
+                  const firstItem = param.value[0];
+                  if (
+                    typeof firstItem === "object" &&
+                    firstItem !== null &&
+                    "value" in firstItem
+                  ) {
+                    let convertedValue = firstItem.value;
+                    if (typeof firstItem.value === "string") {
+                      const lowerValue = firstItem.value.toLowerCase().trim();
+                      convertedValue = lowerValue === "true";
+                    }
+                    return {
+                      ...param,
+                      value: [
+                        {
+                          value: convertedValue,
+                          isTemplateString: false,
+                        },
+                      ],
+                    };
+                  }
+                }
+                return param;
+              }
+
+              // If value is a primitive, convert to array format
+              if (
+                param.value !== undefined &&
+                param.value !== null &&
+                (typeof param.value === "string" ||
+                  typeof param.value === "number" ||
+                  typeof param.value === "boolean")
+              ) {
+                // For emitNativeEvent, convert boolean strings to actual booleans
+                let finalValue = param.value;
+                if (
+                  action.type === "emitNativeEvent" &&
+                  param.type === "boolean" &&
+                  typeof param.value === "string"
+                ) {
+                  const lowerValue = param.value.toLowerCase().trim();
+                  finalValue = lowerValue === "true";
+                }
+
+                return {
+                  ...param,
+                  value: [
+                    {
+                      value: finalValue,
+                      isTemplateString: false,
+                    },
+                  ],
+                };
+              }
+
+              return param;
+            }) || [];
+
+          return {
+            ...action,
+            params: {
+              eventName: eventParams.eventName || "",
+              eventParams: transformedEventParams,
+            },
+          };
+        }
+      }
+
       return action;
     });
   }
@@ -59,9 +169,7 @@ const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
   return node;
 };
 
-export function buildJourneyRule(
-  formData: CreateJourneyFormData
-): JourneyRule {
+export function buildJourneyRule(formData: CreateJourneyFormData): JourneyRule {
   const contextParams: string[] =
     formData.contextParams?.map((param) => param.label).filter(Boolean) || [];
 
@@ -187,14 +295,34 @@ export function buildJourneyRule(
   // Build frequency - same logic as normal journey (no enable flag checks)
   const frequency: CtaFrequency = {
     lifespan: {
-      limit: formData.journeyFrequency?.maxTimesInLifetime || 1000,
+      limit:
+        formData.journeyFrequency?.enableMaxTimesInLifetime &&
+        formData.journeyFrequency?.maxTimesInLifetime !== null &&
+        formData.journeyFrequency?.maxTimesInLifetime !== undefined
+          ? formData.journeyFrequency.maxTimesInLifetime
+          : 999,
     },
     session: {
-      limit: formData.journeyFrequency?.timesInSession || 1000,
+      limit:
+        formData.journeyFrequency?.enableTimesInSession &&
+        formData.journeyFrequency?.timesInSession !== null &&
+        formData.journeyFrequency?.timesInSession !== undefined
+          ? formData.journeyFrequency.timesInSession
+          : 999,
     },
     window: {
-      limit: formData.journeyFrequency?.maxTimesInPeriod || 1000,
-      value: formData.journeyFrequency?.periodValue || 1000,
+      limit:
+        formData.journeyFrequency?.enableMaxTimesInPeriod &&
+        formData.journeyFrequency?.maxTimesInPeriod !== null &&
+        formData.journeyFrequency?.maxTimesInPeriod !== undefined
+          ? formData.journeyFrequency.maxTimesInPeriod
+          : 999,
+      value:
+        formData.journeyFrequency?.enableMaxTimesInPeriod &&
+        formData.journeyFrequency?.periodValue !== null &&
+        formData.journeyFrequency?.periodValue !== undefined
+          ? formData.journeyFrequency.periodValue
+          : 999,
       unit: formData.journeyFrequency?.periodUnit || "days",
     },
   };
@@ -209,20 +337,54 @@ export function buildJourneyRule(
   const actions =
     formData.nudgeSelection.actions?.map((action, index) => {
       const actionId = actionIds[index];
-      let templateToStringify: ReactNativeJson = action.template;
+      const apiActionType: NudgeType = action.type;
 
-      // Remove templateVariantId from props
-      if (templateToStringify?.props?.templateVariantId) {
-        const {
-          templateVariantId: _removed,
-          ...restProps
-        } = templateToStringify.props;
-        templateToStringify = {
-          ...templateToStringify,
-          props: restProps,
+      // Handle NUDGE_ACTION (Native Event Emitter) - transform template to ensure boolean values
+      if (action.type === NudgeType.NUDGE_ACTION) {
+        const nudgeEventTemplate = action.template as NudgeEvent;
+
+        // Transform eventParams to convert boolean strings to actual booleans
+        const transformedTemplate: NudgeEvent = {
+          eventName: nudgeEventTemplate.eventName || "",
+          eventParams: (nudgeEventTemplate.eventParams || []).map((param) => {
+            if (param.type === "boolean" && param.value && Array.isArray(param.value) && param.value.length > 0) {
+              const firstItem = param.value[0];
+              
+              if (
+                firstItem &&
+                !firstItem.isTemplateString &&
+                "value" in firstItem &&
+                typeof firstItem.value === "string"
+              ) {
+                const lowerValue = firstItem.value.toLowerCase().trim();
+                const convertedValue = lowerValue === "true";
+                return {
+                  ...param,
+                  value: [
+                    {
+                      ...firstItem,
+                      value: convertedValue,
+                    },
+                  ],
+                };
+              }
+            }
+            return param;
+          }),
         };
-        void _removed;
+
+        return {
+          config: {
+            triggerDelay: action.config?.triggerDelay || 1000,
+          },
+          actionId,
+          type: apiActionType,
+          template: transformedTemplate,
+        };
       }
+
+      // Handle UI engagements (POPUP, TOOLTIP, NUDGE_UI) - transform template
+      let templateToStringify: ReactNativeJson = action.template as ReactNativeJson;
 
       if (templateToStringify?.type) {
         const templateTypeMapping: Record<string, string> = {
@@ -239,8 +401,6 @@ export function buildJourneyRule(
       }
 
       templateToStringify = transformDeeplinkParams(templateToStringify);
-
-      const apiActionType: NudgeType = action.type;
 
       let variant:
         | NudgeSelectionPopupMenu
@@ -319,4 +479,3 @@ export function buildJourneyRule(
     resetStates,
   };
 }
-

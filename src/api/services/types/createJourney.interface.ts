@@ -1,6 +1,7 @@
 import {
   NudgeType,
   ReactNativeJson,
+  NudgeEvent,
 } from "@/app/dashboard/create/types/journey.interface";
 
 export interface CreateCtaInput {
@@ -47,7 +48,7 @@ export interface RuleInput {
     actionId: string;
     type: NudgeType;
     variant?: string;
-    template?: ReactNativeJson;
+    template?: ReactNativeJson | NudgeEvent;
   }>;
   resetStates: Array<string>;
 }

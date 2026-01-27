@@ -23,8 +23,11 @@ describe("createJourney.utils", () => {
           enableImmediateStart: true,
         },
         journeyFrequency: {
+          enableMaxTimesInLifetime: true,
           maxTimesInLifetime: 10,
+          enableTimesInSession: true,
           timesInSession: 5,
+          enableMaxTimesInPeriod: true,
           maxTimesInPeriod: 3,
           periodValue: 7,
           periodUnit: "days",

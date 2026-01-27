@@ -21,7 +21,13 @@ function HomepageHeader() {
   );
 }
 
-function FeatureCard({title, description, icon, link, buttonText}) {
+function FeatureCard({title, description, icon, link, buttonText}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  link: string;
+  buttonText: string;
+}) {
   return (
     <div className={styles.featureCard}>
       <div className={styles.featureIcon}>{icon}</div>
@@ -34,7 +40,11 @@ function FeatureCard({title, description, icon, link, buttonText}) {
   );
 }
 
-function DetailFeature({title, description, icon}) {
+function DetailFeature({title, description, icon}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}) {
   return (
     <div className="col col--4 margin-bottom--lg">
       <div className={styles.detailFeature}>

@@ -1,5 +1,6 @@
 import {
   CreateJourneyFormData,
+  ReactNativeJson,
 } from "../types/journey.interface";
 import { TestJourneyRequest } from "@/api/services/types/testJourney.interface";
 import { DEFAULT_TEST_JOURNEY_EXPIRE_IN_MINS } from "../constants/journeyConstants";
@@ -50,6 +51,12 @@ export const transformFormDataToTestApiFormat = (
   // Calculate ctaValidTill based on expiresInMinutes
   const ctaValidTill = Date.now() + expiresInMinutesToUse * 60 * 1000;
 
+  // Map actions to ensure template is ReactNativeJson only
+  const actions = rule.actions.map(action => ({
+    ...action,
+    template: action.template as ReactNativeJson,
+  }));
+
   // Build request payload
   const requestPayload: TestJourneyRequest = {
     ...(previousCtaId && { previousCtaId }),
@@ -57,6 +64,7 @@ export const transformFormDataToTestApiFormat = (
     userIds,
     rule: {
       ...rule,
+      actions,
       ctaValidTill,
     },
   };

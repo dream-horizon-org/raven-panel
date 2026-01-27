@@ -2,6 +2,8 @@ import {
   CreateJourneyFormData,
   ValidationResult,
   ValidationError,
+  NudgeEvent,
+  ReactNativeJson,
 } from "../types/journey.interface";
 import { Path } from "react-hook-form";
 
@@ -186,11 +188,25 @@ const validateTemplates = (data: CreateJourneyFormData): ValidationError[] => {
     (action) => {
       if (!action.template) return true;
       const template = action.template;
+      
+      const isNudgeEvent = (t: ReactNativeJson | NudgeEvent): t is NudgeEvent => {
+        return "eventName" in t;
+      };
+      
       // Check if template has meaningful content
-      const hasContent =
-        (template.children && template.children.length > 0) ||
-        (template.props && Object.keys(template.props).length > 1) ||
-        (template.styles && Object.keys(template.styles).length > 0);
+      let hasContent: boolean = false;
+      if (isNudgeEvent(template)) {
+        hasContent =
+          !!template.eventName &&
+          !!template.eventParams &&
+          template.eventParams.length > 0;
+      } else {
+        hasContent =
+          !!(template.children && template.children.length > 0) ||
+          !!(template.props && Object.keys(template.props).length > 1) ||
+          !!(template.styles && Object.keys(template.styles).length > 0);
+      }
+      
       return !hasContent;
     }
   );
@@ -225,40 +241,4 @@ export const hasScheduleErrors = (errors: {
   );
 };
 
-export const validateJourneyForm = (
-  data: CreateJourneyFormData,
-  errors: {
-    schedule?: {
-      startDate?: { message?: string };
-      startTime?: { message?: string };
-      endDate?: { message?: string };
-      endTime?: { message?: string };
-      enableScheduledStart?: { message?: string };
-      enableScheduledEnd?: { message?: string };
-    };
-  }
-): ValidationResult => {
-  const validationErrors: ValidationError[] = [];
 
-  const scheduleErrors = validateSchedule(data);
-  validationErrors.push(...scheduleErrors);
-
-  if (hasScheduleErrors(errors)) {
-    validationErrors.push({
-      type: "schedule",
-      message:
-        "Please fix all schedule errors before creating/updating the journey.",
-    });
-  }
-
-  const actionErrors = validateActions(data);
-  validationErrors.push(...actionErrors);
-
-  const templateErrors = validateTemplates(data);
-  validationErrors.push(...templateErrors);
-
-  return {
-    isValid: validationErrors.length === 0,
-    errors: validationErrors,
-  };
-};

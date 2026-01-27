@@ -19,8 +19,11 @@ describe("testJourney.utils", () => {
         priority: 5,
       },
       journeyFrequency: {
+        enableMaxTimesInLifetime: true,
         maxTimesInLifetime: 10,
+        enableTimesInSession: true,
         timesInSession: 5,
+        enableMaxTimesInPeriod: true,
         maxTimesInPeriod: 3,
         periodValue: 7,
         periodUnit: "days",
@@ -68,7 +71,7 @@ describe("testJourney.utils", () => {
         ...baseFormData,
         testFeature: {
           ...baseFormData.testFeature,
-          expireInMins: undefined,
+          expireInMins: 0,
         },
       };
 
@@ -244,10 +247,9 @@ describe("testJourney.utils", () => {
 
       const result = transformFormDataToTestApiFormat(formData);
 
-      expect(result.rule.frequency.lifespan.limit).toBe(1000);
-      expect(result.rule.frequency.session.limit).toBe(1000);
-      expect(result.rule.frequency.window.limit).toBe(1000);
+      expect(result.rule.frequency.lifespan.limit).toBe(999);
+      expect(result.rule.frequency.session.limit).toBe(999);
+      expect(result.rule.frequency.window.limit).toBe(999);
     });
   });
 });
-
