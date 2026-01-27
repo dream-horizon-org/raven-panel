@@ -31,6 +31,7 @@ import {
   hasTemplate as checkHasTemplate,
   validateEngagementsBeforeTabChange,
 } from "../utils/templateValidation.utils";
+import { extractAllTemplateVariables } from "../utils/extractTemplateVariables.utils";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -113,6 +114,49 @@ export default function CreateJourneyPage({
     control: methods.control,
     name: "journeyFrequency.enableMaxTimesInLifetime",
   });
+
+  // Auto-sync template variables to contextParams
+  useEffect(() => {
+    if (!watchedActions || watchedActions.length === 0) {
+      // If no actions, clear auto-added contextParams
+      // For now, we'll keep existing contextParams when no actions exist
+      return;
+    }
+    
+    // Extract all template variables from all actions
+    const templateVariables = extractAllTemplateVariables(watchedActions);
+    
+    // Get current contextParams
+    const currentContextParams = getValues("contextParams") || [];
+    const templateVariableSet = new Set(templateVariables);
+    
+    // Filter contextParams to only keep those that are still in templates
+    // This removes variables that are no longer used
+    const updatedContextParams = currentContextParams.filter(
+      (param: { id: number; label: string }) => templateVariableSet.has(param.label)
+    );
+    
+    // Find which template variables are missing from the filtered contextParams
+    const existingLabels = new Set(
+      updatedContextParams.map((param: { id: number; label: string }) => param.label)
+    );
+    const missingVariables = Array.from(templateVariables).filter(
+      (variable) => !existingLabels.has(variable)
+    );
+
+    // Add missing variables or update if contextParams changed
+    if (missingVariables.length > 0 || updatedContextParams.length !== currentContextParams.length) {
+      const newContextParams = [
+        ...updatedContextParams,
+        ...missingVariables.map((variable, index) => ({
+          id: Date.now() + index,
+          label: variable,
+        })),
+      ];
+
+      setValue("contextParams", newContextParams, { shouldDirty: true });
+    }
+  }, [watchedActions, getValues, setValue]);
 
   useEffect(() => {
     const fetchJourneyData = async () => {

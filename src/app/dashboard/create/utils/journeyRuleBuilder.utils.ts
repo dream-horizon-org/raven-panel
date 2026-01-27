@@ -10,6 +10,7 @@ import {
 } from "../types/journey.interface";
 import { CtaFrequency, CtaGroupByInput } from "@/api/services/types/createJourney.interface";
 import { JourneyRule } from "../types/journeyRule.interface";
+import { extractAllTemplateVariables } from "./extractTemplateVariables.utils";
 
 const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
   if (!node || typeof node !== "object") {
@@ -62,8 +63,22 @@ const transformDeeplinkParams = (node: ReactNativeJson): ReactNativeJson => {
 export function buildJourneyRule(
   formData: CreateJourneyFormData
 ): JourneyRule {
-  const contextParams: string[] =
+  // Get manually added context params
+  const manualContextParams: string[] =
     formData.contextParams?.map((param) => param.label).filter(Boolean) || [];
+
+  // Extract template variables from all actions
+  const templateVariables = extractAllTemplateVariables(
+    formData.nudgeSelection.actions
+  );
+
+  // Combine both, removing duplicates
+  const allContextParams = new Set([
+    ...manualContextParams,
+    ...Array.from(templateVariables),
+  ]);
+
+  const contextParams: string[] = Array.from(allContextParams);
 
   const groupByConfig: CtaGroupByInput = {
     groupByKeys: [],
