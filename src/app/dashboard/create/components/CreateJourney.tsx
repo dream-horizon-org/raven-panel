@@ -32,6 +32,11 @@ import {
   validateEngagementsBeforeTabChange,
 } from "../utils/templateValidation.utils";
 import { extractAllTemplateVariables } from "../utils/extractTemplateVariables.utils";
+import {
+  filterActiveContextParams,
+  findMissingVariables,
+  mergeContextParams,
+} from "../utils/contextParamsSync.utils";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -118,8 +123,6 @@ export default function CreateJourneyPage({
   // Auto-sync template variables to contextParams
   useEffect(() => {
     if (!watchedActions || watchedActions.length === 0) {
-      // If no actions, clear auto-added contextParams
-      // For now, we'll keep existing contextParams when no actions exist
       return;
     }
     
@@ -128,32 +131,22 @@ export default function CreateJourneyPage({
     
     // Get current contextParams
     const currentContextParams = getValues("contextParams") || [];
-    const templateVariableSet = new Set(templateVariables);
     
     // Filter contextParams to only keep those that are still in templates
-    // This removes variables that are no longer used
-    const updatedContextParams = currentContextParams.filter(
-      (param: { id: number; label: string }) => templateVariableSet.has(param.label)
+    const updatedContextParams = filterActiveContextParams(
+      currentContextParams,
+      templateVariables
     );
     
     // Find which template variables are missing from the filtered contextParams
-    const existingLabels = new Set(
-      updatedContextParams.map((param: { id: number; label: string }) => param.label)
-    );
-    const missingVariables = Array.from(templateVariables).filter(
-      (variable) => !existingLabels.has(variable)
+    const missingVariables = findMissingVariables(
+      updatedContextParams,
+      templateVariables
     );
 
     // Add missing variables or update if contextParams changed
     if (missingVariables.length > 0 || updatedContextParams.length !== currentContextParams.length) {
-      const newContextParams = [
-        ...updatedContextParams,
-        ...missingVariables.map((variable, index) => ({
-          id: Date.now() + index,
-          label: variable,
-        })),
-      ];
-
+      const newContextParams = mergeContextParams(updatedContextParams, missingVariables);
       setValue("contextParams", newContextParams, { shouldDirty: true });
     }
   }, [watchedActions, getValues, setValue]);
