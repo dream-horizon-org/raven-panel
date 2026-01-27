@@ -135,15 +135,32 @@ export default function ElementStylesEditor({
   );
   const flexStyles = availableStyles.filter((s) => FLEX_STYLES.includes(s));
 
-  // Separate dimension styles (borderRadius, height, width, aspectRatio) from other styles
   const dimensionStyles = availableStyles.filter((s) =>
-    ["borderRadius", "height", "width", "aspectRatio"].includes(s)
+    [
+      "borderRadius",
+      "height",
+      "width",
+      "aspectRatio",
+      "maxHeight",
+      "minHeight",
+      "maxWidth",
+      "minWidth",
+    ].includes(s)
   );
   const otherStyles = availableStyles.filter(
     (s) =>
       !SPACING_STYLES.includes(s) &&
       !FLEX_STYLES.includes(s) &&
-      !["borderRadius", "height", "width", "aspectRatio"].includes(s)
+      ![
+        "borderRadius",
+        "height",
+        "width",
+        "aspectRatio",
+        "maxHeight",
+        "minHeight",
+        "maxWidth",
+        "minWidth",
+      ].includes(s)
   );
 
   // Get current background color
@@ -850,7 +867,13 @@ export default function ElementStylesEditor({
             Dimensions
           </Typography>
           <Box
-            sx={{ display: "flex", gap: 2, alignItems: "flex-start", mt: 2 }}
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 2,
+              alignItems: "flex-start",
+              mt: 2,
+            }}
           >
             {dimensionStyles.map((styleName) => renderStyleInput(styleName))}
           </Box>

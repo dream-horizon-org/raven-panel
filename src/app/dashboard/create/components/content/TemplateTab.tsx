@@ -806,10 +806,7 @@ export const generateTemplate = (
   return baseTemplate as ReactNativeJson;
 };
 
-const TEMPLATE_OPTIONS: Record<
-  NudgeType,
-  Array<{ id: string; label: string; description: string }>
-> = {
+const TEMPLATE_OPTIONS = {
   [NudgeType.TOOLTIP]: [
     {
       id: "basic-tooltip",
@@ -837,7 +834,11 @@ const TEMPLATE_OPTIONS: Record<
       description: "Popup with action button",
     },
   ],
-};
+  [NudgeType.NUDGE_ACTION]: [],
+} satisfies Record<
+  NudgeType,
+  Array<{ id: string; label: string; description: string }>
+>;
 
 export default function TemplateTab({
   control,
@@ -873,6 +874,7 @@ export default function TemplateTab({
       [NudgeType.TOOLTIP]: "tooltip",
       [NudgeType.NUDGE_UI]: "bottom sheet",
       [NudgeType.POPUP]: "popup",
+      [NudgeType.NUDGE_ACTION]: "action",
     };
     return `Choose a template variant for your ${typeLabels[type]} engagement`;
   };

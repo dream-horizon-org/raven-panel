@@ -124,6 +124,7 @@ export enum NudgeType {
   TOOLTIP = "TOOLTIP",
   NUDGE_UI = "NUDGE_UI",
   POPUP = "POPUP",
+  NUDGE_ACTION = "NUDGE_ACTION",
 }
 
 export enum NudgeSelectionPopupMenu {
@@ -193,7 +194,7 @@ export interface NudgeEvent {
   eventParams: Array<{
     name: string;
     type: "string" | "boolean" | "number";
-    value?: DynamicTextValueType;
+    value: DynamicTextValueType;
   }>;
 }
 
@@ -279,7 +280,7 @@ export interface NudgeSelectionHookForm {
     actionId: string;
     type: NudgeType;
     variant?: NudgeSelectionPopupMenu | NudgeSelectionTooltipMenu;
-    template: ReactNativeJson;
+    template: ReactNativeJson | NudgeEvent;
     isNudgeValid: boolean;
   }>;
   resetStates: Array<string>;
@@ -315,13 +316,13 @@ export type ContentElement = {
 
 export type JourneyFrequency = {
   enableTimesInSession?: boolean;
-  timesInSession: number;
+  timesInSession: number | null;
   enableMaxTimesInPeriod?: boolean;
-  maxTimesInPeriod: number;
-  periodValue: number;
+  maxTimesInPeriod: number | null;
+  periodValue: number | null;
   periodUnit: string;
   enableMaxTimesInLifetime?: boolean;
-  maxTimesInLifetime: number;
+  maxTimesInLifetime: number | null;
 };
 
 export type CampaignFormType = {

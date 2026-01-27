@@ -217,7 +217,7 @@ export default function ContentElementEditor({
   // };
 
   const handleAddChildElement = (
-    type: "View" | "Text" | "Image" | "Button"
+    type: "View" | "Text" | "Image" | "Button" | "Lottie"
   ) => {
     if (element?.type !== "View") {
       setChildMenuAnchor(null);
@@ -618,8 +618,8 @@ export default function ContentElementEditor({
               engagementType={engagementType}
               basePath={
                 elementPath.length === 0
-                  ? "nudgeSelection.actions.0.template"
-                  : `nudgeSelection.actions.0.template.children.${elementPath.join(
+                  ? `nudgeSelection.actions.${actionIndex}.template`
+                  : `nudgeSelection.actions.${actionIndex}.template.children.${elementPath.join(
                       ".children."
                     )}`
               }
@@ -665,6 +665,9 @@ export default function ContentElementEditor({
                 </MenuItem>
                 <MenuItem onClick={() => handleAddChildElement("Button")}>
                   Button
+                </MenuItem>
+                <MenuItem onClick={() => handleAddChildElement("Lottie")}>
+                  Lottie
                 </MenuItem>
               </Menu>
               {children.length === 0 ? (

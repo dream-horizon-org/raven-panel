@@ -109,8 +109,6 @@ export interface FilterCondition {
     | "<"
     | ">="
     | "<="
-    | "in"
-    | "not in"
     | string;
   comparisonValue: string; // server sends string, even for numbers
 }

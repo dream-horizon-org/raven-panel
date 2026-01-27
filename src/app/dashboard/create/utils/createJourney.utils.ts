@@ -2,9 +2,7 @@ import {
   CreateCtaInput,
   CohortEligibilityInput,
 } from "@/api/services/types/createJourney.interface";
-import {
-  CreateJourneyFormData,
-} from "../types/journey.interface";
+import { CreateJourneyFormData } from "../types/journey.interface";
 import { buildJourneyRule } from "./journeyRuleBuilder.utils";
 
 export const transformFormDataToApiFormat = (
