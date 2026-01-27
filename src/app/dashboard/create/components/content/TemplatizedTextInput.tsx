@@ -60,12 +60,37 @@ function parseTemplateString(str: string): DynamicTextValueType {
       }
     }
 
-    // Add template variable (including empty ones - they represent placeholders)
-    const variablePath = match[1].trim();
+    // Parse template variable with optional default value
+    // Format: {{propertyName;default:"value"}} or {{propertyName;default:value}}
+    const content = match[1];
+    let variableName = "";
+    let defaultValue: string | number | boolean = "";
+    
+    if (content.includes(";default:")) {
+      const [varPart, defaultPart] = content.split(";default:");
+      variableName = varPart.trim();
+      
+      // Parse default value
+      const parsedDefault = defaultPart.trim();
+      
+      // Check if value is quoted (string literal)
+      if ((parsedDefault.startsWith('"') && parsedDefault.endsWith('"')) ||
+          (parsedDefault.startsWith("'") && parsedDefault.endsWith("'"))) {
+        // Remove quotes - it's explicitly a string
+        defaultValue = parsedDefault.slice(1, -1);
+      } else {
+        // No quotes - keep as-is (will be treated as string in storage)
+        // This ensures {{prop;default:1}} stays as "1" (string)
+        defaultValue = parsedDefault;
+      }
+    } else {
+      variableName = content.trim();
+    }
+    
     result.push({
       isTemplateString: true,
-      variableName: variablePath, // Can be empty string for {{}}
-      default: "",
+      variableName: variableName,
+      default: defaultValue,
       variableType: "string",
     } as DynamicTextDynamicType);
 
@@ -101,7 +126,12 @@ function stringifyTemplate(value: DynamicTextValueType | undefined): string {
   return value
     .map((item) => {
       if (item.isTemplateString) {
-        return `{{${item.variableName}}}`;
+        // Always include default value syntax
+        // Convert default value to string (always use quotes for consistency)
+        const defaultStr = item.default !== undefined && item.default !== null 
+          ? String(item.default) 
+          : "";
+        return `{{${item.variableName};default:"${defaultStr}"}}`;
       }
       return String(item.value);
     })
@@ -113,6 +143,23 @@ function textToPartsArray(text: string): string[] {
   if (!text) return [];
   // This regex captures both the delimiters and the content between them
   return text.split(/(\{\{[^}]*\}\})/g).filter(part => part !== "");
+}
+
+// Check if a string is a template variable
+function isTemplateVariable(str: string): boolean {
+  return str.startsWith("{{") && str.endsWith("}}");
+}
+
+// Split a template variable into parts: {{, content, }}
+function splitTemplateVariable(template: string): { open: string; content: string; close: string } {
+  if (!isTemplateVariable(template)) {
+    return { open: "", content: template, close: "" };
+  }
+  return {
+    open: "{{",
+    content: template.slice(2, -2), // Remove {{ and }}
+    close: "}}",
+  };
 }
 
 export default function TemplatizedTextInput({
@@ -227,11 +274,31 @@ export default function TemplatizedTextInput({
       const start = openPos + 2;
       const end = closePos;
       
-      // Check if cursor is inside this {{...}} (works for both empty and filled)
+      // Check if cursor is inside this {{...}}
       if (cursorPos >= start && cursorPos <= end) {
-        setAnchorEl(containerRef.current);
-        setSelectedEvent(null);
-        return;
+        // Extract the content between {{ and }}
+        const content = text.substring(start, end);
+        
+        // Check if there's a ;default: in the content
+        const defaultIndex = content.indexOf(";default:");
+        
+        if (defaultIndex !== -1) {
+          // Calculate the position of ;default: in the full text
+          const defaultPos = start + defaultIndex;
+          
+          // Only open popover if cursor is BEFORE ;default: (in the property name area)
+          // Don't open if cursor is in or after ;default: (in the default value area)
+          if (cursorPos <= defaultPos) {
+            setAnchorEl(containerRef.current);
+            setSelectedEvent(null);
+            return;
+          }
+        } else {
+          // No default value, always open popover
+          setAnchorEl(containerRef.current);
+          setSelectedEvent(null);
+          return;
+        }
       }
       
       pos = closePos + 2;
@@ -260,22 +327,29 @@ export default function TemplatizedTextInput({
     
     // Find the {{}} we're inside
     const lastOpenBrace = textBeforeCursor.lastIndexOf("{{");
-    const nextCloseBrace = textAfterCursor.indexOf("}}");
+    const nextCloseBraceOffset = textAfterCursor.indexOf("}}");
     
-    if (lastOpenBrace !== -1 && nextCloseBrace !== -1) {
+    if (lastOpenBrace !== -1 && nextCloseBraceOffset !== -1) {
+      // Calculate absolute positions
+      const closeBracePos = currentCursorPos + nextCloseBraceOffset;
+      
       const beforeTemplate = input.value.substring(0, lastOpenBrace + 2);
-      const afterTemplate = input.value.substring(currentCursorPos + nextCloseBrace);
-      const newValue = beforeTemplate + propertyPath + afterTemplate;
+      const afterTemplate = input.value.substring(closeBracePos); // Start from }} onwards
+      
+      // Add property with default value syntax
+      const propertyWithDefault = `${propertyPath};default:""`;
+      const newValue = beforeTemplate + propertyWithDefault + afterTemplate;
       
       setDisplayValue(newValue);
       onChange(parseTemplateString(newValue));
       setAnchorEl(null);
       setSelectedEvent(null);
       
-      // Focus back and position cursor after the inserted property
+      // Focus back and position cursor after the inserted property (inside the quotes for default value)
       setTimeout(() => {
         if (inputRef.current) {
-          const newCursorPos = lastOpenBrace + 2 + propertyPath.length;
+          // Position cursor between the quotes: {{propertyPath;default:"|"}}
+          const newCursorPos = lastOpenBrace + 2 + propertyPath.length + 10; // +10 for ';default:"'
           inputRef.current.focus();
           inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
         }
@@ -309,11 +383,6 @@ export default function TemplatizedTextInput({
         prop.propertyName.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
-
-  // Check if a part is a template variable
-  const isTemplateVariable = (part: string) => {
-    return part.startsWith("{{") && part.endsWith("}}");
-  };
 
   return (
     <Box sx={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 1 }}>
@@ -397,39 +466,67 @@ export default function TemplatizedTextInput({
                   {placeholder}
                 </Typography>
               )}
-              {parts.map((part, index) =>
-                isTemplateVariable(part) ? (
-                  <Box
-                    component="span"
-                    key={index}
-                    sx={{
-                      backgroundColor: alpha("#1976d2", 0.15),
-                      color: "#1976d2",
-                      borderRadius: "2px",
-                      fontFamily: "monospace",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      whiteSpace: "pre",
-                    }}
-                  >
-                    {part}
-                  </Box>
-                ) : (
-                  <Box
-                    component="span"
-                    key={index}
-                    sx={{
-                      color: "text.primary",
-                      fontFamily: "monospace",
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      whiteSpace: "pre",
-                    }}
-                  >
-                    {part}
-                  </Box>
-                )
-              )}
+              {parts.map((part, index) => {
+                if (isTemplateVariable(part)) {
+                  const { open, content, close } = splitTemplateVariable(part);
+                  return (
+                    <Box component="span" key={index}>
+                      {/* Opening {{ in blue */}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: "#1976d2",
+                          fontFamily: "monospace",
+                          fontSize: "14px",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {open}
+                      </Box>
+                      {/* Content in normal color */}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: "text.primary",
+                          fontFamily: "monospace",
+                          fontSize: "14px",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {content}
+                      </Box>
+                      {/* Closing }} in blue */}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: "#1976d2",
+                          fontFamily: "monospace",
+                          fontSize: "14px",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {close}
+                      </Box>
+                    </Box>
+                  );
+                } else {
+                  return (
+                    <Box
+                      component="span"
+                      key={index}
+                      sx={{
+                        color: "text.primary",
+                        fontFamily: "monospace",
+                        fontSize: "14px",
+                        fontWeight: 400,
+                        whiteSpace: "pre",
+                      }}
+                    >
+                      {part}
+                    </Box>
+                  );
+                }
+              })}
             </Box>
           </Box>
 
