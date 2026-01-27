@@ -339,3 +339,4 @@ const JourneyAnimation = () => {
 };
 
 export default JourneyAnimation;
+
