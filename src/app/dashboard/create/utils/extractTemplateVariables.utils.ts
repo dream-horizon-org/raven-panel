@@ -1,4 +1,35 @@
-import { ReactNativeJson, DynamicTextValueType } from "../types/journey.interface";
+import { ReactNativeJson, DynamicTextValueType, NudgeEvent } from "../types/journey.interface";
+
+/**
+ * Helper function to extract variables from DynamicTextValueType arrays
+ */
+function extractVariablesFromDynamicText(dynamicText: DynamicTextValueType): Set<string> {
+  const variables = new Set<string>();
+  dynamicText.forEach((item) => {
+    if (item.isTemplateString && item.variableName) {
+      variables.add(item.variableName);
+    }
+  });
+  return variables;
+}
+
+/**
+ * Extracts template variables from NudgeEvent
+ */
+function extractVariablesFromNudgeEvent(nudgeEvent: NudgeEvent): Set<string> {
+  const variables = new Set<string>();
+  
+  if (nudgeEvent.eventParams) {
+    nudgeEvent.eventParams.forEach((param) => {
+      if (param.value && Array.isArray(param.value)) {
+        const paramVariables = extractVariablesFromDynamicText(param.value);
+        paramVariables.forEach((variable) => variables.add(variable));
+      }
+    });
+  }
+  
+  return variables;
+}
 
 /**
  * Recursively extracts all template variable names from a ReactNativeJson template
@@ -18,11 +49,8 @@ export function extractTemplateVariables(template: ReactNativeJson | null | unde
           "isTemplateString" in propValue[0];
         
         if (isDynamicTextArray) {
-          (propValue as DynamicTextValueType).forEach((item) => {
-            if (item.isTemplateString && item.variableName) {
-              variables.add(item.variableName);
-            }
-          });
+          const propVariables = extractVariablesFromDynamicText(propValue as DynamicTextValueType);
+          propVariables.forEach((variable) => variables.add(variable));
         }
       }
     });
@@ -39,11 +67,8 @@ export function extractTemplateVariables(template: ReactNativeJson | null | unde
               "isTemplateString" in paramValue[0];
             
             if (isDynamicTextArray) {
-              (paramValue as DynamicTextValueType).forEach((item) => {
-                if (item.isTemplateString && item.variableName) {
-                  variables.add(item.variableName);
-                }
-              });
+              const paramVariables = extractVariablesFromDynamicText(paramValue as DynamicTextValueType);
+              paramVariables.forEach((variable) => variables.add(variable));
             }
           }
         });
@@ -66,7 +91,7 @@ export function extractTemplateVariables(template: ReactNativeJson | null | unde
  * Extracts all template variables from all actions in the form
  */
 export function extractAllTemplateVariables(
-  actions: Array<{ template?: ReactNativeJson }> | undefined
+  actions: Array<{ template?: ReactNativeJson | NudgeEvent }> | undefined
 ): Set<string> {
   const allVariables = new Set<string>();
 
@@ -74,8 +99,16 @@ export function extractAllTemplateVariables(
 
   actions.forEach((action) => {
     if (action.template) {
-      const templateVariables = extractTemplateVariables(action.template);
-      templateVariables.forEach((variable) => allVariables.add(variable));
+      // Check if it's a NudgeEvent or ReactNativeJson
+      if ("eventName" in action.template && "eventParams" in action.template) {
+        // It's a NudgeEvent
+        const eventVariables = extractVariablesFromNudgeEvent(action.template as NudgeEvent);
+        eventVariables.forEach((variable) => allVariables.add(variable));
+      } else {
+        // It's a ReactNativeJson
+        const templateVariables = extractTemplateVariables(action.template as ReactNativeJson);
+        templateVariables.forEach((variable) => allVariables.add(variable));
+      }
     }
   });
 

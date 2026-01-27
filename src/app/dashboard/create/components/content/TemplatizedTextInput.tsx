@@ -115,30 +115,6 @@ function textToPartsArray(text: string): string[] {
   return text.split(/(\{\{[^}]*\}\})/g).filter(part => part !== "");
 }
 
-// Get which template variable index the cursor is at
-function getTemplateIndexAtCursor(text: string, cursorPos: number): number | null {
-  let pos = 0;
-  let templateIndex = 0;
-  
-  while (pos < text.length) {
-    const openPos = text.indexOf("{{", pos);
-    if (openPos === -1) break;
-    
-    const closePos = text.indexOf("}}", openPos + 2);
-    if (closePos === -1) break;
-    
-    // Cursor is inside this {{...}}
-    if (cursorPos >= openPos && cursorPos <= closePos + 2) {
-      return templateIndex;
-    }
-    
-    templateIndex++;
-    pos = closePos + 2;
-  }
-  
-  return null;
-}
-
 export default function TemplatizedTextInput({
   value,
   onChange,
