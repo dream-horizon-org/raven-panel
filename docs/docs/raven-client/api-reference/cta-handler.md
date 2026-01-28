@@ -11,9 +11,6 @@ import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 
 trackAppEvent({
   eventName: "USER_LOGIN",
-  routeName: "Home",
-  is_from_rn: true,
-  actionDone: false,
   userId: "123",
 });
 ```
@@ -118,9 +115,6 @@ function LoginScreen() {
       // Process login event
       trackAppEvent({
         eventName: "USER_LOGIN",
-        routeName: "Home",
-        is_from_rn: true,
-        actionDone: true,
         userId: user.id,
         loginMethod: "email",
       });
@@ -149,9 +143,6 @@ function useScreenTracking() {
 
       trackAppEvent({
         eventName: "SCREEN_VIEW",
-        routeName: routeName,
-        is_from_rn: true,
-        actionDone: false,
         screenName: routeName,
       });
     });

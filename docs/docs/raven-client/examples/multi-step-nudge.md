@@ -148,9 +148,6 @@ function App() {
     // Process app launch
     trackAppEvent({
       eventName: 'APP_LAUNCH',
-      routeName: 'Home',
-      is_from_rn: true,
-      actionDone: false,
     });
   }, []);
 
@@ -158,9 +155,6 @@ function App() {
   const handleNudgeButtonClick = (buttonId: string) => {
     trackAppEvent({
       eventName: 'BUTTON_CLICKED',
-      routeName: 'Home',
-      is_from_rn: true,
-      actionDone: false,
       buttonId: buttonId,
     });
   };

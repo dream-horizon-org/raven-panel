@@ -126,9 +126,6 @@ export default function App() {
     // Process app launch event
     trackAppEvent({
       eventName: "APP_LAUNCH",
-      routeName: "Home",
-      is_from_rn: true,
-      actionDone: false,
     });
   }, []);
 

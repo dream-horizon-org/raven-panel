@@ -233,9 +233,6 @@ useEffect(() => {
 // Process events when they occur
 trackAppEvent({
   eventName: "USER_LOGIN",
-  routeName: "Home",
-  is_from_rn: true,
-  actionDone: false,
 });
 ```
 

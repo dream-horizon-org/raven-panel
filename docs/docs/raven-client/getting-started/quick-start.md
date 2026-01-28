@@ -129,9 +129,6 @@ import { trackAppEvent } from "@dreamhorizonorg/raven-client";
 // When a user logs in
 trackAppEvent({
   eventName: "USER_LOGIN",
-  routeName: "Home",
-  is_from_rn: true,
-  actionDone: false,
   userId: "123",
 });
 ```
@@ -181,9 +178,6 @@ function HomeScreen() {
     // Process event to trigger CTAs
     trackAppEvent({
       eventName: "USER_LOGIN",
-      routeName: "Home",
-      is_from_rn: true,
-      actionDone: false,
     });
   };
 
