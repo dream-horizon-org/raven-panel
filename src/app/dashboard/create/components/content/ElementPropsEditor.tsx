@@ -28,7 +28,9 @@ import {
   ComponentDefinition,
 } from "../../types/journey.interface";
 import { contentElementEditorStyles } from "./styles/contentElementEditorStyles";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
+import TemplatizedTextInput from "./TemplatizedTextInput";
+import { useEventsList } from "../../hooks/useEventsList";
 
 interface ElementPropsEditorProps {
   element: ReactNativeJson;
@@ -48,7 +50,23 @@ export default function ElementPropsEditor({
 }: ElementPropsEditorProps) {
   const {
     formState: { errors },
+    control,
   } = useFormContext<CreateJourneyFormData>();
+
+  // Get events data
+  const { data: eventsData } = useEventsList();
+  const events = eventsData?.data?.eventList || [];
+
+  // Get eventInfo and contextParams from form
+  const eventInfo = useWatch({
+    control,
+    name: "ruleEngine.eventInfo",
+  }) as CreateJourneyFormData["ruleEngine"]["eventInfo"] || [];
+
+  const contextParams = useWatch({
+    control,
+    name: "contextParams",
+  }) as CreateJourneyFormData["contextParams"] || [];
 
   // Helper to get field error - handles nested paths with array indices
   const getFieldError = (propName: string) => {
@@ -112,71 +130,23 @@ export default function ElementPropsEditor({
 
     // Handle template props (DynamicTextValueType)
     if (prop.isTemplate) {
-      // Check if currentValue is a DynamicTextValueType array
-      const isDynamicTextArray =
-        Array.isArray(currentValue) &&
-        currentValue.length > 0 &&
-        typeof currentValue[0] === "object" &&
-        "isTemplateString" in currentValue[0];
+      const currentValue = element.props?.[prop.name] as DynamicTextValueType | undefined;
 
-      if (isDynamicTextArray) {
-        const dynamicTextArray = currentValue as DynamicTextValueType;
-        const firstItem = dynamicTextArray[0];
-        // Extract value from static type
-        const displayValue =
-          firstItem && !firstItem.isTemplateString
-            ? String(firstItem.value)
-            : "";
-
-        return (
-          <TextField
-            key={prop.name}
-            size="small"
-            label={prop.display ? prop.display : prop.name}
-            value={displayValue}
-            onChange={(e) => {
-              // Update the DynamicTextValueType array with new value
-              const updatedArray: DynamicTextValueType = [
-                {
-                  isTemplateString: false,
-                  value: e.target.value,
-                } as DynamicTextStaticType,
-              ];
-              onPropChange(prop.name, updatedArray);
-            }}
-            required={prop.isRequired}
-            placeholder={prop.default ? String(prop.default) : ""}
-            sx={{ width: "auto", maxWidth: "300px" }}
-          />
-        );
-      } else {
-        // Initialize with empty array if not set
-        return (
-          <TextField
-            key={prop.name}
-            size="small"
-            label={prop.display ? prop.display : prop.name}
-            value=""
-            onChange={(e) => {
-              const updatedArray: DynamicTextValueType = [
-                {
-                  isTemplateString: false,
-                  value: e.target.value,
-                } as DynamicTextStaticType,
-              ];
-              onPropChange(prop.name, updatedArray);
-            }}
-            required={prop.isRequired}
-            placeholder={prop.default ? String(prop.default) : ""}
-            sx={{ width: "auto", maxWidth: "300px" }}
-            error={hasError}
-            helperText={errorMessage}
-            FormHelperTextProps={{
-              sx: { color: hasError ? "error.main" : "inherit" },
-            }}
-          />
-        );
-      }
+      return (
+        <TemplatizedTextInput
+          key={prop.name}
+          value={currentValue}
+          onChange={(newValue) => onPropChange(prop.name, newValue)}
+          label={prop.display || prop.name}
+          placeholder={prop.default ? String(prop.default) : ""}
+          required={prop.isRequired}
+          error={hasError}
+          helperText={errorMessage}
+          events={events}
+          eventInfo={eventInfo}
+          contextParams={contextParams}
+        />
+      );
     }
 
     const value = currentValue ?? prop.default ?? "";
