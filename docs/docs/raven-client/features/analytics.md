@@ -5,6 +5,7 @@ Raven Client includes built-in analytics tracking for CTAs and user interactions
 ## Overview
 
 The SDK automatically tracks:
+
 - CTA processing events
 - State machine transitions
 - Action executions
@@ -33,7 +34,7 @@ The SDK automatically tracks:
 The SDK automatically sends analytics events. Configure the `appEvent` listener:
 
 ```tsx
-nudgeClient.init({
+ravenClient.init({
   listeners: {
     appEvent: (eventName, props) => {
       // Send to your analytics service
@@ -49,10 +50,10 @@ nudgeClient.init({
 Send custom analytics events:
 
 ```tsx
-import { sendNudgeAppEvent } from '@dreamhorizonorg/raven-client';
+import { sendNudgeAppEvent } from "@dreamhorizonorg/raven-client";
 
-sendNudgeAppEvent('BUTTON_CLICKED', {
-  buttonId: 'signup',
+sendNudgeAppEvent("BUTTON_CLICKED", {
+  buttonId: "signup",
   timestamp: Date.now(),
 });
 ```
@@ -80,9 +81,9 @@ Events include contextual information:
 ### Firebase Analytics
 
 ```tsx
-import analytics from '@react-native-firebase/analytics';
+import analytics from "@react-native-firebase/analytics";
 
-nudgeClient.init({
+ravenClient.init({
   listeners: {
     appEvent: (eventName, props) => {
       analytics().logEvent(eventName, props);
@@ -95,9 +96,9 @@ nudgeClient.init({
 ### Mixpanel
 
 ```tsx
-import Mixpanel from 'react-native-mixpanel';
+import Mixpanel from "react-native-mixpanel";
 
-nudgeClient.init({
+ravenClient.init({
   listeners: {
     appEvent: (eventName, props) => {
       Mixpanel.track(eventName, props);
@@ -110,11 +111,11 @@ nudgeClient.init({
 ### Custom Analytics
 
 ```tsx
-nudgeClient.init({
+ravenClient.init({
   listeners: {
     appEvent: (eventName, props) => {
-      fetch('https://api.example.com/analytics', {
-        method: 'POST',
+      fetch("https://api.example.com/analytics", {
+        method: "POST",
         body: JSON.stringify({
           event: eventName,
           properties: props,
@@ -151,4 +152,3 @@ The SDK batches events for efficient sending:
 
 - [Quick Start](/docs/raven-client/getting-started/quick-start) - Set up analytics
 - [API Reference](/docs/raven-client/api-reference/nudge-client) - See API details
-

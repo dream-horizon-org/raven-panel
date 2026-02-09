@@ -141,26 +141,20 @@ This example demonstrates:
 ## App Integration
 
 ```tsx
-import { processEventForCTAs } from '@dreamhorizonorg/raven-client';
+import { trackAppEvent } from '@dreamhorizonorg/raven-client';
 
 function App() {
   useEffect(() => {
     // Process app launch
-    processEventForCTAs({
+    trackAppEvent({
       eventName: 'APP_LAUNCH',
-      routeName: 'Home',
-      is_from_rn: true,
-      actionDone: false,
     });
   }, []);
 
   // When nudge button is clicked, process event
   const handleNudgeButtonClick = (buttonId: string) => {
-    processEventForCTAs({
+    trackAppEvent({
       eventName: 'BUTTON_CLICKED',
-      routeName: 'Home',
-      is_from_rn: true,
-      actionDone: false,
       buttonId: buttonId,
     });
   };

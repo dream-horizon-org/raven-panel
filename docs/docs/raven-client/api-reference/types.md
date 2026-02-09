@@ -4,39 +4,34 @@ Complete TypeScript type definitions for Raven Client.
 
 ## Core Types
 
-### `NudgeClientOptions`
+### `RavenClientOptions`
 
 ```typescript
-interface NudgeClientOptions {
-  listeners: NudgeClientListeners;
-  config: NudgeClientConfig;
+interface RavenClientOptions {
+  listeners: RavenClientListeners;
+  config: RavenClientConfig;
 }
 ```
 
-### `NudgeClientConfig`
+### `RavenClientConfig`
 
 ```typescript
-interface NudgeClientConfig {
+interface RavenClientConfig {
   baseUrl: string;
   userId: string | number;
   appVersion: string;
   codepushVersion?: string;
   platform: string;
-  nudgeRouteName: string;
   packageName: string;
+  tenantId?: string;
 }
 ```
 
-### `NudgeClientListeners`
+### `RavenClientListeners`
 
 ```typescript
-interface NudgeClientListeners {
+interface RavenClientListeners {
   appEvent: (eventName: string, props?: unknown) => void;
-  fetchCtaApi: <TVariables, TData>(
-    url: string,
-    method: string,
-    variables?: TVariables,
-  ) => Promise<TData>;
   getAccessToken: () => AccessToken;
 }
 ```
@@ -55,14 +50,9 @@ interface AccessToken {
 ### `CTAEvent`
 
 ```typescript
-interface CTAEvent {
+type CTAEvent = {
   eventName: string;
-  actionDone: boolean;
-  ActiveScreenName?: string;
-  routeName: string;
-  is_from_rn: boolean;
-  [key: string]: boolean | string | number;
-}
+} & { [key: string]: boolean | string | number };
 ```
 
 ## CTA Types
@@ -106,10 +96,10 @@ type CtaActionType =
 
 ```typescript
 enum ActionType {
-  NUDGE = 'NUDGE_UI',
-  ACTION = 'NUDGE_ACTION',
-  NUDGE_POPUP = 'POPUP',
-  TOOLTIP = 'TOOLTIP',
+  NUDGE = "NUDGE_UI",
+  ACTION = "NUDGE_ACTION",
+  NUDGE_POPUP = "POPUP",
+  TOOLTIP = "TOOLTIP",
 }
 ```
 
@@ -168,13 +158,13 @@ interface Filter {
 ### `ComparisonType`
 
 ```typescript
-type ComparisonType = '=' | '>' | '<' | '>=' | '<=' | '!=';
+type ComparisonType = "=" | ">" | "<" | ">=" | "<=" | "!=";
 ```
 
 ### `OperatorType`
 
 ```typescript
-type OperatorType = 'AND' | 'OR';
+type OperatorType = "AND" | "OR";
 ```
 
 ## Tooltip Types
@@ -186,7 +176,7 @@ interface TooltipOptions {
   title: string;
   subTitle?: string;
   targetId: string;
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  position?: "top" | "bottom" | "left" | "right";
   backgroundColor?: string;
   titleColor?: string;
   subTitleColor?: string;
@@ -194,15 +184,15 @@ interface TooltipOptions {
   subTitleFontSize?: number;
   titleFontFamily?: string;
   subTitleFontFamily?: string;
-  titleFontWeight?: 'Bold' | 'Medium' | 'Regular';
-  subTitleFontWeight?: 'Bold' | 'Medium' | 'Regular';
+  titleFontWeight?: "Bold" | "Medium" | "Regular";
+  subTitleFontWeight?: "Bold" | "Medium" | "Regular";
   targetScreen?: string;
-  triggerType?: 'mount' | 'click' | 'event';
+  triggerType?: "mount" | "click" | "event";
   triggerDelay?: number;
   autoDismissMs?: number;
   dismissOnOutsideTouch?: boolean;
-  titleAlignment?: 'left' | 'center' | 'right';
-  subTitleAlignment?: 'left' | 'center' | 'right';
+  titleAlignment?: "left" | "center" | "right";
+  subTitleAlignment?: "left" | "center" | "right";
   arrowSize?: number;
   borderRadius?: number;
   paddingLeft?: number;
@@ -239,11 +229,11 @@ interface StorageConfig {
 
 ## Nudge Types
 
-### `NudgeParams`
+### `RavenParams`
 
 ```typescript
-interface NudgeParams {
-  // Nudge parameters
+interface RavenParams {
+  // Raven parameters
 }
 ```
 
@@ -253,16 +243,15 @@ Import types as needed:
 
 ```tsx
 import type {
-  NudgeClientOptions,
-  NudgeClientConfig,
+  RavenClientOptions,
+  RavenClientConfig,
   CTAEvent,
   TooltipOptions,
   IStorage,
-} from '@dreamhorizonorg/raven-client';
+} from "@dreamhorizonorg/raven-client";
 ```
 
 ## Next Steps
 
 - [API Reference](/docs/raven-client/api-reference/nudge-client) - See API documentation
 - [Quick Start](/docs/raven-client/getting-started/quick-start) - Use types in your app
-

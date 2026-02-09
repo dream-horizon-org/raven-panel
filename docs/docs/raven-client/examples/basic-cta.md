@@ -5,6 +5,7 @@ A simple example showing how to create and trigger a basic engagement.
 ## Overview
 
 This example demonstrates:
+
 - Creating a simple engagement
 - Triggering it with an event
 - Displaying a welcome nudge
@@ -17,12 +18,12 @@ This example demonstrates:
   "rule": {
     "priority": 1,
     "frequency": {
-      "session": {"limit": 1},
-      "lifespan": {"limit": 1}
+      "session": { "limit": 1 },
+      "lifespan": { "limit": 1 }
     },
     "stateTransition": {
       "APP_LAUNCH": {
-        "0": [{"transitionTo": "1"}]
+        "0": [{ "transitionTo": "1" }]
       }
     },
     "stateToAction": {
@@ -63,21 +64,25 @@ This example demonstrates:
 ## App Integration
 
 ```tsx
-import React, { useEffect, useRef } from 'react';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Platform } from 'react-native';
+import React, { useEffect, useRef } from "react";
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+} from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Platform } from "react-native";
 import {
   Nudge,
+  RAVEN_ROUTE_NAME,
   setNavigationRef,
-  nudgeClient,
+  ravenClient,
   useNavigationTracker,
   fetchCTA,
-  processEventForCTAs,
-  type NudgeClientOptions,
-} from '@dreamhorizonorg/raven-client';
+  trackAppEvent,
+  type RavenClientOptions,
+} from "@dreamhorizonorg/raven-client";
 
 const Stack = createNativeStackNavigator();
 
@@ -96,38 +101,31 @@ export default function App() {
 
   useEffect(() => {
     // Initialize SDK
-    nudgeClient.init({
+    ravenClient.init({
       listeners: {
         appEvent: (eventName, props) => {
-          console.log('Analytics:', eventName, props);
-        },
-        fetchCtaApi: async () => {
-          throw new Error('Not used');
+          console.log("Analytics:", eventName, props);
         },
         getAccessToken: () => ({
-          token: 'your-token',
-          tokenType: 'Bearer',
+          token: "your-token",
+          tokenType: "Bearer",
         }),
       },
       config: {
-        baseUrl: 'https://api.example.com',
-        userId: 'user-123',
-        appVersion: '1.0.0',
+        baseUrl: "https://api.example.com",
+        userId: "user-123",
+        appVersion: "1.0.0",
         platform: Platform.OS,
-        nudgeRouteName: 'Nudge',
-        packageName: 'com.example.app',
+        packageName: "com.example.app",
       },
-    } as NudgeClientOptions);
+    } as RavenClientOptions);
 
     // Fetch CTAs
     fetchCTA().catch(console.error);
 
     // Process app launch event
-    processEventForCTAs({
-      eventName: 'APP_LAUNCH',
-      routeName: 'Home',
-      is_from_rn: true,
-      actionDone: false,
+    trackAppEvent({
+      eventName: "APP_LAUNCH",
     });
   }, []);
 
@@ -143,12 +141,12 @@ export default function App() {
           <Stack.Navigator>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen
-              name="Nudge"
+              name={RAVEN_ROUTE_NAME}
               component={Nudge}
               options={{
                 headerShown: false,
-                presentation: 'transparentModal',
-                animation: 'fade',
+                presentation: "transparentModal",
+                animation: "fade",
               }}
             />
           </Stack.Navigator>
@@ -174,4 +172,3 @@ export default function App() {
 
 - [Multi-Step Nudge](/docs/raven-client/examples/multi-step-nudge) - More complex example
 - [State Machine DSL Examples](/docs/raven-client/state-machine-dsl/examples) - More configuration examples
-
