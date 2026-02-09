@@ -31,6 +31,12 @@ import {
   hasTemplate as checkHasTemplate,
   validateEngagementsBeforeTabChange,
 } from "../utils/templateValidation.utils";
+import { extractAllTemplateVariables } from "../utils/extractTemplateVariables.utils";
+import {
+  filterActiveContextParams,
+  findMissingVariables,
+  mergeContextParams,
+} from "../utils/contextParamsSync.utils";
 
 interface CreateJourneyPageProps {
   journeyId?: string;
@@ -113,6 +119,37 @@ export default function CreateJourneyPage({
     control: methods.control,
     name: "journeyFrequency.enableMaxTimesInLifetime",
   });
+
+  // Auto-sync template variables to contextParams
+  useEffect(() => {
+    if (!watchedActions || watchedActions.length === 0) {
+      return;
+    }
+    
+    // Extract all template variables from all actions
+    const templateVariables = extractAllTemplateVariables(watchedActions);
+    
+    // Get current contextParams
+    const currentContextParams = getValues("contextParams") || [];
+    
+    // Filter contextParams to only keep those that are still in templates
+    const updatedContextParams = filterActiveContextParams(
+      currentContextParams,
+      templateVariables
+    );
+    
+    // Find which template variables are missing from the filtered contextParams
+    const missingVariables = findMissingVariables(
+      updatedContextParams,
+      templateVariables
+    );
+
+    // Add missing variables or update if contextParams changed
+    if (missingVariables.length > 0 || updatedContextParams.length !== currentContextParams.length) {
+      const newContextParams = mergeContextParams(updatedContextParams, missingVariables);
+      setValue("contextParams", newContextParams, { shouldDirty: true });
+    }
+  }, [watchedActions, getValues, setValue]);
 
   useEffect(() => {
     const fetchJourneyData = async () => {
